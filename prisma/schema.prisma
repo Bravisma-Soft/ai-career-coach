@@ -1,0 +1,659 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =================================
+// ENUMS
+// =================================
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  TEMPORARY
+}
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum JobStatus {
+  INTERESTED
+  APPLIED
+  INTERVIEW_SCHEDULED
+  INTERVIEW_COMPLETED
+  OFFER_RECEIVED
+  REJECTED
+  ACCEPTED
+  WITHDRAWN
+}
+
+enum ApplicationMethod {
+  MANUAL
+  AUTOMATED
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  REJECTED
+  ACCEPTED
+}
+
+enum InterviewType {
+  PHONE
+  VIDEO
+  ONSITE
+  TECHNICAL
+  BEHAVIORAL
+  PANEL
+  FINAL
+}
+
+enum InterviewOutcome {
+  PASSED
+  FAILED
+  PENDING
+}
+
+enum DocumentType {
+  RESUME
+  COVER_LETTER
+  PORTFOLIO
+  TRANSCRIPT
+  REFERENCE
+  OTHER
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+// =================================
+// USER MANAGEMENT
+// =================================
+
+model User {
+  id                     String      @id @default(cuid())
+  email                  String      @unique
+  password               String
+  firstName              String?
+  lastName               String?
+  role                   UserRole    @default(USER)
+  status                 UserStatus  @default(ACTIVE)
+  emailVerified          Boolean     @default(false)
+  emailVerifiedAt        DateTime?
+  lastLoginAt            DateTime?
+  passwordResetToken     String?     @unique
+  passwordResetExpires   DateTime?
+
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+
+  // Relations
+  profile                UserProfile?
+  sessions               Session[]
+  resumes                Resume[]
+  jobs                   Job[]
+  applications           Application[]
+  interviews             Interview[]
+  mockInterviews         MockInterview[]
+  careerGoals            CareerGoal[]
+  assessments            Assessment[]
+  conversations          Conversation[]
+
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  userId        String
+  refreshToken  String   @unique
+  userAgent     String?
+  ipAddress     String?
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// =================================
+// USER PROFILE & CAREER DATA
+// =================================
+
+model UserProfile {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  phone                 String?
+  bio                   String?   @db.Text
+  location              String?
+  city                  String?
+  state                 String?
+  country               String?
+  zipCode               String?
+  linkedinUrl           String?
+  githubUrl             String?
+  portfolioUrl          String?
+  websiteUrl            String?
+  currentJobTitle       String?
+  currentCompany        String?
+  yearsOfExperience     Int?
+
+  // Career Preferences
+  desiredJobTitle       String?
+  desiredSalaryMin      Int?
+  desiredSalaryMax      Int?
+  desiredWorkMode       WorkMode?
+  desiredJobTypes       String[]  // Array of JobType values
+  willingToRelocate     Boolean   @default(false)
+  preferredLocations    String[]
+  availableStartDate    DateTime?
+
+  // Additional Info
+  profilePictureUrl     String?
+  timezone              String?
+  preferredLanguage     String    @default("en")
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experiences           Experience[]
+  educations            Education[]
+  skills                Skill[]
+  certifications        Certification[]
+
+  @@index([userId])
+  @@map("user_profiles")
+}
+
+model Experience {
+  id                String       @id @default(cuid())
+  userProfileId     String
+  company           String
+  position          String
+  description       String?      @db.Text
+  location          String?
+  workMode          WorkMode?
+  startDate         DateTime
+  endDate           DateTime?
+  isCurrent         Boolean      @default(false)
+  achievements      String[]
+  technologies      String[]
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  userProfile       UserProfile  @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId])
+  @@index([isCurrent])
+  @@map("experiences")
+}
+
+model Education {
+  id                String       @id @default(cuid())
+  userProfileId     String
+  institution       String
+  degree            String
+  fieldOfStudy      String
+  location          String?
+  startDate         DateTime
+  endDate           DateTime?
+  isCurrent         Boolean      @default(false)
+  gpa               Float?
+  achievements      String[]
+  coursework        String[]
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  userProfile       UserProfile  @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId])
+  @@index([isCurrent])
+  @@map("educations")
+}
+
+model Skill {
+  id                String       @id @default(cuid())
+  userProfileId     String
+  name              String
+  category          String?      // e.g., "Programming", "Design", "Management"
+  level             SkillLevel
+  yearsOfExperience Int?
+  endorsements      Int          @default(0)
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  userProfile       UserProfile  @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId])
+  @@index([category])
+  @@map("skills")
+}
+
+model Certification {
+  id                String       @id @default(cuid())
+  userProfileId     String
+  name              String
+  issuingOrganization String
+  issueDate         DateTime
+  expiryDate        DateTime?
+  credentialId      String?
+  credentialUrl     String?
+  doesNotExpire     Boolean      @default(false)
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  userProfile       UserProfile  @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId])
+  @@map("certifications")
+}
+
+// =================================
+// RESUME MANAGEMENT
+// =================================
+
+model Resume {
+  id                String       @id @default(cuid())
+  userId            String
+  title             String
+  fileName          String
+  fileUrl           String
+  fileSize          Int
+  mimeType          String
+  isPrimary         Boolean      @default(false)
+
+  // Parsed Content
+  rawText           String?      @db.Text
+  parsedData        Json?
+
+  // Resume Metadata
+  version           Int          @default(1)
+  isActive          Boolean      @default(true)
+  lastUsedAt        DateTime?
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications      Application[]
+
+  @@index([userId])
+  @@index([isPrimary])
+  @@index([isActive])
+  @@map("resumes")
+}
+
+// =================================
+// JOB TRACKING
+// =================================
+
+model Job {
+  id                String       @id @default(cuid())
+  userId            String
+
+  // Job Information
+  title             String
+  company           String
+  companyUrl        String?
+  location          String?
+  workMode          WorkMode
+  jobType           JobType
+  salaryMin         Int?
+  salaryMax         Int?
+  salaryCurrency    String?      @default("USD")
+  jobUrl            String?
+  jobDescription    String?      @db.Text
+  requirements      String[]
+  responsibilities  String[]
+  benefits          String[]
+
+  // Tracking
+  status            JobStatus    @default(INTERESTED)
+  source            String?      // e.g., "LinkedIn", "Indeed", "Company Website"
+  referralName      String?
+
+  // Dates
+  postedDate        DateTime?
+  applicationDeadline DateTime?
+  savedAt           DateTime     @default(now())
+  appliedAt         DateTime?
+
+  // AI Analysis
+  matchScore        Float?       // AI-calculated match score (0-100)
+  aiAnalysis        Json?        // AI-generated insights
+
+  // Notes
+  notes             String?      @db.Text
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications      Application[]
+  interviews        Interview[]
+  documents         Document[]
+  statusChanges     StatusChange[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([workMode])
+  @@index([jobType])
+  @@index([appliedAt])
+  @@map("jobs")
+}
+
+model StatusChange {
+  id                String       @id @default(cuid())
+  jobId             String
+  fromStatus        JobStatus?
+  toStatus          JobStatus
+  reason            String?      @db.Text
+  changedAt         DateTime     @default(now())
+
+  job               Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([changedAt])
+  @@map("status_changes")
+}
+
+// =================================
+// APPLICATION TRACKING
+// =================================
+
+model Application {
+  id                String            @id @default(cuid())
+  userId            String
+  jobId             String
+  resumeId          String?
+
+  // Application Details
+  applicationMethod ApplicationMethod @default(MANUAL)
+  status            ApplicationStatus @default(DRAFT)
+  coverLetter       String?           @db.Text
+  applicationUrl    String?
+  confirmationNumber String?
+
+  // Tracking
+  submittedAt       DateTime?
+  responseReceivedAt DateTime?
+
+  // AI Assistance
+  aiGeneratedCoverLetter Boolean      @default(false)
+  aiOptimizationApplied Boolean       @default(false)
+
+  // Notes
+  notes             String?           @db.Text
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job               Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resume            Resume?           @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([jobId])
+  @@index([resumeId])
+  @@index([status])
+  @@index([submittedAt])
+  @@map("applications")
+}
+
+// =================================
+// INTERVIEW TRACKING
+// =================================
+
+model Interview {
+  id                String           @id @default(cuid())
+  userId            String
+  jobId             String
+
+  // Interview Details
+  interviewType     InterviewType
+  scheduledAt       DateTime
+  duration          Int?             // Duration in minutes
+  location          String?          // Physical address or video link
+  interviewerName   String?
+  interviewerEmail  String?
+  interviewerPhone  String?
+
+  // Tracking
+  outcome           InterviewOutcome @default(PENDING)
+  completedAt       DateTime?
+
+  // Preparation
+  prepNotes         String?          @db.Text
+  questionsAsked    String[]
+  feedback          String?          @db.Text
+  followUpSentAt    DateTime?
+
+  // Reminders
+  reminderSent      Boolean          @default(false)
+  reminderSentAt    DateTime?
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job               Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([jobId])
+  @@index([scheduledAt])
+  @@index([outcome])
+  @@map("interviews")
+}
+
+// =================================
+// MOCK INTERVIEW & AI COACHING
+// =================================
+
+model MockInterview {
+  id                String           @id @default(cuid())
+  userId            String
+
+  // Mock Interview Details
+  title             String
+  interviewType     InterviewType
+  targetRole        String?
+  targetCompany     String?
+  difficulty        String?          // "Easy", "Medium", "Hard"
+  duration          Int?             // Actual duration in minutes
+
+  // Scoring
+  overallScore      Float?           // 0-100
+  technicalScore    Float?
+  communicationScore Float?
+  problemSolvingScore Float?
+
+  // AI Analysis
+  aiAnalysis        Json?
+  aiSuggestions     String[]
+  strengths         String[]
+  areasToImprove    String[]
+
+  // Session Data
+  conversationHistory Json           // Stored conversation messages
+
+  // Status
+  isCompleted       Boolean          @default(false)
+  completedAt       DateTime?
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isCompleted])
+  @@index([createdAt])
+  @@map("mock_interviews")
+}
+
+// =================================
+// DOCUMENTS
+// =================================
+
+model Document {
+  id                String           @id @default(cuid())
+  jobId             String?
+
+  // Document Details
+  documentType      DocumentType
+  title             String
+  fileName          String
+  fileUrl           String
+  fileSize          Int
+  mimeType          String
+
+  // Content
+  description       String?          @db.Text
+
+  // Version Control
+  version           Int              @default(1)
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  job               Job?             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([documentType])
+  @@map("documents")
+}
+
+// =================================
+// CAREER COACHING
+// =================================
+
+model CareerGoal {
+  id                String           @id @default(cuid())
+  userId            String
+  title             String
+  description       String?          @db.Text
+  targetDate        DateTime?
+  status            GoalStatus       @default(NOT_STARTED)
+  priority          Int              @default(0)
+  progress          Int              @default(0) // 0-100
+
+  // Milestones
+  milestones        Json?
+
+  // AI Coaching
+  aiRecommendations String[]
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@map("career_goals")
+}
+
+model Assessment {
+  id                String           @id @default(cuid())
+  userId            String
+  type              String           // "personality", "skills", "career_fit", etc.
+  title             String
+  description       String?          @db.Text
+  results           Json
+  score             Float?
+
+  // AI Analysis
+  aiInsights        Json?
+  recommendations   String[]
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@map("assessments")
+}
+
+model Conversation {
+  id                String           @id @default(cuid())
+  userId            String
+  title             String?
+  context           String?          // "job_search", "interview_prep", "career_advice", etc.
+  metadata          Json?
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages          Message[]
+
+  @@index([userId])
+  @@index([context])
+  @@map("conversations")
+}
+
+model Message {
+  id                String           @id @default(cuid())
+  conversationId    String
+  role              String           // 'user' or 'assistant'
+  content           String           @db.Text
+  metadata          Json?            // Token usage, model used, etc.
+
+  createdAt         DateTime         @default(now())
+
+  conversation      Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("messages")
+}
