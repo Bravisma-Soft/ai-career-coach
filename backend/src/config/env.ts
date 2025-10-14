@@ -6,7 +6,7 @@ dotenv.config();
 const envSchema = z.object({
   // Application
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).default('3000'),
+  PORT: z.string().default('3000').transform(Number),
   API_VERSION: z.string().default('v1'),
 
   // Database
@@ -14,10 +14,10 @@ const envSchema = z.object({
 
   // Redis
   REDIS_HOST: z.string().default('localhost'),
-  REDIS_PORT: z.string().transform(Number).default('6379'),
+  REDIS_PORT: z.string().default('6379').transform(Number),
   REDIS_PASSWORD: z.string().optional(),
-  REDIS_DB: z.string().transform(Number).default('0'),
-  REDIS_TLS: z.string().transform((val) => val === 'true').default('false'),
+  REDIS_DB: z.string().default('0').transform(Number),
+  REDIS_TLS: z.string().default('false').transform((val) => val === 'true'),
 
   // JWT
   JWT_SECRET: z.string().min(32),
@@ -28,8 +28,8 @@ const envSchema = z.object({
   // Anthropic AI / Claude
   ANTHROPIC_API_KEY: z.string(),
   CLAUDE_MODEL: z.string().default('claude-sonnet-4-5-20250929'),
-  CLAUDE_MAX_TOKENS: z.string().transform(Number).default('4096'),
-  CLAUDE_TEMPERATURE: z.string().transform(Number).default('1.0'),
+  CLAUDE_MAX_TOKENS: z.string().default('4096').transform(Number),
+  CLAUDE_TEMPERATURE: z.string().default('1.0').transform(Number),
 
   // AWS
   AWS_REGION: z.string().optional(),
@@ -39,34 +39,34 @@ const envSchema = z.object({
 
   // Email
   SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.string().transform(Number).optional(),
+  SMTP_PORT: z.string().optional().transform((val) => val ? Number(val) : undefined),
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
 
   // Rate Limiting
-  RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default('900000'),
-  RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default('100'),
-  RATE_LIMIT_AUTH_MAX: z.string().transform(Number).default('5'),
+  RATE_LIMIT_WINDOW_MS: z.string().default('900000').transform(Number),
+  RATE_LIMIT_MAX_REQUESTS: z.string().default('100').transform(Number),
+  RATE_LIMIT_AUTH_MAX: z.string().default('5').transform(Number),
 
   // CORS
   CORS_ORIGIN: z.string().default('http://localhost:3001'),
-  CORS_CREDENTIALS: z.string().transform((val) => val === 'true').default('true'),
+  CORS_CREDENTIALS: z.string().default('true').transform((val) => val === 'true'),
 
   // Logging
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
   LOG_FORMAT: z.enum(['json', 'simple']).default('json'),
 
   // Security
-  BCRYPT_ROUNDS: z.string().transform(Number).default('10'),
-  PASSWORD_MIN_LENGTH: z.string().transform(Number).default('8'),
+  BCRYPT_ROUNDS: z.string().default('10').transform(Number),
+  PASSWORD_MIN_LENGTH: z.string().default('8').transform(Number),
 
   // Queue
-  QUEUE_CONCURRENCY: z.string().transform(Number).default('5'),
-  QUEUE_MAX_RETRIES: z.string().transform(Number).default('3'),
+  QUEUE_CONCURRENCY: z.string().default('5').transform(Number),
+  QUEUE_MAX_RETRIES: z.string().default('3').transform(Number),
 
   // File Upload
-  MAX_FILE_SIZE: z.string().transform(Number).default('10485760'),
+  MAX_FILE_SIZE: z.string().default('10485760').transform(Number),
 });
 
 const parseEnv = () => {

@@ -121,9 +121,7 @@ export class ResumeParseProcessor {
       await prisma.resume.update({
         where: { id: resumeId },
         data: {
-          parsedData: parsedData as any, // Store as JSON
-          isParsed: true,
-          parsedAt: new Date(),
+          parsedData: parsedData as any, // Store as JSON (rawText already saved earlier)
         },
       });
 
@@ -166,7 +164,6 @@ export class ResumeParseProcessor {
       await prisma.resume.update({
         where: { id: resumeId },
         data: {
-          isParsed: false,
           parsedData: {
             error: error instanceof Error ? error.message : 'Unknown error',
           } as any,
@@ -254,6 +251,12 @@ export class ResumeParseProcessor {
 
       // Add educations
       for (const edu of parsedData.educations || []) {
+        // Skip if missing required startDate
+        if (!edu.startDate) {
+          logger.warn('Skipping education without startDate', { institution: edu.institution });
+          continue;
+        }
+
         await prisma.education.create({
           data: {
             userProfileId: profile.id,
@@ -261,7 +264,7 @@ export class ResumeParseProcessor {
             degree: edu.degree,
             fieldOfStudy: edu.fieldOfStudy,
             location: edu.location,
-            startDate: edu.startDate ? this.parseDate(edu.startDate) : null,
+            startDate: this.parseDate(edu.startDate),
             endDate: edu.endDate ? this.parseDate(edu.endDate) : null,
             isCurrent: edu.isCurrent,
             gpa: edu.gpa,
@@ -294,12 +297,18 @@ export class ResumeParseProcessor {
 
       // Add certifications
       for (const cert of parsedData.certifications || []) {
+        // Skip if missing required issueDate
+        if (!cert.issueDate) {
+          logger.warn('Skipping certification without issueDate', { name: cert.name });
+          continue;
+        }
+
         await prisma.certification.create({
           data: {
             userProfileId: profile.id,
             name: cert.name,
             issuingOrganization: cert.issuingOrganization,
-            issueDate: cert.issueDate ? this.parseDate(cert.issueDate) : null,
+            issueDate: this.parseDate(cert.issueDate),
             expiryDate: cert.expiryDate ? this.parseDate(cert.expiryDate) : null,
             credentialId: cert.credentialId,
           },

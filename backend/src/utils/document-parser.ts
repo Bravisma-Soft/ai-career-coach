@@ -1,4 +1,3 @@
-import pdf from 'pdf-parse';
 import mammoth from 'mammoth';
 import { logger } from '@/config/logger';
 import { InternalServerError, BadRequestError } from '@/utils/ApiError';
@@ -31,10 +30,13 @@ export class DocumentParser {
         size: buffer.length,
       });
 
-      const data = await pdf(buffer);
+      // Use require within function scope for CommonJS module (pdf-parse v1.x)
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const pdfParse = require('pdf-parse');
+      const data = await pdfParse(buffer);
 
       const text = data.text;
-      const wordCount = text.split(/\s+/).filter((word) => word.length > 0).length;
+      const wordCount = text.split(/\s+/).filter((word: string) => word.length > 0).length;
 
       logger.info('PDF text extraction complete', {
         pages: data.numpages,
@@ -56,8 +58,12 @@ export class DocumentParser {
         },
       };
     } catch (error) {
-      logger.error('PDF text extraction failed', { error });
-      throw new InternalServerError('Failed to extract text from PDF file');
+      logger.error('PDF text extraction failed', {
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : undefined,
+      });
+      throw new InternalServerError(`Failed to extract text from PDF file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -253,7 +259,10 @@ export class DocumentParser {
   ): Promise<Record<string, any>> {
     try {
       if (mimeType === 'application/pdf') {
-        const data = await pdf(buffer);
+        // Use require within function scope for CommonJS module (pdf-parse v1.x)
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const pdfParse = require('pdf-parse');
+        const data = await pdfParse(buffer);
         return {
           pages: data.numpages,
           info: data.info,
