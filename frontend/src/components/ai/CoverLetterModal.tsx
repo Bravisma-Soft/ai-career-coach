@@ -127,8 +127,8 @@ export function CoverLetterModal({ job, open, onOpenChange }: CoverLetterModalPr
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <h3 className="font-semibold">{job.jobTitle}</h3>
-              <p className="text-sm text-muted-foreground">{job.companyName}</p>
+              <h3 className="font-semibold">{job.title}</h3>
+              <p className="text-sm text-muted-foreground">{job.company}</p>
               <div className="flex gap-2">
                 <Badge variant="secondary">{job.location}</Badge>
                 <Badge variant="secondary">{job.workMode}</Badge>

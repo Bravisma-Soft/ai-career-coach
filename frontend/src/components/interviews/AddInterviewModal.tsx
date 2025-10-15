@@ -135,7 +135,7 @@ export const AddInterviewModal = ({ open, onOpenChange }: AddInterviewModalProps
                     <SelectContent>
                       {jobs.map((job) => (
                         <SelectItem key={job.id} value={job.id}>
-                          {job.jobTitle} at {job.companyName}
+                          {job.title} at {job.company}
                         </SelectItem>
                       ))}
                     </SelectContent>

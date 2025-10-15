@@ -65,31 +65,36 @@ export const TOAST_DURATION = {
 } as const;
 
 export const JOB_STATUSES = [
-  'interested',
-  'applied',
-  'interview',
-  'offer',
-  'rejected',
-  'accepted',
+  'INTERESTED',
+  'APPLIED',
+  'INTERVIEW_SCHEDULED',
+  'INTERVIEW_COMPLETED',
+  'OFFER_RECEIVED',
+  'REJECTED',
+  'ACCEPTED',
+  'WITHDRAWN',
 ] as const;
 
 export const INTERVIEW_TYPES = [
-  'Phone',
-  'Video',
-  'Onsite',
-  'Technical',
-  'Behavioral',
-  'Panel',
+  'PHONE',
+  'VIDEO',
+  'ONSITE',
+  'TECHNICAL',
+  'BEHAVIORAL',
+  'PANEL',
+  'FINAL',
 ] as const;
 
 export const WORK_MODES = [
-  'remote',
-  'hybrid',
-  'onsite',
+  'REMOTE',
+  'HYBRID',
+  'ONSITE',
 ] as const;
 
 export const JOB_TYPES = [
-  'full-time',
-  'part-time',
-  'contract',
+  'FULL_TIME',
+  'PART_TIME',
+  'CONTRACT',
+  'INTERNSHIP',
+  'TEMPORARY',
 ] as const;

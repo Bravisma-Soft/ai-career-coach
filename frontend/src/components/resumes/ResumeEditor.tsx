@@ -30,37 +30,37 @@ const resumeEditorSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   personalInfo: z.object({
     fullName: z.string().min(1, 'Full name is required'),
-    email: z.string().email('Invalid email'),
-    phone: z.string().min(1, 'Phone is required'),
-    location: z.string().min(1, 'Location is required'),
+    email: z.string().email('Invalid email').or(z.literal('')),
+    phone: z.string().optional(),
+    location: z.string().optional(),
     linkedin: z.string().optional(),
     website: z.string().optional(),
   }),
-  summary: z.string().min(1, 'Summary is required'),
+  summary: z.string().optional(),
   experience: z.array(
     z.object({
-      company: z.string().min(1, 'Company is required'),
-      position: z.string().min(1, 'Position is required'),
-      location: z.string().min(1, 'Location is required'),
-      startDate: z.string().min(1, 'Start date is required'),
-      endDate: z.string().nullable(),
+      company: z.string().optional(),
+      position: z.string().optional(),
+      location: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
       current: z.boolean(),
-      description: z.string().min(1, 'Description is required'),
+      description: z.string().optional(),
     })
   ),
   education: z.array(
     z.object({
-      institution: z.string().min(1, 'Institution is required'),
-      degree: z.string().min(1, 'Degree is required'),
-      field: z.string().min(1, 'Field is required'),
-      location: z.string().min(1, 'Location is required'),
-      startDate: z.string().min(1, 'Start date is required'),
-      endDate: z.string().nullable(),
+      institution: z.string().optional(),
+      degree: z.string().optional(),
+      field: z.string().optional(),
+      location: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
       current: z.boolean(),
       gpa: z.string().optional(),
     })
   ),
-  skills: z.string().min(1, 'Skills are required'),
+  skills: z.string().optional(),
 });
 
 type ResumeEditorFormData = z.infer<typeof resumeEditorSchema>;
@@ -106,14 +106,26 @@ export const ResumeEditor = ({ resume, open, onOpenChange, onSave }: ResumeEdito
     if (resume) {
       form.reset({
         name: resume.name,
-        personalInfo: resume.personalInfo,
-        summary: resume.summary,
-        experience: resume.experience.map(exp => ({
+        personalInfo: resume.personalInfo || {
+          fullName: '',
+          email: '',
+          phone: '',
+          location: '',
+          linkedin: '',
+          website: '',
+        },
+        summary: resume.summary || '',
+        experience: resume.experience?.map(exp => ({
           ...exp,
+          endDate: exp.endDate || '', // Convert null to empty string
           description: exp.description.join('\n'),
-        })),
-        education: resume.education,
-        skills: resume.skills.join(', '),
+        })) || [],
+        education: resume.education?.map(edu => ({
+          ...edu,
+          endDate: edu.endDate || '', // Convert null to empty string
+          gpa: edu.gpa || '', // Convert undefined to empty string
+        })) || [],
+        skills: resume.skills?.join(', ') || '',
       });
     }
   }, [resume, form]);
@@ -125,35 +137,39 @@ export const ResumeEditor = ({ resume, open, onOpenChange, onSave }: ResumeEdito
       name: data.name,
       personalInfo: {
         fullName: data.personalInfo.fullName,
-        email: data.personalInfo.email,
-        phone: data.personalInfo.phone,
-        location: data.personalInfo.location,
+        email: data.personalInfo.email || '',
+        phone: data.personalInfo.phone || '',
+        location: data.personalInfo.location || '',
         linkedin: data.personalInfo.linkedin,
         website: data.personalInfo.website,
       },
-      summary: data.summary,
+      summary: data.summary || '',
       experience: data.experience.map(exp => ({
-        id: exp.company.toLowerCase().replace(/\s+/g, '-'),
-        company: exp.company,
-        position: exp.position,
-        location: exp.location,
-        startDate: exp.startDate,
-        endDate: exp.endDate,
+        id: (exp.company || 'exp').toLowerCase().replace(/\s+/g, '-'),
+        company: exp.company || '',
+        position: exp.position || '',
+        location: exp.location || '',
+        startDate: exp.startDate || '',
+        endDate: exp.endDate || null, // Convert empty string back to null
         current: exp.current,
-        description: exp.description.split('\n').filter(line => line.trim()),
+        description: exp.description
+          ? (typeof exp.description === 'string'
+              ? exp.description.split('\n').filter(line => line.trim())
+              : exp.description)
+          : [],
       })),
       education: data.education.map(edu => ({
-        id: edu.institution.toLowerCase().replace(/\s+/g, '-'),
-        institution: edu.institution,
-        degree: edu.degree,
-        field: edu.field,
-        location: edu.location,
-        startDate: edu.startDate,
-        endDate: edu.endDate,
+        id: (edu.institution || 'edu').toLowerCase().replace(/\s+/g, '-'),
+        institution: edu.institution || '',
+        degree: edu.degree || '',
+        field: edu.field || '',
+        location: edu.location || '',
+        startDate: edu.startDate || '',
+        endDate: edu.endDate || null, // Convert empty string back to null
         current: edu.current,
         gpa: edu.gpa,
       })),
-      skills: data.skills.split(',').map(skill => skill.trim()).filter(Boolean),
+      skills: data.skills ? data.skills.split(',').map(skill => skill.trim()).filter(Boolean) : [],
     };
 
     onSave(resume.id, updateData);
@@ -162,13 +178,31 @@ export const ResumeEditor = ({ resume, open, onOpenChange, onSave }: ResumeEdito
 
   if (!resume) return null;
 
+  // Check if resume has been parsed
+  const isParsed = resume.personalInfo && resume.experience && resume.education && resume.skills;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Edit Resume</DialogTitle>
-          <DialogDescription>Update your resume information</DialogDescription>
+          <DialogDescription>
+            {isParsed
+              ? 'Update your resume information'
+              : 'This resume needs to be parsed before it can be edited. Click "Parse Resume" first.'}
+          </DialogDescription>
         </DialogHeader>
+
+        {!isParsed && (
+          <div className="p-4 bg-muted rounded-lg text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              This resume hasn't been parsed yet. Parse it first to edit the content.
+            </p>
+            <Button onClick={() => onOpenChange(false)}>Close</Button>
+          </div>
+        )}
+
+        {isParsed && (
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -604,6 +638,7 @@ export const ResumeEditor = ({ resume, open, onOpenChange, onSave }: ResumeEdito
             </div>
           </form>
         </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

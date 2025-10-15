@@ -19,18 +19,22 @@ export interface ApiError {
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds
+  timeout: 300000, // 5 minutes (300 seconds) - increased for complex AI operations like resume tailoring
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Enable sending cookies and credentials
 });
 
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
+    console.log('🔑 Token from store:', token ? 'exists' : 'missing');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('⚠️ No token found in auth store');
     }
     return config;
   },

@@ -3,7 +3,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -556,6 +555,8 @@ model Document {
 
   // Content
   description       String?          @db.Text
+  content           String?          @db.Text  // JSON content for tailored resumes
+  metadata          Json?            // Additional metadata (match score, etc.)
 
   // Version Control
   version           Int              @default(1)

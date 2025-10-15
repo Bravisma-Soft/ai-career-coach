@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { resumeService } from '@/services/resumeService';
 import { useResumesStore } from '@/store/resumesStore';
 import { Resume, CreateResumeData, UpdateResumeData } from '@/types/resume';
@@ -11,99 +12,23 @@ export const useResumes = () => {
   const { data: resumes = [], isLoading, error } = useQuery<Resume[]>({
     queryKey: ['resumes'],
     queryFn: async () => {
-      // Mock data for demo - replace with actual API call
-      const mockResumes: Resume[] = [
-        {
-          id: '1',
-          userId: 'user-1',
-          name: 'Software Engineer Resume',
-          type: 'master',
-          isMaster: true,
-          version: 1,
-          fileUrl: '/mock-resume.pdf',
-          fileType: 'application/pdf',
-          fileSize: 245000,
-          personalInfo: {
-            fullName: 'John Doe',
-            email: 'john.doe@example.com',
-            phone: '+1 (555) 123-4567',
-            location: 'San Francisco, CA',
-            linkedin: 'linkedin.com/in/johndoe',
-            website: 'johndoe.com',
-          },
-          summary: 'Experienced software engineer with 5+ years of building scalable web applications.',
-          experience: [
-            {
-              id: 'exp-1',
-              company: 'Tech Corp',
-              position: 'Senior Software Engineer',
-              location: 'San Francisco, CA',
-              startDate: '2020-01',
-              endDate: null,
-              current: true,
-              description: [
-                'Led development of microservices architecture',
-                'Mentored junior developers',
-                'Improved system performance by 40%',
-              ],
-            },
-          ],
-          education: [
-            {
-              id: 'edu-1',
-              institution: 'University of California',
-              degree: 'Bachelor of Science',
-              field: 'Computer Science',
-              location: 'Berkeley, CA',
-              startDate: '2014-09',
-              endDate: '2018-05',
-              current: false,
-              gpa: '3.8',
-            },
-          ],
-          skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker'],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
-      return mockResumes;
-      // return resumeService.fetchResumes();
+      // Real API call
+      return resumeService.fetchResumes();
     },
     staleTime: 5 * 60 * 1000,
   });
 
+  // Sync resumes with store whenever they change
+  useEffect(() => {
+    if (resumes.length > 0) {
+      setResumes(resumes);
+    }
+  }, [resumes, setResumes]);
+
   const uploadMutation = useMutation({
     mutationFn: (data: CreateResumeData) => {
-      // Mock implementation - replace with actual API call
-      return new Promise<Resume>((resolve) => {
-        setTimeout(() => {
-          const newResume: Resume = {
-            id: Math.random().toString(36).substr(2, 9),
-            userId: 'user-1',
-            name: data.name,
-            type: data.type,
-            isMaster: false,
-            version: 1,
-            fileUrl: '/mock-resume.pdf',
-            fileType: data.file.type,
-            fileSize: data.file.size,
-            personalInfo: {
-              fullName: '',
-              email: '',
-              phone: '',
-              location: '',
-            },
-            summary: '',
-            experience: [],
-            education: [],
-            skills: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          resolve(newResume);
-        }, 1500);
-      });
-      // return resumeService.uploadResume(data);
+      // Real API call
+      return resumeService.uploadResume(data);
     },
     onSuccess: (newResume) => {
       queryClient.setQueryData<Resume[]>(['resumes'], (old = []) => [...old, newResume]);
@@ -199,6 +124,72 @@ export const useResumes = () => {
     },
   });
 
+  const parseMutation = useMutation({
+    mutationFn: (id: string) => resumeService.parseResume(id),
+    onSuccess: (updatedResume) => {
+      queryClient.setQueryData<Resume[]>(['resumes'], (old = []) =>
+        old.map((r) => (r.id === updatedResume.id ? updatedResume : r))
+      );
+      toast({
+        title: 'Resume parsing started',
+        description: 'Your resume is being parsed. This may take a few moments.',
+      });
+
+      // Poll for updates every 5 seconds for up to 2 minutes
+      let pollCount = 0;
+      const maxPolls = 24; // 2 minutes / 5 seconds
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+
+        try {
+          // Refetch the resumes to get the updated parsed data
+          const result = await queryClient.fetchQuery({ queryKey: ['resumes'] });
+          const targetResume = result?.find((r: Resume) => r.id === updatedResume.id);
+
+          // Check if parsing is complete - either has parsed data or has an error
+          const hasData = targetResume?.personalInfo || targetResume?.experience || targetResume?.education;
+          const hasError = targetResume?.parsedData && typeof targetResume.parsedData === 'object' && 'error' in targetResume.parsedData;
+
+          if (hasData) {
+            // Parsing complete successfully
+            clearInterval(pollInterval);
+            toast({
+              title: 'Resume parsed successfully',
+              description: 'Your resume has been analyzed and is ready to use.',
+            });
+          } else if (hasError) {
+            // Parsing failed
+            clearInterval(pollInterval);
+            toast({
+              title: 'Parsing failed',
+              description: 'There was an error parsing your resume. Please try again.',
+              variant: 'destructive',
+            });
+          } else if (pollCount >= maxPolls) {
+            // Timeout
+            clearInterval(pollInterval);
+            toast({
+              title: 'Parsing is taking longer than expected',
+              description: 'Please refresh the page to check the status.',
+              variant: 'default',
+            });
+          }
+        } catch (error) {
+          console.error('Error polling resume status:', error);
+          // Stop polling on error
+          clearInterval(pollInterval);
+        }
+      }, 5000);
+    },
+    onError: () => {
+      toast({
+        title: 'Parse failed',
+        description: 'Failed to start parsing. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     resumes,
     isLoading,
@@ -208,5 +199,7 @@ export const useResumes = () => {
     updateResume: updateMutation.mutate,
     deleteResume: deleteMutation.mutate,
     setMasterResume: setMasterMutation.mutate,
+    parseResume: parseMutation.mutate,
+    isParsing: parseMutation.isPending,
   };
 };

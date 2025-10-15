@@ -36,17 +36,20 @@ export interface Resume {
   id: string;
   userId: string;
   name: string;
+  fileName?: string;  // Original file name (optional for backwards compatibility)
   type: ResumeType;
   isMaster: boolean;
   version: number;
   fileUrl: string;
   fileType: string;
   fileSize: number;
-  personalInfo: ResumePersonalInfo;
-  summary: string;
-  experience: ResumeExperience[];
-  education: ResumeEducation[];
-  skills: string[];
+  rawText?: string;  // Raw text extracted from document
+  parsedData?: any;  // Raw parsed data from backend (may contain error)
+  personalInfo?: ResumePersonalInfo;  // Optional until parsed
+  summary?: string;  // Optional until parsed
+  experience?: ResumeExperience[];  // Optional until parsed
+  education?: ResumeEducation[];  // Optional until parsed
+  skills?: string[];  // Optional until parsed
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +58,7 @@ export interface CreateResumeData {
   name: string;
   type: ResumeType;
   file: File;
+  isPrimary?: boolean;
 }
 
 export interface UpdateResumeData {

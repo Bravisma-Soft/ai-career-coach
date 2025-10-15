@@ -1,0 +1,47 @@
+﻿Gaurav Chawla
+Foster City, CA 94404 | 415-425-7051 | gauravc@gmail.com | linkedin.com/in/gauravchawla
+PRODUCT MANAGER
+Dynamic, results-driven product lead with extensive experience in milestone-critical execution, cross-functional collaboration delivering high-impact outcomes across software, hardware and systems engineering domains. Proven expertise in establishing launch strategies, defining KPIs to measure progress towards business goals, and leading concise, impactful communications to leadership and executive stakeholders. Adept at risk mitigation, managing lifecycle processes and ensuring timeline handoffs and issue resolution for successful program milestones.
+SKILLS
+CoPilot | Real time communication | Cloud Computing | Consumer Hardware | Product Roadmap | Licensing | Marketing | Product Launch | GTM
+EXPERIENCE
+Microsoft | 2023-Current
+Principal Product Manager, Microsoft Teams
+* Lead data-driven product initiatives to create high-impact product experiences in teams of up to 25 across design, engineering, and marketing roles.
+* Scaled the broadcast capacity to 100K attendees while preserving AV quality experience.
+* Analyzed COGs and licensing model to ensure the business is generating profit and the licensing model is aligned with the value delivered to customers.
+* Developed a framework, working with lead architects and various engineering and product stakeholders, to improve the resiliency and health monitoring of events, ensuring 90% of tier-0 scenarios meet or exceed high reliability and performance targets.
+* Implemented a robust DVR system for desktop and mobile to enhance broadcast user experience and ensure seamless content playback for high impacting virtual events.
+* Launched real-time analytics tools for event organizers, providing them with actionable insights and data to optimize virtual events experience for their audience.
+* Spearheaded the development of Event ASHA, a system designed to constantly monitor key user experience metrics for all our virtual event customers, resulting in identifying key areas of improvements to focus investments and making virtual events on Teams 50% more robust.
+* Delivered key adoption blockers for new Teams town hall, ensuring a significant number of customers transitioned from an older product stack to the newer virtual event stack.
+Chime (brewchime.com) | 2014-Current
+Founder & Product Lead
+* Invented Chime, the world's first chai brewer with a consumable-based recurring revenue business model.
+* Created a new category in consumer goods with an issued patent in the US and Europe.
+* Designed and developed Chime from the ground up working with disparate teams of product designers, UI/UX specialists, graphics designers, mechanical engineers, electrical engineers, firmware, and software engineers across three countries.
+* Created detailed design specs and functional specs resulting in a shortened development cycle.
+* Created a modern and unique design for a kitchen appliance while integrating customer requirements with physical, engineering, and material constraints, resulting in a product loved by 90% of our customers.
+* Developed the IOT architecture for Chime including backend server infrastructure and client-side iOS and Android apps.
+* Created 2 design iterations including DFM/DFA, 4 engineering builds post tooling, performed FMEA analysis and life testing, obtained ETL and FCC certifications to launch Chime from idea to market in less than $2M.
+* Partnered with appliance manufacturer, tea supplier, and 3PL logistics company to establish the supply chain for brewers and tea capsules laying the foundation for shipping, logistics, reverse logistics and customer support.
+* Evaluated multiple kitchen appliance manufacturers in China and negotiated an MSA with two suppliers. Negotiated FOB price for a product with 100+ item BOM list.
+* Partnered with a tea supplier in India to create a manufacturing unit for production of newly created tea capsules.
+* Designed the brand strategy, brand guidelines, positioning, and go-to market plan for an aspirational consumer brand, resulting in a product that 90% of our customers would recommend.
+* Launched a crowdfunding pre-order campaign working with a marketing campaign strategist and a team of marketers to launch paid marketing, content marketing, social media marketing, PR, and email marketing campaigns.
+* Raised $4.5M to develop and launch a consumer product to disrupt a $90B tea industry generating six figures ARR.
+Salesforce.com | 2008-2013
+Sr. Engineering Manager, Force.com Platform Development
+* Defined the vision for an improved Platform Experience for building, managing, and deploying Force.com applications working with various stakeholders and disparate teams of senior engineers, product managers and designers.
+* Managed 12 senior engineers with 5-20 years of experience responsible for various aspects of the Salesforce platform across multiple scrum teams including being their agile coach.
+* Delivered 15 major releases for the Force.com platform while acting as the Development Release Manager.
+* Managed Licensing and Provisioning team responsible for implementing provisioning framework which enabled revenue teams to charge for SaaS software to all the Salesforce enterprise customers.
+ADDITIONAL RELEVANT EXPERIENCE
+BEA Systems
+Sr. Software Engineer
+* Developed core technologies in various teams for the WebLogic Server, WebLogic Integration and AquaLogic DataServices Platform.
+EDUCATION
+Texas A&M University
+M.E. Computer Engineering
+Gujarat University, LDCE
+B.E. - Instrumentation & Control Engineering

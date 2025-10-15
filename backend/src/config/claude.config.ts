@@ -28,7 +28,7 @@ const defaultConfig: ClaudeConfig = {
   temperature: env.CLAUDE_TEMPERATURE || 1.0,
   topP: 0.9,
   topK: 40,
-  timeout: 60000, // 60 seconds
+  timeout: 300000, // 5 minutes (300 seconds) - increased for complex AI operations like resume tailoring
   maxRetries: 3,
   retryDelay: 1000, // 1 second
 };

@@ -19,37 +19,37 @@ export const Dashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
-  const [defaultStatus, setDefaultStatus] = useState<JobStatus>('interested');
+  const [defaultStatus, setDefaultStatus] = useState<JobStatus>('INTERESTED');
 
   const stats = [
     {
       title: 'Total Applications',
-      value: jobs.filter((j) => j.status === 'applied' || j.status === 'interview' || j.status === 'offer').length,
+      value: jobs.filter((j) => j.status === 'APPLIED' || j.status === 'INTERVIEW_SCHEDULED' || j.status === 'INTERVIEW_COMPLETED' || j.status === 'OFFER_RECEIVED').length,
       icon: Briefcase,
       color: 'from-blue-500 to-blue-600',
     },
     {
       title: 'Active Interviews',
-      value: jobs.filter((j) => j.status === 'interview').length,
+      value: jobs.filter((j) => j.status === 'INTERVIEW_SCHEDULED' || j.status === 'INTERVIEW_COMPLETED').length,
       icon: MessageSquare,
       color: 'from-purple-500 to-purple-600',
     },
     {
       title: 'Pending Responses',
-      value: jobs.filter((j) => j.status === 'applied').length,
+      value: jobs.filter((j) => j.status === 'APPLIED').length,
       icon: Clock,
       color: 'from-orange-500 to-orange-600',
     },
     {
       title: 'Offers Received',
-      value: jobs.filter((j) => j.status === 'offer').length,
+      value: jobs.filter((j) => j.status === 'OFFER_RECEIVED').length,
       icon: Award,
       color: 'from-green-500 to-green-600',
     },
   ];
 
   const handleAddJob = (status?: JobStatus) => {
-    setDefaultStatus(status || 'interested');
+    setDefaultStatus(status || 'INTERESTED');
     setEditingJob(null);
     setIsAddModalOpen(true);
   };

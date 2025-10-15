@@ -1,35 +1,39 @@
-export type JobStatus = 'interested' | 'applied' | 'interview' | 'offer' | 'rejected' | 'accepted';
-export type JobType = 'full-time' | 'part-time' | 'contract';
-export type WorkMode = 'remote' | 'hybrid' | 'onsite';
+export type JobStatus = 'INTERESTED' | 'APPLIED' | 'INTERVIEW_SCHEDULED' | 'INTERVIEW_COMPLETED' | 'OFFER_RECEIVED' | 'REJECTED' | 'ACCEPTED' | 'WITHDRAWN';
+export type JobType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP' | 'TEMPORARY';
+export type WorkMode = 'REMOTE' | 'HYBRID' | 'ONSITE';
 
 export interface Job {
   id: string;
-  companyName: string;
-  jobTitle: string;
-  description: string;
+  company: string;
+  title: string;
+  jobDescription?: string;
   jobUrl?: string;
-  location: string;
-  salaryRange?: string;
+  location?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  salaryCurrency?: string;
+  salaryRange?: string; // For display/input purposes (e.g., "$100k - $150k")
   jobType: JobType;
   workMode: WorkMode;
   applicationDeadline?: string;
   notes?: string;
   status: JobStatus;
   matchScore?: number;
-  appliedDate: string;
+  appliedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateJobData {
-  companyName: string;
-  jobTitle: string;
-  description: string;
+  company: string;
+  title: string;
+  jobDescription?: string;
   jobUrl?: string;
-  location: string;
+  location?: string;
   salaryRange?: string;
   jobType: JobType;
   workMode: WorkMode;
+  appliedAt?: string;
   applicationDeadline?: string;
   notes?: string;
   status: JobStatus;

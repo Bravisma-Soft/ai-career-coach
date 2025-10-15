@@ -116,14 +116,18 @@ import resumeRoutes from '@/api/routes/resume.routes';
 import jobRoutes from '@/api/routes/job.routes';
 import applicationRoutes from '@/api/routes/application.routes';
 import interviewRoutes from '@/api/routes/interview.routes';
+import aiRoutes from '@/api/routes/ai.routes';
+import documentRoutes from '@/api/routes/document.routes';
 
-// Mount routes
-app.use(`/api/${env.API_VERSION}/auth`, authRoutes);
-app.use(`/api/${env.API_VERSION}/profile`, userRoutes);
-app.use(`/api/${env.API_VERSION}/resumes`, resumeRoutes);
-app.use(`/api/${env.API_VERSION}/jobs`, jobRoutes);
-app.use(`/api/${env.API_VERSION}/applications`, applicationRoutes);
-app.use(`/api/${env.API_VERSION}/interviews`, interviewRoutes);
+// Mount routes - Updated to /api/* to match frontend expectations
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', userRoutes);
+app.use('/api/resumes', resumeRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/interviews', interviewRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/documents', documentRoutes);
 
 // =================================
 // ERROR HANDLING

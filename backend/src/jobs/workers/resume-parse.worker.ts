@@ -1,5 +1,5 @@
 import { Worker } from 'bullmq';
-import { redis } from '@/config/redis';
+import { initializeRedis } from '@/config/redis';
 import { logger } from '@/config/logger';
 import { resumeParseProcessor } from '@/jobs/processors/resume-parse.processor';
 
@@ -8,6 +8,9 @@ import { resumeParseProcessor } from '@/jobs/processors/resume-parse.processor';
  *
  * Background worker that processes resume parsing jobs
  */
+
+// Ensure Redis is initialized
+const redis = initializeRedis();
 
 const resumeParseWorker = new Worker('resume-parsing', resumeParseProcessor, {
   connection: redis,

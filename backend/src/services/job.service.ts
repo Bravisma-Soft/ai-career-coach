@@ -14,17 +14,16 @@ import {
 } from '@/api/validators/job.validator';
 import { Job, StatusChange, JobStatus } from '@prisma/client';
 
-// Status transition rules
+// Status transition rules - flexible for Kanban board
 const VALID_STATUS_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
-  SAVED: ['RESEARCHING', 'APPLIED', 'WITHDRAWN', 'CLOSED'],
-  RESEARCHING: ['SAVED', 'APPLIED', 'WITHDRAWN', 'CLOSED'],
-  APPLIED: ['INTERVIEWING', 'REJECTED', 'WITHDRAWN', 'CLOSED'],
-  INTERVIEWING: ['OFFER_RECEIVED', 'REJECTED', 'WITHDRAWN', 'CLOSED'],
-  OFFER_RECEIVED: ['ACCEPTED', 'REJECTED', 'WITHDRAWN'],
-  ACCEPTED: ['CLOSED'],
-  REJECTED: ['CLOSED'],
-  WITHDRAWN: ['CLOSED'],
-  CLOSED: [], // Terminal state
+  INTERESTED: ['APPLIED', 'INTERVIEW_SCHEDULED', 'INTERVIEW_COMPLETED', 'OFFER_RECEIVED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'],
+  APPLIED: ['INTERESTED', 'INTERVIEW_SCHEDULED', 'INTERVIEW_COMPLETED', 'OFFER_RECEIVED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'],
+  INTERVIEW_SCHEDULED: ['INTERESTED', 'APPLIED', 'INTERVIEW_COMPLETED', 'OFFER_RECEIVED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'],
+  INTERVIEW_COMPLETED: ['INTERESTED', 'APPLIED', 'INTERVIEW_SCHEDULED', 'OFFER_RECEIVED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'],
+  OFFER_RECEIVED: ['INTERESTED', 'APPLIED', 'INTERVIEW_SCHEDULED', 'INTERVIEW_COMPLETED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'],
+  ACCEPTED: ['INTERESTED', 'APPLIED', 'INTERVIEW_SCHEDULED', 'INTERVIEW_COMPLETED', 'OFFER_RECEIVED', 'REJECTED', 'WITHDRAWN'],
+  REJECTED: ['INTERESTED', 'APPLIED', 'INTERVIEW_SCHEDULED', 'INTERVIEW_COMPLETED', 'OFFER_RECEIVED', 'ACCEPTED', 'WITHDRAWN'],
+  WITHDRAWN: ['INTERESTED', 'APPLIED', 'INTERVIEW_SCHEDULED', 'INTERVIEW_COMPLETED', 'OFFER_RECEIVED', 'ACCEPTED', 'REJECTED'],
 };
 
 export class JobService {
@@ -32,14 +31,36 @@ export class JobService {
    * Create a new job
    */
   async createJob(userId: string, data: CreateJobInput): Promise<Job> {
-    // Parse dates if present
-    const jobData: any = { ...data };
-    if (data.postedDate) {
-      jobData.postedDate = new Date(data.postedDate);
-    }
-    if (data.deadline) {
-      jobData.deadline = new Date(data.deadline);
-    }
+    // Parse dates and map field names for Prisma
+    const jobData: any = {};
+
+    // Copy all fields and map to Prisma field names
+    Object.keys(data).forEach(key => {
+      const value = (data as any)[key];
+
+      // Skip undefined values
+      if (value === undefined) {
+        return;
+      }
+
+      // Map validator field names to Prisma field names
+      if (key === 'description') {
+        jobData.jobDescription = value;
+      } else if (key === 'url') {
+        jobData.jobUrl = value;
+      } else if (key === 'sourceUrl') {
+        jobData.source = value;
+      } else if (key === 'deadline') {
+        jobData.applicationDeadline = value ? new Date(value) : value;
+      } else if (key === 'postedDate') {
+        jobData.postedDate = new Date(value);
+      } else if (key === 'appliedAt') {
+        jobData.appliedAt = new Date(value);
+      } else {
+        // Keep other fields as-is
+        jobData[key] = value;
+      }
+    });
 
     const job = await prisma.job.create({
       data: {
@@ -55,7 +76,7 @@ export class JobService {
           jobId: job.id,
           fromStatus: null,
           toStatus: data.status,
-          notes: 'Job created',
+          reason: 'Job created',
         },
       });
     }
@@ -136,13 +157,6 @@ export class JobService {
         take: limit,
         orderBy,
         include: {
-          applications: {
-            select: {
-              id: true,
-              status: true,
-              applicationDate: true,
-            },
-          },
           _count: {
             select: {
               applications: true,
@@ -183,13 +197,13 @@ export class JobService {
                 fileName: true,
               },
             },
-            interviews: {
-              orderBy: { scheduledAt: 'asc' },
-            },
           },
         },
+        interviews: {
+          orderBy: { scheduledAt: 'asc' },
+        },
         statusChanges: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { changedAt: 'desc' },
           take: 20,
         },
       },
@@ -214,17 +228,43 @@ export class JobService {
     userId: string,
     data: UpdateJobInput
   ): Promise<Job> {
+    logger.info(`Updating job ${jobId} with data:`, JSON.stringify(data, null, 2));
+
     // Verify ownership
     const job = await this.getJobById(jobId, userId);
 
-    // Parse dates if present
-    const updateData: any = { ...data };
-    if (data.postedDate) {
-      updateData.postedDate = new Date(data.postedDate);
-    }
-    if (data.deadline) {
-      updateData.deadline = new Date(data.deadline);
-    }
+    // Parse dates and map field names for Prisma
+    const updateData: any = {};
+
+    // Copy all fields except the ones we need to transform
+    Object.keys(data).forEach(key => {
+      const value = (data as any)[key];
+
+      // Skip undefined values
+      if (value === undefined) {
+        return;
+      }
+
+      // Map validator field names to Prisma field names
+      if (key === 'description') {
+        updateData.jobDescription = value;
+      } else if (key === 'url') {
+        updateData.jobUrl = value;
+      } else if (key === 'sourceUrl') {
+        updateData.source = value;
+      } else if (key === 'deadline') {
+        updateData.applicationDeadline = value ? new Date(value) : value;
+      } else if (key === 'postedDate') {
+        updateData.postedDate = new Date(value);
+      } else if (key === 'appliedAt') {
+        updateData.appliedAt = new Date(value);
+      } else {
+        // Keep other fields as-is
+        updateData[key] = value;
+      }
+    });
+
+    logger.info(`Parsed update data:`, JSON.stringify(updateData, null, 2));
 
     // If status is being updated, validate and create status change
     if (data.status && data.status !== job.status) {
@@ -235,7 +275,7 @@ export class JobService {
           jobId: job.id,
           fromStatus: job.status,
           toStatus: data.status,
-          notes: 'Status updated',
+          reason: 'Status updated',
         },
       });
     }
@@ -295,7 +335,7 @@ export class JobService {
         jobId: job.id,
         fromStatus: job.status,
         toStatus: data.status,
-        notes: data.notes || null,
+        reason: data.reason || null,
       },
     });
 
@@ -373,10 +413,10 @@ export class JobService {
 
     // Get active jobs (not in terminal states)
     const activeStatuses: JobStatus[] = [
-      'SAVED',
-      'RESEARCHING',
+      'INTERESTED',
       'APPLIED',
-      'INTERVIEWING',
+      'INTERVIEW_SCHEDULED',
+      'INTERVIEW_COMPLETED',
       'OFFER_RECEIVED',
     ];
     const activeJobs = jobs.filter((job) =>

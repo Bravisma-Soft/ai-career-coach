@@ -32,20 +32,21 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CreateJobData, Job, JobStatus } from '@/types/job';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const jobSchema = z.object({
-  companyName: z.string().min(1, 'Company name is required'),
-  jobTitle: z.string().min(1, 'Job title is required'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+  company: z.string().min(1, 'Company name is required'),
+  title: z.string().min(1, 'Job title is required'),
+  jobDescription: z.string().min(10, 'Description must be at least 10 characters').optional(),
   jobUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
-  location: z.string().min(1, 'Location is required'),
+  location: z.string().optional(),
   salaryRange: z.string().optional(),
-  jobType: z.enum(['full-time', 'part-time', 'contract']),
-  workMode: z.enum(['remote', 'hybrid', 'onsite']),
+  jobType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'TEMPORARY']),
+  workMode: z.enum(['REMOTE', 'HYBRID', 'ONSITE']),
+  appliedAt: z.date().optional(),
   applicationDeadline: z.date().optional(),
   notes: z.string().optional(),
-  status: z.enum(['interested', 'applied', 'interview', 'offer', 'rejected', 'accepted']),
+  status: z.enum(['INTERESTED', 'APPLIED', 'INTERVIEW_SCHEDULED', 'INTERVIEW_COMPLETED', 'OFFER_RECEIVED', 'REJECTED', 'ACCEPTED', 'WITHDRAWN']),
 });
 
 type JobFormData = z.infer<typeof jobSchema>;
@@ -63,26 +64,49 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
-    defaultValues: editJob
-      ? {
+    defaultValues: {
+      status: defaultStatus || 'INTERESTED',
+      jobType: 'FULL_TIME',
+      workMode: 'REMOTE',
+    },
+  });
+
+  // Reset form when modal opens or editJob changes
+  useEffect(() => {
+    if (open) {
+      if (editJob) {
+        form.reset({
           ...editJob,
           jobUrl: editJob.jobUrl || '',
+          appliedAt: editJob.appliedAt ? new Date(editJob.appliedAt) : undefined,
           applicationDeadline: editJob.applicationDeadline ? new Date(editJob.applicationDeadline) : undefined,
-        }
-      : {
-          status: defaultStatus || 'interested',
-          jobType: 'full-time',
-          workMode: 'remote',
-        },
-  });
+        });
+      } else {
+        form.reset({
+          status: defaultStatus || 'INTERESTED',
+          jobType: 'FULL_TIME',
+          workMode: 'REMOTE',
+          company: '',
+          title: '',
+          jobDescription: '',
+          jobUrl: '',
+          location: '',
+          salaryRange: '',
+          notes: '',
+          appliedAt: undefined,
+          applicationDeadline: undefined,
+        });
+      }
+    }
+  }, [open, editJob, defaultStatus, form]);
 
   const handleSubmit = async (data: JobFormData) => {
     setIsSubmitting(true);
     try {
       const submitData: CreateJobData = {
-        companyName: data.companyName,
-        jobTitle: data.jobTitle,
-        description: data.description,
+        company: data.company,
+        title: data.title,
+        jobDescription: data.jobDescription,
         jobUrl: data.jobUrl,
         location: data.location,
         salaryRange: data.salaryRange,
@@ -90,6 +114,7 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
         workMode: data.workMode,
         notes: data.notes,
         status: data.status,
+        appliedAt: data.appliedAt?.toISOString(),
         applicationDeadline: data.applicationDeadline?.toISOString(),
       };
       onSubmit(submitData);
@@ -114,7 +139,7 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="companyName"
+                name="company"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company Name *</FormLabel>
@@ -127,7 +152,7 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
               />
               <FormField
                 control={form.control}
-                name="jobTitle"
+                name="title"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Job Title *</FormLabel>
@@ -142,15 +167,16 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
 
             <FormField
               control={form.control}
-              name="description"
+              name="jobDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Job Description *</FormLabel>
+                  <FormLabel>Job Description</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Describe the role, responsibilities, requirements..."
                       className="min-h-[100px]"
                       {...field}
+                      value={field.value || ''}
                     />
                   </FormControl>
                   <FormMessage />
@@ -177,7 +203,7 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location *</FormLabel>
+                    <FormLabel>Location</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., San Francisco, CA" {...field} />
                     </FormControl>
@@ -187,43 +213,44 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="salaryRange"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Salary Range</FormLabel>
+            <FormField
+              control={form.control}
+              name="salaryRange"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Salary Range</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., $100k - $150k" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="jobType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Job Type *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Input placeholder="e.g., $100k - $150k" {...field} />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="jobType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Job Type *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-popover">
-                        <SelectItem value="full-time">Full-time</SelectItem>
-                        <SelectItem value="part-time">Part-time</SelectItem>
-                        <SelectItem value="contract">Contract</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <SelectContent className="bg-popover">
+                      <SelectItem value="FULL_TIME">Full-time</SelectItem>
+                      <SelectItem value="PART_TIME">Part-time</SelectItem>
+                      <SelectItem value="CONTRACT">Contract</SelectItem>
+                      <SelectItem value="INTERNSHIP">Internship</SelectItem>
+                      <SelectItem value="TEMPORARY">Temporary</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -239,9 +266,9 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="bg-popover">
-                        <SelectItem value="remote">Remote</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                        <SelectItem value="onsite">Onsite</SelectItem>
+                        <SelectItem value="REMOTE">Remote</SelectItem>
+                        <SelectItem value="HYBRID">Hybrid</SelectItem>
+                        <SelectItem value="ONSITE">Onsite</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -261,12 +288,14 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="bg-popover">
-                        <SelectItem value="interested">Interested</SelectItem>
-                        <SelectItem value="applied">Applied</SelectItem>
-                        <SelectItem value="interview">Interview</SelectItem>
-                        <SelectItem value="offer">Offer</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                        <SelectItem value="accepted">Accepted</SelectItem>
+                        <SelectItem value="INTERESTED">Interested</SelectItem>
+                        <SelectItem value="APPLIED">Applied</SelectItem>
+                        <SelectItem value="INTERVIEW_SCHEDULED">Interview Scheduled</SelectItem>
+                        <SelectItem value="INTERVIEW_COMPLETED">Interview Completed</SelectItem>
+                        <SelectItem value="OFFER_RECEIVED">Offer Received</SelectItem>
+                        <SelectItem value="REJECTED">Rejected</SelectItem>
+                        <SelectItem value="ACCEPTED">Accepted</SelectItem>
+                        <SelectItem value="WITHDRAWN">Withdrawn</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -275,42 +304,80 @@ export const AddJobModal = ({ open, onClose, onSubmit, editJob, defaultStatus }:
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="applicationDeadline"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Application Deadline</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            'w-full pl-3 text-left font-normal',
-                            !field.value && 'text-muted-foreground'
-                          )}
-                        >
-                          {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="appliedAt"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Applied Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              'w-full pl-3 text-left font-normal',
+                              !field.value && 'text-muted-foreground'
+                            )}
+                          >
+                            {field.value ? format(field.value, 'PPP') : <span>Not Applied</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date > new Date()}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="applicationDeadline"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Application Deadline</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              'w-full pl-3 text-left font-normal',
+                              !field.value && 'text-muted-foreground'
+                            )}
+                          >
+                            {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

@@ -16,7 +16,6 @@ import { Briefcase, Loader2 } from 'lucide-react';
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  rememberMe: z.boolean().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -34,46 +33,32 @@ export const Login = () => {
     resolver: zodResolver(loginSchema),
   });
 
+  // Log validation errors
+  console.log('Form validation errors:', errors);
+
   const onSubmit = async (data: LoginFormData) => {
+    console.log('🔥 Login form submitted with data:', { email: data.email });
+    alert('Form submitted!'); // This should popup if form is submitting
     setIsLoading(true);
     try {
-      // Check for test user credentials
-      if (data.email === 'test@example.com' && data.password === 'Password123!') {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const response = {
-          user: {
-            id: 'test-user-1',
-            email: 'test@example.com',
-            name: 'Test User',
-          },
-          token: 'test-token-' + Date.now(),
-        };
+      // Call real API
+      console.log('Calling authService.login...');
+      const response = await authService.login({
+        email: data.email,
+        password: data.password,
+      });
 
-        setAuth(response.user, response.token);
-        toast.success('Welcome back, Test User!', {
-          description: 'You have successfully logged in.',
-        });
-        navigate('/dashboard');
-        return;
-      }
-
-      // Simulate API call for other users
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const response = {
-        user: {
-          id: '1',
-          email: data.email,
-          name: 'Demo User',
-        },
-        token: 'demo-token-' + Date.now(),
-      };
-
-      setAuth(response.user, response.token);
-      toast.success('Welcome back!', {
+      console.log('Login successful:', response);
+      console.log('Setting auth with tokens:', response.tokens);
+      setAuth(response.user, response.tokens);
+      console.log('Auth set. Current token:', useAuthStore.getState().token);
+      const userName = response.user.firstName || response.user.email;
+      toast.success(`Welcome back, ${userName}!`, {
         description: 'You have successfully logged in.',
       });
       navigate('/dashboard');
     } catch (error: any) {
+      console.error('Login error:', error);
       toast.error('Login failed', {
         description: error.response?.data?.message || 'Invalid email or password. Please try again.',
       });
@@ -98,7 +83,9 @@ export const Login = () => {
             <p className="text-xs text-muted-foreground">Email: <span className="font-mono">test@example.com</span></p>
             <p className="text-xs text-muted-foreground">Password: <span className="font-mono">Password123!</span></p>
           </div>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit, (errors) => {
+            console.log('❌ Form validation failed:', errors);
+          })} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -126,13 +113,14 @@ export const Login = () => {
               />
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="rememberMe" {...register('rememberMe')} disabled={isLoading} />
-              <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">
-                Remember me
-              </Label>
-            </div>
-            <Button type="submit" className="w-full" variant="hero" disabled={isLoading}>
+            {/* Removed rememberMe checkbox as it's not used in backend */}
+            <Button
+              type="submit"
+              className="w-full"
+              variant="hero"
+              disabled={isLoading}
+              onClick={() => console.log('🔘 Button clicked!')}
+            >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>

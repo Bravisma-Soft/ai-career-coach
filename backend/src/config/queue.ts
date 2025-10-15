@@ -1,7 +1,10 @@
 import { Queue, Worker, QueueEvents } from 'bullmq';
-import { redis } from './redis';
+import { initializeRedis } from './redis';
 import { logger } from './logger';
 import { env } from './env';
+
+// Ensure Redis is initialized
+const redis = initializeRedis();
 
 // Queue configuration
 const queueConfig = {

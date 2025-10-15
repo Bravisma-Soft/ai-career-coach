@@ -12,8 +12,11 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
+  DragOverEvent,
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { cn } from '@/lib/utils';
 
 interface KanbanBoardProps {
   jobs: Job[];
@@ -25,13 +28,32 @@ interface KanbanBoardProps {
 }
 
 const columns: { id: JobStatus; title: string; color: string }[] = [
-  { id: 'interested', title: 'Interested', color: 'bg-blue-500' },
-  { id: 'applied', title: 'Applied', color: 'bg-purple-500' },
-  { id: 'interview', title: 'Interview', color: 'bg-orange-500' },
-  { id: 'offer', title: 'Offer', color: 'bg-green-500' },
-  { id: 'rejected', title: 'Rejected', color: 'bg-red-500' },
-  { id: 'accepted', title: 'Accepted', color: 'bg-emerald-500' },
+  { id: 'INTERESTED', title: 'Interested', color: 'bg-blue-500' },
+  { id: 'APPLIED', title: 'Applied', color: 'bg-purple-500' },
+  { id: 'INTERVIEW_SCHEDULED', title: 'Interview Scheduled', color: 'bg-orange-500' },
+  { id: 'INTERVIEW_COMPLETED', title: 'Interview Done', color: 'bg-yellow-500' },
+  { id: 'OFFER_RECEIVED', title: 'Offer', color: 'bg-green-500' },
+  { id: 'REJECTED', title: 'Rejected', color: 'bg-red-500' },
+  { id: 'ACCEPTED', title: 'Accepted', color: 'bg-emerald-500' },
+  { id: 'WITHDRAWN', title: 'Withdrawn', color: 'bg-gray-500' },
 ];
+
+// Droppable column component
+const DroppableColumn = ({ id, children }: { id: string; children: React.ReactNode }) => {
+  const { setNodeRef, isOver } = useDroppable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex-1 transition-colors rounded-lg',
+        isOver && 'bg-accent/50'
+      )}
+    >
+      {children}
+    </div>
+  );
+};
 
 export const KanbanBoard = ({
   jobs,
@@ -42,6 +64,7 @@ export const KanbanBoard = ({
   onUpdateStatus,
 }: KanbanBoardProps) => {
   const [activeJob, setActiveJob] = useState<Job | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -56,18 +79,48 @@ export const KanbanBoard = ({
     setActiveJob(job || null);
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    setOverId(over?.id as string || null);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveJob(null);
+    setOverId(null);
 
-    if (!over) return;
+    if (!over) {
+      console.log('Drag ended but no drop target');
+      return;
+    }
 
     const jobId = active.id as string;
-    const newStatus = over.id as JobStatus;
+    console.log('Drag ended:', { jobId, overId: over.id });
+
+    // Check if we dropped on a column (status) or on another job
+    let newStatus: JobStatus;
+
+    // If dropped on a column directly
+    if (columns.some(col => col.id === over.id)) {
+      newStatus = over.id as JobStatus;
+      console.log('Dropped on column:', newStatus);
+    } else {
+      // If dropped on another job, find that job's status
+      const targetJob = jobs.find((j) => j.id === over.id);
+      if (!targetJob) {
+        console.log('Could not find target job:', over.id);
+        return;
+      }
+      newStatus = targetJob.status;
+      console.log('Dropped on job, using its status:', newStatus);
+    }
 
     const job = jobs.find((j) => j.id === jobId);
     if (job && job.status !== newStatus) {
+      console.log('Updating job status from', job.status, 'to', newStatus);
       onUpdateStatus(jobId, newStatus);
+    } else {
+      console.log('Job not found or status unchanged');
     }
   };
 
@@ -76,7 +129,12 @@ export const KanbanBoard = ({
   };
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 overflow-x-auto">
         {columns.map((column) => {
           const columnJobs = getJobsByStatus(column.id);
@@ -100,25 +158,27 @@ export const KanbanBoard = ({
                   </Button>
                 </div>
 
-                <SortableContext items={columnJobs.map((j) => j.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-2 md:space-y-3 flex-1">
-                    {columnJobs.length === 0 ? (
-                      <div className="text-center text-xs md:text-sm text-muted-foreground py-6 md:py-8">
-                        No jobs in this stage
-                      </div>
-                    ) : (
-                      columnJobs.map((job) => (
-                        <JobCard
-                          key={job.id}
-                          job={job}
-                          onView={onViewJob}
-                          onEdit={onEditJob}
-                          onDelete={onDeleteJob}
-                        />
-                      ))
-                    )}
-                  </div>
-                </SortableContext>
+                <DroppableColumn id={column.id}>
+                  <SortableContext items={columnJobs.map((j) => j.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-2 md:space-y-3 flex-1 min-h-[200px]">
+                      {columnJobs.length === 0 ? (
+                        <div className="text-center text-xs md:text-sm text-muted-foreground py-6 md:py-8">
+                          No jobs in this stage
+                        </div>
+                      ) : (
+                        columnJobs.map((job) => (
+                          <JobCard
+                            key={job.id}
+                            job={job}
+                            onView={onViewJob}
+                            onEdit={onEditJob}
+                            onDelete={onDeleteJob}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </SortableContext>
+                </DroppableColumn>
               </Card>
             </div>
           );

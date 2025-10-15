@@ -6,29 +6,49 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  name: string;
   email: string;
   password: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: string;
+  status: string;
+  emailVerified: boolean;
+  createdAt: string;
+}
+
+export interface Tokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
 }
 
 export interface AuthResponse {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
-  token: string;
+  user: User;
+  tokens: Tokens;
+}
+
+export interface ApiAuthResponse {
+  success: boolean;
+  data: AuthResponse;
+  message: string;
 }
 
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
-    return response.data;
+    const response = await apiClient.post<ApiAuthResponse>('/auth/login', credentials);
+    return response.data.data;
   },
 
   register: async (data: RegisterData): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/register', data);
-    return response.data;
+    const response = await apiClient.post<ApiAuthResponse>('/auth/register', data);
+    return response.data.data;
   },
 
   logout: async (): Promise<void> => {

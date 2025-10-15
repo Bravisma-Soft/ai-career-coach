@@ -141,6 +141,23 @@ router.delete(
 );
 
 /**
+ * @route   PATCH /api/resumes/:id/set-master
+ * @desc    Set resume as primary (master)
+ * @access  Private
+ */
+router.patch(
+  '/:id/set-master',
+  validate(getResumeSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.userId!;
+    const { id } = req.params;
+
+    const resume = await resumeService.setPrimaryResume(id, userId);
+    sendSuccess(res, { resume }, 'Resume set as primary');
+  })
+);
+
+/**
  * @route   POST /api/v1/resumes/:id/parse
  * @desc    Parse resume content (triggers background job)
  * @access  Private

@@ -136,7 +136,17 @@ export class ResumeService {
   async updateResume(
     resumeId: string,
     userId: string,
-    data: { title?: string; isPrimary?: boolean; isActive?: boolean }
+    data: {
+      title?: string;
+      name?: string;  // Accept 'name' as alias for 'title'
+      isPrimary?: boolean;
+      isActive?: boolean;
+      personalInfo?: any;
+      summary?: string;
+      experience?: any[];
+      education?: any[];
+      skills?: string[];
+    }
   ): Promise<SerializedResume> {
     // Verify ownership
     const resume = await this.getRawResumeById(resumeId, userId);
@@ -153,9 +163,107 @@ export class ResumeService {
       });
     }
 
+    // Build update data
+    const updateData: any = {};
+
+    // Handle title (accept both 'title' and 'name')
+    if (data.title) {
+      updateData.title = data.title;
+    } else if (data.name) {
+      updateData.title = data.name;
+    }
+
+    if (data.isPrimary !== undefined) {
+      updateData.isPrimary = data.isPrimary;
+    }
+
+    if (data.isActive !== undefined) {
+      updateData.isActive = data.isActive;
+    }
+
+    // Handle parsed data - store in parsedData JSON field
+    if (data.personalInfo || data.summary || data.experience || data.education || data.skills) {
+      const parsedData: any = resume.parsedData || {};
+
+      // Map personalInfo - frontend sends fullName, serializer expects name
+      if (data.personalInfo) {
+        parsedData.personalInfo = {
+          name: data.personalInfo.fullName || data.personalInfo.name,
+          email: data.personalInfo.email,
+          phone: data.personalInfo.phone,
+          location: data.personalInfo.location,
+          linkedinUrl: data.personalInfo.linkedin,
+          portfolioUrl: data.personalInfo.website,
+        };
+      }
+
+      if (data.summary) {
+        parsedData.summary = data.summary;
+      }
+
+      // Map experience - frontend sends description[], serializer expects achievements[]
+      if (data.experience) {
+        logger.info('Mapping experience data:', JSON.stringify(data.experience.map((exp: any) => ({
+          company: exp.company,
+          descriptionType: Array.isArray(exp.description) ? 'array' : typeof exp.description,
+          descriptionLength: exp.description?.length,
+          hasAchievements: !!exp.achievements
+        }))));
+
+        parsedData.experiences = data.experience.map((exp: any) => ({
+          // Preserve all fields from the experience object
+          ...exp,
+          company: exp.company,
+          position: exp.position,
+          location: exp.location,
+          startDate: exp.startDate,
+          endDate: exp.endDate,
+          isCurrent: exp.current,
+          // Keep description as array - convert to achievements array
+          achievements: Array.isArray(exp.description)
+            ? exp.description
+            : (exp.achievements || []),
+          // Remove the old description field since we mapped it to achievements
+          description: undefined,
+        }));
+
+        logger.info('Mapped experiences with achievements:', JSON.stringify(parsedData.experiences.map((exp: any) => ({
+          company: exp.company,
+          achievementsCount: exp.achievements?.length || 0
+        }))));
+      }
+
+      // Map education
+      if (data.education) {
+        parsedData.educations = data.education.map((edu: any) => ({
+          // Preserve all fields from the education object
+          ...edu,
+          institution: edu.institution,
+          degree: edu.degree,
+          fieldOfStudy: edu.field,
+          location: edu.location,
+          startDate: edu.startDate,
+          endDate: edu.endDate,
+          isCurrent: edu.current,
+          gpa: edu.gpa,
+          // Remove the old field field since we mapped it to fieldOfStudy
+          field: undefined,
+        }));
+      }
+
+      // Map skills - frontend sends string[], serializer expects {name: string}[]
+      if (data.skills) {
+        parsedData.skills = data.skills.map((skill: any) =>
+          typeof skill === 'string' ? { name: skill } : skill
+        );
+      }
+
+      updateData.parsedData = parsedData;
+    }
+
     const updated = await prisma.resume.update({
       where: { id: resumeId },
-      data,
+      data: updateData,
     });
 
     logger.info(`Resume updated: ${resumeId}`);

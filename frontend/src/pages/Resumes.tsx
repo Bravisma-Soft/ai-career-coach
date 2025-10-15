@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Upload, Star, FileText, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,8 +37,38 @@ export default function Resumes() {
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [sortType, setSortType] = useState<SortType>('date');
 
-  const { resumes, isLoading, uploadResume, isUploading, updateResume, deleteResume, setMasterResume } = useResumes();
+  const location = useLocation();
+  const { resumes, isLoading, uploadResume, isUploading, updateResume, deleteResume, setMasterResume, parseResume } = useResumes();
   const { selectedResume, setSelectedResume, masterResume } = useResumesStore();
+
+  // Auto-open editor if navigated from TailorResumeModal
+  useEffect(() => {
+    const state = location.state as { openEditorForResumeId?: string; newResume?: any };
+
+    // If we have a newResume passed directly, use it immediately
+    if (state?.newResume && !isLoading) {
+      console.log('Using passed resume object:', state.newResume);
+      setSelectedResume(state.newResume);
+      setEditorModalOpen(true);
+      // Clear the state to prevent re-opening on subsequent renders
+      window.history.replaceState({}, document.title);
+      return;
+    }
+
+    // Otherwise, wait for resumes to load and find it
+    if (state?.openEditorForResumeId && !isLoading && resumes.length > 0) {
+      const resumeToEdit = resumes.find(r => r.id === state.openEditorForResumeId);
+      if (resumeToEdit) {
+        console.log('Auto-opening editor for resume:', resumeToEdit);
+        setSelectedResume(resumeToEdit);
+        setEditorModalOpen(true);
+        // Clear the state to prevent re-opening on subsequent renders
+        window.history.replaceState({}, document.title);
+      } else {
+        console.log('Resume not found in list:', state.openEditorForResumeId, 'Available:', resumes.map(r => r.id));
+      }
+    }
+  }, [location.state, resumes, isLoading, setSelectedResume]);
 
   const filteredAndSortedResumes = useMemo(() => {
     let filtered = [...resumes];
@@ -104,6 +135,10 @@ export default function Resumes() {
 
   const handleSetMaster = (resume: Resume) => {
     setMasterResume(resume.id);
+  };
+
+  const handleParse = (resume: Resume) => {
+    parseResume(resume.id);
   };
 
   const handleSaveEdit = (id: string, data: any) => {
@@ -243,6 +278,7 @@ export default function Resumes() {
                   onDownload={handleDownload}
                   onDelete={handleDelete}
                   onSetMaster={handleSetMaster}
+                  onParse={handleParse}
                 />
               ))}
             </div>

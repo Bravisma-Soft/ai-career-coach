@@ -9,6 +9,7 @@ export interface SerializedResume {
   id: string;
   userId: string;
   name: string; // Maps to title
+  fileName?: string; // Original file name (optional for backwards compatibility)
   type: 'master' | 'tailored' | 'version'; // Derived from isPrimary
   isMaster: boolean; // Maps to isPrimary
   version: number;
@@ -62,16 +63,27 @@ export function serializeResume(resume: Resume): SerializedResume {
   const parsedData = resume.parsedData as ParsedResumeData | null;
 
   // Transform parsed experience data
-  const experience = parsedData?.experiences?.map((exp, index) => ({
-    id: `exp-${index}`,
-    company: exp.company || '',
-    position: exp.position || '',
-    location: exp.location || '',
-    startDate: exp.startDate || '',
-    endDate: exp.endDate || null,
-    current: exp.isCurrent || false,
-    description: exp.achievements || [],
-  }));
+  const experience = parsedData?.experiences?.map((exp, index) => {
+    const result = {
+      id: `exp-${index}`,
+      company: exp.company || '',
+      position: exp.position || '',
+      location: exp.location || '',
+      startDate: exp.startDate || '',
+      endDate: exp.endDate || null,
+      current: exp.isCurrent || false,
+      description: exp.achievements || [],
+    };
+    // Log for debugging
+    if (index === 0) {
+      console.log('Serializing experience 0:', {
+        hasAchievements: !!exp.achievements,
+        achievementsLength: exp.achievements?.length,
+        descriptionLength: result.description?.length
+      });
+    }
+    return result;
+  });
 
   // Transform parsed education data
   const education = parsedData?.educations?.map((edu, index) => ({
@@ -103,6 +115,7 @@ export function serializeResume(resume: Resume): SerializedResume {
     id: resume.id,
     userId: resume.userId,
     name: resume.title,
+    fileName: resume.fileName,
     type: resume.isPrimary ? 'master' : 'version',
     isMaster: resume.isPrimary,
     version: resume.version,

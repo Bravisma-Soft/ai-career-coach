@@ -17,7 +17,13 @@ const registerSchema = z
   .object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Please enter a valid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+      .regex(/\d/, 'Password must contain at least one number')
+      .regex(/[@$!%*?&]/, 'Password must contain at least one special character (@$!%*?&)'),
     confirmPassword: z.string(),
     termsAccepted: z.boolean().refine((val) => val === true, {
       message: 'You must accept the terms and conditions',
@@ -53,27 +59,26 @@ export const Register = () => {
     { text: 'Contains a number', met: /\d/.test(password) },
     { text: 'Contains uppercase letter', met: /[A-Z]/.test(password) },
     { text: 'Contains lowercase letter', met: /[a-z]/.test(password) },
+    { text: 'Contains special character (@$!%*?&)', met: /[@$!%*?&]/.test(password) },
   ];
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      // Simulate API call for demo purposes
-      // In production, uncomment the line below:
-      // const response = await authService.register({ name: data.name, email: data.email, password: data.password });
-      
-      // Demo mode - simulate successful registration
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const response = {
-        user: {
-          id: '1',
-          email: data.email,
-          name: data.name,
-        },
-        token: 'demo-token-' + Date.now(),
-      };
+      // Split name into first and last name (simple split by first space)
+      const nameParts = data.name.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || undefined;
 
-      setAuth(response.user, response.token);
+      // Call real API
+      const response = await authService.register({
+        email: data.email,
+        password: data.password,
+        firstName,
+        lastName
+      });
+
+      setAuth(response.user, response.tokens);
       toast.success('Account created successfully!', {
         description: 'Welcome to AI Career Coach.',
       });

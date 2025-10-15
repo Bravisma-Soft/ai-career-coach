@@ -7,7 +7,7 @@ export const createJobSchema = z.object({
     company: z.string().min(1).max(200),
     location: z.string().max(255).optional(),
     workMode: z.enum(['REMOTE', 'HYBRID', 'ONSITE']).optional(),
-    jobType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'FREELANCE']).optional(),
+    jobType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'TEMPORARY']).optional(),
     salaryMin: z.number().int().min(0).optional(),
     salaryMax: z.number().int().min(0).optional(),
     salaryCurrency: z.string().max(10).default('USD').optional(),
@@ -18,6 +18,7 @@ export const createJobSchema = z.object({
     url: z.string().url().optional().or(z.literal('')),
     sourceUrl: z.string().url().optional().or(z.literal('')),
     postedDate: z.string().datetime().optional(),
+    appliedAt: z.string().datetime().optional(),
     deadline: z.string().datetime().optional(),
     contactName: z.string().max(200).optional(),
     contactEmail: z.string().email().optional(),
@@ -26,16 +27,15 @@ export const createJobSchema = z.object({
     tags: z.array(z.string()).optional(),
     priority: z.number().int().min(1).max(5).default(3).optional(),
     status: z.enum([
-      'SAVED',
-      'RESEARCHING',
+      'INTERESTED',
       'APPLIED',
-      'INTERVIEWING',
+      'INTERVIEW_SCHEDULED',
+      'INTERVIEW_COMPLETED',
       'OFFER_RECEIVED',
       'ACCEPTED',
       'REJECTED',
-      'WITHDRAWN',
-      'CLOSED'
-    ]).default('SAVED').optional(),
+      'WITHDRAWN'
+    ]).default('INTERESTED').optional(),
   }),
 });
 
@@ -48,7 +48,7 @@ export const updateJobSchema = z.object({
     company: z.string().min(1).max(200).optional(),
     location: z.string().max(255).optional(),
     workMode: z.enum(['REMOTE', 'HYBRID', 'ONSITE']).optional(),
-    jobType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'FREELANCE']).optional(),
+    jobType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'TEMPORARY']).optional(),
     salaryMin: z.number().int().min(0).optional(),
     salaryMax: z.number().int().min(0).optional(),
     salaryCurrency: z.string().max(10).optional(),
@@ -59,6 +59,7 @@ export const updateJobSchema = z.object({
     url: z.string().url().optional().or(z.literal('')),
     sourceUrl: z.string().url().optional().or(z.literal('')),
     postedDate: z.string().datetime().optional(),
+    appliedAt: z.string().datetime().optional(),
     deadline: z.string().datetime().optional(),
     contactName: z.string().max(200).optional(),
     contactEmail: z.string().email().optional(),
@@ -67,15 +68,14 @@ export const updateJobSchema = z.object({
     tags: z.array(z.string()).optional(),
     priority: z.number().int().min(1).max(5).optional(),
     status: z.enum([
-      'SAVED',
-      'RESEARCHING',
+      'INTERESTED',
       'APPLIED',
-      'INTERVIEWING',
+      'INTERVIEW_SCHEDULED',
+      'INTERVIEW_COMPLETED',
       'OFFER_RECEIVED',
       'ACCEPTED',
       'REJECTED',
-      'WITHDRAWN',
-      'CLOSED'
+      'WITHDRAWN'
     ]).optional(),
   }),
 });
@@ -98,17 +98,16 @@ export const updateJobStatusSchema = z.object({
   }),
   body: z.object({
     status: z.enum([
-      'SAVED',
-      'RESEARCHING',
+      'INTERESTED',
       'APPLIED',
-      'INTERVIEWING',
+      'INTERVIEW_SCHEDULED',
+      'INTERVIEW_COMPLETED',
       'OFFER_RECEIVED',
       'ACCEPTED',
       'REJECTED',
-      'WITHDRAWN',
-      'CLOSED'
+      'WITHDRAWN'
     ]),
-    notes: z.string().max(1000).optional(),
+    reason: z.string().max(1000).optional(),
   }),
 });
 
@@ -126,19 +125,18 @@ export const getJobsQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(10).optional(),
     status: z.enum([
-      'SAVED',
-      'RESEARCHING',
+      'INTERESTED',
       'APPLIED',
-      'INTERVIEWING',
+      'INTERVIEW_SCHEDULED',
+      'INTERVIEW_COMPLETED',
       'OFFER_RECEIVED',
       'ACCEPTED',
       'REJECTED',
-      'WITHDRAWN',
-      'CLOSED'
+      'WITHDRAWN'
     ]).optional(),
     company: z.string().optional(),
     workMode: z.enum(['REMOTE', 'HYBRID', 'ONSITE']).optional(),
-    jobType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'FREELANCE']).optional(),
+    jobType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'TEMPORARY']).optional(),
     priority: z.coerce.number().int().min(1).max(5).optional(),
     search: z.string().optional(),
     sortBy: z.enum(['createdAt', 'updatedAt', 'company', 'title', 'priority', 'postedDate']).default('createdAt').optional(),
