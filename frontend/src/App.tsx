@@ -17,6 +17,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Resumes = lazy(() => import("./pages/Resumes"));
+const Jobs = lazy(() => import("./pages/Jobs"));
 const Interviews = lazy(() => import("./pages/Interviews"));
 const InterviewDetail = lazy(() => import("./pages/InterviewDetail"));
 const MockInterview = lazy(() => import("./pages/MockInterview"));
@@ -118,10 +119,7 @@ const App = () => {
                 path="/jobs"
                 element={
                   <ProtectedRoute>
-                    <div className="container py-8">
-                      <h1 className="text-3xl font-bold">Job Tracker</h1>
-                      <p className="text-muted-foreground mt-2">Coming soon...</p>
-                    </div>
+                    <Jobs />
                   </ProtectedRoute>
                 }
               />

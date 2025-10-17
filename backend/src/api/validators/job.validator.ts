@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+// Parse job URL schema
+export const parseJobUrlSchema = z.object({
+  body: z.object({
+    url: z.string().url('Invalid URL format').min(1, 'URL is required'),
+  }),
+});
+
 // Job validation
 export const createJobSchema = z.object({
   body: z.object({

@@ -190,8 +190,8 @@ router.get(
     const fileBuffer = await resumeService.downloadResume(id, userId);
 
     // Set headers for file download
-    res.setHeader('Content-Type', resume.mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${resume.fileName}"`);
+    res.setHeader('Content-Type', resume.fileType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${resume.fileName || 'resume.pdf'}"`);
     res.setHeader('Content-Length', fileBuffer.length);
 
     res.send(fileBuffer);

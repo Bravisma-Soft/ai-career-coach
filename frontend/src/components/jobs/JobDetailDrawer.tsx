@@ -41,6 +41,7 @@ import { documentService } from '@/services/documentService';
 import { interviewService } from '@/services/interviewService';
 import { toast } from '@/hooks/use-toast';
 import { useResumes } from '@/hooks/useResumes';
+import { generateResumePDF } from '@/utils/pdfGenerator';
 
 interface JobDetailDrawerProps {
   open: boolean;
@@ -180,6 +181,35 @@ export const JobDetailDrawer = ({ open, onClose, job, onEdit, onDelete }: JobDet
       toast({
         title: 'Error',
         description: 'Failed to load cover letter',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDownloadResumePDF = (doc: Document) => {
+    try {
+      console.log('📄 handleDownloadResumePDF called for document:', doc.title);
+
+      // Parse the tailored resume content
+      const resumeContent = JSON.parse(doc.content || '{}');
+      console.log('✅ Resume content parsed successfully');
+
+      // Generate a clean filename
+      const fileName = `${doc.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`;
+
+      // Generate and download PDF
+      console.log('🎨 Calling generateResumePDF...');
+      generateResumePDF(resumeContent, fileName);
+
+      toast({
+        title: 'PDF Downloaded',
+        description: `${doc.title} has been downloaded`
+      });
+    } catch (error) {
+      console.error('❌ Error generating resume PDF:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate PDF. Please try again.',
         variant: 'destructive'
       });
     }
@@ -505,28 +535,29 @@ export const JobDetailDrawer = ({ open, onClose, job, onEdit, onDelete }: JobDet
                             )}
                           </div>
                           <div className="flex gap-1 ml-2">
-                            {doc.documentType !== 'RESUME' && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Download or view document
-                                  if (doc.content) {
-                                    const blob = new Blob([doc.content], { type: doc.mimeType });
-                                    const url = URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    a.download = doc.fileName;
-                                    a.click();
-                                    URL.revokeObjectURL(url);
-                                  }
-                                }}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Handle download based on document type
+                                if (doc.documentType === 'RESUME') {
+                                  handleDownloadResumePDF(doc);
+                                } else if (doc.content) {
+                                  // Download other document types as-is
+                                  const blob = new Blob([doc.content], { type: doc.mimeType });
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = doc.fileName;
+                                  a.click();
+                                  URL.revokeObjectURL(url);
+                                }
+                              }}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"

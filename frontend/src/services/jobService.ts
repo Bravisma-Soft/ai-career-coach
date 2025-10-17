@@ -15,6 +15,32 @@ interface PaginatedResponse<T> {
 }
 
 export const jobService = {
+  parseJobUrl: async (url: string): Promise<{
+    company: string;
+    title: string;
+    jobDescription: string;
+    location: string;
+    salaryRange?: string | null;
+    jobType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP' | 'TEMPORARY';
+    workMode: 'REMOTE' | 'HYBRID' | 'ONSITE';
+  }> => {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: {
+        jobData: {
+          company: string;
+          title: string;
+          jobDescription: string;
+          location: string;
+          salaryRange?: string | null;
+          jobType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP' | 'TEMPORARY';
+          workMode: 'REMOTE' | 'HYBRID' | 'ONSITE';
+        };
+      };
+    }>('/jobs/parse-url', { url });
+    return response.data.data.jobData;
+  },
+
   fetchJobs: async (): Promise<Job[]> => {
     const response = await apiClient.get<PaginatedResponse<Job>>('/jobs');
     return response.data.data; // Extract data array from paginated response

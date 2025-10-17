@@ -127,11 +127,11 @@ export const KanbanBoard = ({
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 overflow-x-auto">
+      <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4">
         {columns.map((column) => {
           const columnJobs = getJobsByStatus(column.id);
           return (
-            <div key={column.id} className="flex flex-col min-h-[400px] md:min-h-[500px] min-w-[280px]">
+            <div key={column.id} className="flex flex-col min-h-[400px] md:min-h-[500px] w-full md:min-w-[300px] md:max-w-[350px] flex-shrink-0">
               <Card className="p-3 md:p-4 flex-1 flex flex-col">
                 <div className="flex items-center justify-between mb-3 md:mb-4">
                   <div className="flex items-center gap-2">

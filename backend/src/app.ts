@@ -110,6 +110,7 @@ app.get('/', (req: Request, res: Response) => {
 // =================================
 // API ROUTES
 // =================================
+import healthRoutes from '@/api/routes/health.routes';
 import authRoutes from '@/api/routes/auth.routes';
 import userRoutes from '@/api/routes/user.routes';
 import resumeRoutes from '@/api/routes/resume.routes';
@@ -121,6 +122,7 @@ import aiRoutes from '@/api/routes/ai.routes';
 import documentRoutes from '@/api/routes/document.routes';
 
 // Mount routes - Updated to /api/* to match frontend expectations
+app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', userRoutes);
 app.use('/api/resumes', resumeRoutes);

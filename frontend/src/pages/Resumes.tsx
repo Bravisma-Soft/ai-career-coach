@@ -24,8 +24,10 @@ import { ResumePreview } from '@/components/resumes/ResumePreview';
 import { ResumeEditor } from '@/components/resumes/ResumeEditor';
 import { useResumes } from '@/hooks/useResumes';
 import { useResumesStore } from '@/store/resumesStore';
+import { resumeService } from '@/services/resumeService';
 import { Resume } from '@/types/resume';
 import { toast } from '@/hooks/use-toast';
+import { generateResumePDF } from '@/utils/pdfGenerator';
 
 type FilterType = 'all' | 'master' | 'tailored' | 'recent';
 type SortType = 'date' | 'name' | 'version';
@@ -39,7 +41,10 @@ export default function Resumes() {
 
   const location = useLocation();
   const { resumes, isLoading, uploadResume, isUploading, updateResume, deleteResume, setMasterResume, parseResume } = useResumes();
-  const { selectedResume, setSelectedResume, masterResume } = useResumesStore();
+  const { selectedResume, setSelectedResume } = useResumesStore();
+
+  // Compute master resume directly from resumes data to avoid store persistence issues
+  const masterResume = resumes.find(r => r.isMaster) || null;
 
   // Auto-open editor if navigated from TailorResumeModal
   useEffect(() => {
@@ -115,12 +120,79 @@ export default function Resumes() {
     setEditorModalOpen(true);
   };
 
-  const handleDownload = (resume: Resume) => {
-    toast({
-      title: 'Downloading resume',
-      description: `${resume.name} is being downloaded...`,
-    });
-    // In production, implement actual download
+  const handleDownload = async (resume: Resume) => {
+    try {
+      console.log('📥 Download requested for resume:', resume.name, 'Type:', resume.fileType);
+
+      // Check if this is a tailored resume with parsed data (from Edit Further)
+      // If it has all the parsed data fields, generate a PDF instead of downloading the file
+      const hasParsedData = resume.personalInfo && resume.experience && resume.education && resume.skills;
+
+      if (hasParsedData && resume.fileType === 'application/json') {
+        // This is a tailored resume created from "Edit Further" - generate PDF
+        console.log('✨ Detected tailored resume with JSON file - generating PDF instead');
+        toast({
+          title: 'Generating PDF',
+          description: 'Creating a professional PDF from your resume...',
+        });
+
+        const fileName = `${resume.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`;
+
+        console.log('🎨 Calling generateResumePDF...');
+        generateResumePDF({
+          personalInfo: {
+            fullName: resume.personalInfo.fullName || '',
+            email: resume.personalInfo.email || '',
+            phone: resume.personalInfo.phone || '',
+            location: resume.personalInfo.location || '',
+            linkedin: resume.personalInfo.linkedin,
+            website: resume.personalInfo.website,
+          },
+          summary: resume.summary || '',
+          skills: resume.skills || [],
+          experience: resume.experience || [],
+          education: resume.education || [],
+        }, fileName);
+
+        toast({
+          title: 'PDF Downloaded',
+          description: `${resume.name} has been downloaded as a PDF.`,
+        });
+        return;
+      }
+
+      // Otherwise, download the original file
+      console.log('📁 Downloading original file from backend');
+      toast({
+        title: 'Downloading resume',
+        description: `${resume.name} is being downloaded...`,
+      });
+
+      const blob = await resumeService.downloadResume(resume.id);
+      console.log('✅ File downloaded successfully, size:', blob.size);
+
+      // Create a download link and trigger it
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = resume.fileName || `${resume.name}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Download complete',
+        description: `${resume.name} has been downloaded successfully.`,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: 'Download failed',
+        description: 'Failed to download resume. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleDelete = (resume: Resume) => {

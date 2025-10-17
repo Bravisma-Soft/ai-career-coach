@@ -12,6 +12,7 @@ import {
   updateJobStatusSchema,
   addJobNoteSchema,
   getJobsQuerySchema,
+  parseJobUrlSchema,
 } from '@/api/validators/job.validator';
 
 const router = Router();
@@ -56,6 +57,21 @@ router.get(
     const userId = req.userId!;
     const stats = await jobService.getJobStats(userId);
     sendSuccess(res, { stats }, 'Job statistics retrieved');
+  })
+);
+
+/**
+ * @route   POST /api/v1/jobs/parse-url
+ * @desc    Parse job details from URL
+ * @access  Private
+ */
+router.post(
+  '/parse-url',
+  validate(parseJobUrlSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { url } = req.body;
+    const parsedData = await jobService.parseJobFromUrl(url);
+    sendSuccess(res, { jobData: parsedData }, 'Job URL parsed successfully');
   })
 );
 

@@ -1,4 +1,4 @@
-import { FileText, Download, Eye, Trash2, Star, MoreVertical, Edit, FileSearch } from 'lucide-react';
+import { FileText, Download, Eye, Trash2, Star, MoreVertical, Edit, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,7 +25,7 @@ interface ResumeCardProps {
   onDownload: (resume: Resume) => void;
   onDelete: (resume: Resume) => void;
   onSetMaster: (resume: Resume) => void;
-  onParse?: (resume: Resume) => void;
+  onParse?: (resume: Resume) => void; // Keep for backward compatibility but won't be used
 }
 
 export const ResumeCard = ({
@@ -51,7 +51,7 @@ export const ResumeCard = ({
   };
 
   return (
-    <Card className={cn('hover:shadow-lg transition-shadow', resume.isMaster && 'border-primary')}>
+    <Card className={cn('hover:shadow-lg transition-shadow relative overflow-hidden', resume.isMaster && 'border-primary')}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start gap-3 flex-1">
@@ -82,7 +82,7 @@ export const ResumeCard = ({
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" disabled={!isParsed}>
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -99,15 +99,6 @@ export const ResumeCard = ({
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </DropdownMenuItem>
-              {!isParsed && onParse && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onParse(resume)}>
-                    <FileSearch className="h-4 w-4 mr-2" />
-                    Parse Resume
-                  </DropdownMenuItem>
-                </>
-              )}
               {!resume.isMaster && (
                 <>
                   <DropdownMenuSeparator />
@@ -148,11 +139,11 @@ export const ResumeCard = ({
         </div>
 
         <div className="flex gap-2 mt-4">
-          {!isParsed && onParse ? (
-            <Button variant="default" size="sm" onClick={() => onParse(resume)} className="flex-1">
-              <FileSearch className="h-4 w-4 mr-2" />
-              Parse Resume
-            </Button>
+          {!isParsed ? (
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground flex-1">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>Parsing resume...</span>
+            </div>
           ) : (
             <>
               <Button variant="outline" size="sm" onClick={() => onPreview(resume)} className="flex-1">
@@ -167,6 +158,13 @@ export const ResumeCard = ({
           )}
         </div>
       </CardContent>
+
+      {/* Progress bar at bottom while parsing */}
+      {!isParsed && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted overflow-hidden">
+          <div className="h-full bg-primary animate-pulse" style={{ width: '100%' }} />
+        </div>
+      )}
     </Card>
   );
 };

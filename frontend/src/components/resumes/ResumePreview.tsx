@@ -102,27 +102,34 @@ export const ResumePreview = ({
                 {resume.experience && resume.experience.length > 0 && (
                   <div className="space-y-3">
                     <h2 className="text-lg font-semibold border-b pb-1">Experience</h2>
-                    {resume.experience.map((exp) => (
-                      <div key={exp.id} className="space-y-1">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-semibold">{exp.position}</h3>
-                            <p className="text-sm text-muted-foreground">{exp.company}</p>
+                    {resume.experience.map((exp) => {
+                      // Format date range properly
+                      const startDate = exp.startDate && exp.startDate.trim() !== '' ? exp.startDate : null;
+                      const endDate = exp.current ? 'Present' : (exp.endDate && exp.endDate.trim() !== '' ? exp.endDate : null);
+                      const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : startDate || endDate || null;
+
+                      return (
+                        <div key={exp.id} className="space-y-1">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-semibold">{exp.position}</h3>
+                              <p className="text-sm text-muted-foreground">{exp.company}</p>
+                            </div>
+                            <div className="text-sm text-muted-foreground text-right">
+                              {dateRange && <p>{dateRange}</p>}
+                              {exp.location && <p>{exp.location}</p>}
+                            </div>
                           </div>
-                          <div className="text-sm text-muted-foreground text-right">
-                            <p>{exp.startDate} - {exp.current ? 'Present' : exp.endDate}</p>
-                            {exp.location && <p>{exp.location}</p>}
-                          </div>
+                          {exp.description && exp.description.length > 0 && (
+                            <ul className="list-disc list-inside space-y-1 text-sm">
+                              {exp.description.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
-                        {exp.description && exp.description.length > 0 && (
-                          <ul className="list-disc list-inside space-y-1 text-sm">
-                            {exp.description.map((item, idx) => (
-                              <li key={idx}>{item}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -130,20 +137,27 @@ export const ResumePreview = ({
                 {resume.education && resume.education.length > 0 && (
                   <div className="space-y-3">
                     <h2 className="text-lg font-semibold border-b pb-1">Education</h2>
-                    {resume.education.map((edu) => (
-                      <div key={edu.id} className="space-y-1">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-semibold">{edu.degree} in {edu.field}</h3>
-                            <p className="text-sm text-muted-foreground">{edu.institution}</p>
-                          </div>
-                          <div className="text-sm text-muted-foreground text-right">
-                            <p>{edu.startDate} - {edu.current ? 'Present' : edu.endDate}</p>
-                            {edu.gpa && <p>GPA: {edu.gpa}</p>}
+                    {resume.education.map((edu) => {
+                      // Format date range properly
+                      const startDate = edu.startDate && edu.startDate.trim() !== '' ? edu.startDate : null;
+                      const endDate = edu.current ? 'Present' : (edu.endDate && edu.endDate.trim() !== '' ? edu.endDate : null);
+                      const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : startDate || endDate || null;
+
+                      return (
+                        <div key={edu.id} className="space-y-1">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-semibold">{edu.degree} in {edu.field}</h3>
+                              <p className="text-sm text-muted-foreground">{edu.institution}</p>
+                            </div>
+                            <div className="text-sm text-muted-foreground text-right">
+                              {dateRange && <p>{dateRange}</p>}
+                              {edu.gpa && <p>GPA: {edu.gpa}</p>}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 

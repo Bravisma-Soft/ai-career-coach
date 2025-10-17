@@ -13,6 +13,7 @@ import {
   GetJobsQuery,
 } from '@/api/validators/job.validator';
 import { Job, StatusChange, JobStatus } from '@prisma/client';
+import { JobParserAgent, ParsedJobData } from '@/ai/agents/job-parser.agent';
 
 // Status transition rules - flexible for Kanban board
 const VALID_STATUS_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
@@ -445,6 +446,45 @@ export class JobService {
     });
 
     return statusChanges;
+  }
+
+  /**
+   * Parse job details from URL using AI
+   */
+  async parseJobFromUrl(url: string): Promise<ParsedJobData> {
+    logger.info(`Parsing job from URL: ${url}`);
+
+    try {
+      const jobParser = new JobParserAgent();
+      const result = await jobParser.execute({ url });
+
+      if (!result.success || !result.data) {
+        throw new BadRequestError(
+          result.error?.message || 'Failed to parse job from URL'
+        );
+      }
+
+      logger.info('Job parsed successfully from URL', {
+        url,
+        company: result.data.company,
+        title: result.data.title,
+      });
+
+      return result.data;
+    } catch (error: any) {
+      logger.error('Error parsing job from URL', {
+        url,
+        error: error.message,
+      });
+
+      if (error instanceof BadRequestError) {
+        throw error;
+      }
+
+      throw new BadRequestError(
+        `Failed to parse job from URL: ${error.message}`
+      );
+    }
   }
 
   /**

@@ -24,19 +24,19 @@ export const Dashboard = () => {
   const stats = [
     {
       title: 'Total Applications',
-      value: jobs.filter((j) => j.status === 'APPLIED' || j.status === 'INTERVIEW_SCHEDULED' || j.status === 'INTERVIEW_COMPLETED' || j.status === 'OFFER_RECEIVED').length,
+      value: jobs.filter((j) => j.status === 'APPLIED' || j.status === 'INTERVIEW_SCHEDULED' || j.status === 'INTERVIEW_COMPLETED' || j.status === 'OFFER_RECEIVED' || j.status === 'ACCEPTED' || j.status === 'REJECTED').length,
       icon: Briefcase,
       color: 'from-blue-500 to-blue-600',
     },
     {
       title: 'Active Interviews',
-      value: jobs.filter((j) => j.status === 'INTERVIEW_SCHEDULED' || j.status === 'INTERVIEW_COMPLETED').length,
+      value: jobs.filter((j) => j.status === 'INTERVIEW_SCHEDULED').length,
       icon: MessageSquare,
       color: 'from-purple-500 to-purple-600',
     },
     {
       title: 'Pending Responses',
-      value: jobs.filter((j) => j.status === 'APPLIED').length,
+      value: jobs.filter((j) => j.status === 'INTERVIEW_COMPLETED').length,
       icon: Clock,
       color: 'from-orange-500 to-orange-600',
     },

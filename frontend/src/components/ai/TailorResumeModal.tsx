@@ -17,7 +17,7 @@ import { resumeService } from '@/services/resumeService';
 import { AIProcessingIndicator } from './AIProcessingIndicator';
 import { ResumeComparison } from './ResumeComparison';
 import { toast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf';
+import { generateResumePDF } from '@/utils/pdfGenerator';
 
 interface TailorResumeModalProps {
   job: Job;
@@ -232,80 +232,17 @@ export function TailorResumeModal({ job, open, onOpenChange, onSaveComplete, exi
     if (!tailoredResume) return;
 
     try {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 20;
-      const maxWidth = pageWidth - 2 * margin;
-      let yPosition = margin;
-
-      // Helper function to add text with wrapping
-      const addText = (text: string, fontSize: number = 10, isBold: boolean = false) => {
-        doc.setFontSize(fontSize);
-        doc.setFont('helvetica', isBold ? 'bold' : 'normal');
-        const lines = doc.splitTextToSize(text, maxWidth);
-
-        lines.forEach((line: string) => {
-          if (yPosition > pageHeight - margin) {
-            doc.addPage();
-            yPosition = margin;
-          }
-          doc.text(line, margin, yPosition);
-          yPosition += fontSize * 0.5;
-        });
-        yPosition += 5; // Add spacing after text block
-      };
-
-      // Personal Info
-      const { personalInfo } = tailoredResume.tailoredContent;
-      addText(personalInfo.fullName, 18, true);
-      addText(`${personalInfo.email} | ${personalInfo.phone}`, 10);
-      addText(personalInfo.location, 10);
-      if (personalInfo.linkedin) addText(personalInfo.linkedin, 10);
-      if (personalInfo.website) addText(personalInfo.website, 10);
-      yPosition += 5;
-
-      // Summary
-      addText('PROFESSIONAL SUMMARY', 12, true);
-      addText(tailoredResume.tailoredContent.summary, 10);
-      yPosition += 5;
-
-      // Skills
-      addText('SKILLS', 12, true);
-      addText(tailoredResume.tailoredContent.skills.join(' • '), 10);
-      yPosition += 5;
-
-      // Experience
-      addText('EXPERIENCE', 12, true);
-      tailoredResume.tailoredContent.experience.forEach((exp) => {
-        addText(`${exp.position} at ${exp.company}`, 11, true);
-        addText(`${exp.location} | ${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}`, 9);
-        exp.description.forEach((desc) => {
-          addText(`• ${desc}`, 10);
-        });
-        yPosition += 3;
-      });
-
-      // Education
-      addText('EDUCATION', 12, true);
-      tailoredResume.tailoredContent.education.forEach((edu) => {
-        addText(`${edu.degree} in ${edu.field}`, 11, true);
-        addText(`${edu.institution}, ${edu.location}`, 10);
-        const endDate = edu.current ? 'Present' : (edu.endDate || 'Present');
-        addText(`${edu.startDate} - ${endDate}`, 9);
-        if (edu.gpa) addText(`GPA: ${edu.gpa}`, 9);
-        yPosition += 3;
-      });
-
-      // Save PDF
       const fileName = `tailored-resume-${job.company.replace(/\s+/g, '-')}-${Date.now()}.pdf`;
-      doc.save(fileName);
+
+      // Generate professional PDF using shared utility
+      generateResumePDF(tailoredResume.tailoredContent, fileName);
 
       toast({
-        title: 'PDF Downloaded',
-        description: `Your tailored resume has been downloaded as ${fileName}`
+        title: 'PDF Downloaded Successfully',
+        description: `Your professional resume has been downloaded as ${fileName}`
       });
     } catch (error) {
+      console.error('PDF generation error:', error);
       toast({
         title: 'Error',
         description: 'Failed to generate PDF. Please try again.',
