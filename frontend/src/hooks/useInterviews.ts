@@ -76,6 +76,10 @@ export const useInterviews = () => {
 
   const prepareInterviewMutation = useMutation({
     mutationFn: (id: string) => interviewService.prepareInterview(id),
+    onSuccess: () => {
+      // Refetch interviews to get the updated data with preparation info
+      queryClient.invalidateQueries({ queryKey: ['interviews'] });
+    },
   });
 
   const startMockInterviewMutation = useMutation({
@@ -84,8 +88,8 @@ export const useInterviews = () => {
   });
 
   const submitMockAnswerMutation = useMutation({
-    mutationFn: ({ sessionId, answer }: { sessionId: string; answer: string }) =>
-      interviewService.submitMockAnswer(sessionId, answer),
+    mutationFn: ({ sessionId, questionId, answer }: { sessionId: string; questionId: string; answer: string }) =>
+      interviewService.submitMockAnswer(sessionId, questionId, answer),
   });
 
   const getMockResultsMutation = useMutation({
@@ -102,12 +106,14 @@ export const useInterviews = () => {
     deleteInterview: deleteMutation.mutate,
     prepareInterview: prepareInterviewMutation.mutate,
     startMockInterview: startMockInterviewMutation.mutate,
+    startMockInterviewAsync: startMockInterviewMutation.mutateAsync,
     submitMockAnswer: submitMockAnswerMutation.mutate,
     getMockResults: getMockResultsMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isPreparing: prepareInterviewMutation.isPending,
+    isStartingMock: startMockInterviewMutation.isPending,
     preparationData: prepareInterviewMutation.data,
     mockSession: startMockInterviewMutation.data,
     mockResponse: submitMockAnswerMutation.data,

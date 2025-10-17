@@ -47,7 +47,6 @@ export default function Resumes() {
 
     // If we have a newResume passed directly, use it immediately
     if (state?.newResume && !isLoading) {
-      console.log('Using passed resume object:', state.newResume);
       setSelectedResume(state.newResume);
       setEditorModalOpen(true);
       // Clear the state to prevent re-opening on subsequent renders
@@ -59,13 +58,10 @@ export default function Resumes() {
     if (state?.openEditorForResumeId && !isLoading && resumes.length > 0) {
       const resumeToEdit = resumes.find(r => r.id === state.openEditorForResumeId);
       if (resumeToEdit) {
-        console.log('Auto-opening editor for resume:', resumeToEdit);
         setSelectedResume(resumeToEdit);
         setEditorModalOpen(true);
         // Clear the state to prevent re-opening on subsequent renders
         window.history.replaceState({}, document.title);
-      } else {
-        console.log('Resume not found in list:', state.openEditorForResumeId, 'Available:', resumes.map(r => r.id));
       }
     }
   }, [location.state, resumes, isLoading, setSelectedResume]);

@@ -127,7 +127,6 @@ export const aiService = {
 
   /**
    * Generate cover letter using AI
-   * STILL USING MOCK DATA - TO BE IMPLEMENTED
    */
   generateCoverLetter: async (
     resume: Resume,
@@ -136,47 +135,58 @@ export const aiService = {
     notes: string,
     onProgress: (message: string, progress: number) => void
   ): Promise<CoverLetter> => {
-    // Mock implementation - will be replaced with real API call later
-    onProgress('Analyzing your background...', 25);
-    await delay(1000);
+    try {
+      onProgress('Analyzing your background...', 20);
+      await delay(300);
 
-    onProgress('Crafting opening paragraph...', 50);
-    await delay(1500);
+      onProgress('Reviewing job requirements...', 35);
+      await delay(300);
 
-    onProgress('Highlighting relevant experience...', 75);
-    await delay(1500);
+      onProgress('Generating cover letter with AI...', 50);
 
-    onProgress('Finalizing your cover letter...', 95);
-    await delay(500);
+      const response = await apiClient.post('/ai/cover-letters/generate', {
+        resumeId: resume.id,
+        jobId: job.id,
+        tone,
+        notes: notes || '',
+      });
 
-    const toneIntros = {
-      professional: `I am writing to express my strong interest in the ${job.title} position at ${job.company}.`,
-      enthusiastic: `I am thrilled to apply for the ${job.title} position at ${job.company}!`,
-      formal: `Dear Hiring Manager,\n\nI wish to formally submit my application for the ${job.title} position at ${job.company}.`
-    };
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to generate cover letter');
+      }
 
-    const content = `${toneIntros[tone]}
+      onProgress('Polishing and formatting...', 85);
+      await delay(300);
 
-With ${resume.experience.length}+ years of experience in ${resume.experience[0]?.position || 'the field'}, I am confident that my background aligns perfectly with the requirements for this role. My expertise in ${resume.skills.slice(0, 3).join(', ')} has consistently enabled me to deliver exceptional results.
+      onProgress('Almost ready...', 95);
+      await delay(200);
 
-${resume.summary}
+      const result = response.data.data;
 
-In my most recent role at ${resume.experience[0]?.company || 'my current company'}, I have successfully:
-${resume.experience[0]?.description.slice(0, 3).map(desc => `• ${desc}`).join('\n') || '• Delivered high-impact projects'}
+      return {
+        jobId: job.id,
+        resumeId: resume.id,
+        tone: result.tone,
+        content: result.coverLetter,
+        subject: result.subject,
+        keyPoints: result.keyPoints,
+        suggestions: result.suggestions,
+        wordCount: result.wordCount,
+        estimatedReadTime: result.estimatedReadTime,
+        createdAt: new Date().toISOString(),
+      };
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
 
-${notes ? `Additionally, ${notes}\n\n` : ''}I am particularly drawn to ${job.company} because of your commitment to innovation and excellence. I am excited about the opportunity to contribute to your team and help drive success in the ${job.title} role.
-
-Thank you for considering my application. I look forward to the opportunity to discuss how my skills and experience can benefit ${job.company}.
-
-Sincerely,
-${resume.personalInfo.fullName}`;
-
-    return {
-      jobId: job.id,
-      resumeId: resume.id,
-      tone,
-      content,
-      createdAt: new Date().toISOString()
-    };
+      if (error.response?.status === 404) {
+        throw new Error('Resume or job not found. Please try again.');
+      } else if (error.response?.status === 400) {
+        throw new Error(errorMessage);
+      } else if (error.response?.status === 403) {
+        throw new Error('You do not have permission to access this resource.');
+      } else {
+        throw new Error(`Cover letter generation failed: ${errorMessage}`);
+      }
+    }
   }
 };

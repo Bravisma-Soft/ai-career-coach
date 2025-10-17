@@ -35,6 +35,7 @@ import {
 } from '@/types/ai-api.types';
 import { logger } from '@/config/logger';
 import { NotFoundError, BadRequestError } from '@/utils/ApiError';
+import { coverLetterAgent } from '@/ai/agents/cover-letter.agent';
 
 const router = Router();
 
@@ -217,32 +218,83 @@ router.post(
   validate(generateCoverLetterSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId!;
-    const { resumeId, jobId, tone, length, focusPoints } = req.body;
+    const { resumeId, jobId, tone, length, focusPoints, notes } = req.body;
 
     logger.info(`AI: Generating cover letter for job ${jobId} - User: ${userId}`);
 
-    // TODO: Implement CoverLetterAgent
-    // const agent = new CoverLetterAgent();
-    // const result = await agent.execute({ resumeId, jobId, tone, length, focusPoints, userId });
+    // Fetch resume from database
+    const resume = await prisma.resume.findFirst({
+      where: {
+        id: resumeId,
+        userId: userId,
+        isActive: true,
+      },
+    });
 
-    // Temporary placeholder response
-    const response: GenerateCoverLetterResponse = {
-      coverLetter: 'Your AI-generated cover letter will appear here...',
-      suggestions: [
-        'Consider adding a specific example of your leadership experience',
-        'Mention why you are specifically interested in this company',
-      ],
-      keyPoints: [
-        '5 years of relevant experience',
-        'Strong technical background',
-        'Proven leadership skills',
-      ],
+    if (!resume) {
+      throw new NotFoundError('Resume not found');
+    }
+
+    // Ensure resume has been parsed
+    if (!resume.parsedData) {
+      throw new BadRequestError('Resume must be parsed before generating cover letter. Please wait for parsing to complete.');
+    }
+
+    // Fetch job from database
+    const job = await prisma.job.findFirst({
+      where: {
+        id: jobId,
+        userId: userId,
+      },
+    });
+
+    if (!job) {
+      throw new NotFoundError('Job not found');
+    }
+
+    // Validate job has description
+    if (!job.jobDescription || job.jobDescription.trim().length < 50) {
+      throw new BadRequestError('Job description is too short. Please add a detailed job description (at least 50 characters).');
+    }
+
+    // Execute cover letter agent
+    const agentResult = await coverLetterAgent.execute({
+      resume: resume.parsedData as any,
+      jobDescription: job.jobDescription,
+      jobTitle: job.title,
+      companyName: job.company,
       tone: tone || 'professional',
-      wordCount: 350,
-      estimatedReadTime: '2 minutes',
+      additionalNotes: notes || '',
+    });
+
+    if (!agentResult.success || !agentResult.data) {
+      logger.error('Cover letter generation failed', {
+        error: agentResult.error,
+        jobId,
+        resumeId,
+      });
+      throw new Error(agentResult.error?.message || 'Failed to generate cover letter');
+    }
+
+    const result = agentResult.data;
+
+    // Build response in expected format
+    const response: GenerateCoverLetterResponse = {
+      coverLetter: result.coverLetter,
+      subject: result.subject,
+      keyPoints: result.keyPoints,
+      suggestions: result.suggestions,
+      tone: result.tone,
+      wordCount: result.wordCount,
+      estimatedReadTime: result.estimatedReadTime,
     };
 
-    logger.info(`AI: Cover letter generated - ${response.wordCount} words`);
+    logger.info(`AI: Cover letter generated - ${response.wordCount} words`, {
+      jobId,
+      resumeId,
+      tone: response.tone,
+      usage: agentResult.usage,
+    });
 
     sendSuccess(res, response, 'Cover letter generated successfully');
   })

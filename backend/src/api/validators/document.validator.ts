@@ -7,7 +7,7 @@ export const createDocumentSchema = z.object({
     documentType: z.nativeEnum(DocumentType),
     title: z.string().min(1, 'Title is required'),
     fileName: z.string().min(1, 'File name is required'),
-    fileUrl: z.string().url('Invalid file URL'),
+    fileUrl: z.string().min(1, 'File URL is required'), // Allow data URIs and regular URLs
     fileSize: z.number().positive('File size must be positive'),
     mimeType: z.string().min(1, 'MIME type is required'),
     description: z.string().optional(),

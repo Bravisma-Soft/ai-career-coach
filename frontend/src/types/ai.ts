@@ -53,6 +53,11 @@ export interface CoverLetter {
   resumeId: string;
   tone: 'professional' | 'enthusiastic' | 'formal';
   content: string;
+  subject?: string;
+  keyPoints?: string[];
+  suggestions?: string[];
+  wordCount?: number;
+  estimatedReadTime?: string;
   createdAt: string;
 }
 

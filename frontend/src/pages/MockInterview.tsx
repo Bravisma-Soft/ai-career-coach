@@ -6,41 +6,59 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Send, SkipForward, Timer, Brain } from 'lucide-react';
+import { ArrowLeft, Send, SkipForward, Timer, Brain, Sparkles } from 'lucide-react';
 import { useInterviews } from '@/hooks/useInterviews';
 import { useInterviewsStore } from '@/store/interviewsStore';
 import { cn } from '@/lib/utils';
+import { AIProcessingIndicator } from '@/components/ai/AIProcessingIndicator';
 
 export default function MockInterview() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { startMockInterview, submitMockAnswer } = useInterviews();
+  const { startMockInterviewAsync, submitMockAnswer } = useInterviews();
   const { mockSession, setMockSession } = useInterviewsStore();
   const [answer, setAnswer] = useState('');
   const [messages, setMessages] = useState<Array<{ role: 'ai' | 'user'; content: string }>>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [startTime] = useState(Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
-    if (id && !mockSession) {
-      startMockInterview(id, {
-        onSuccess: (session) => {
+    const initializeMockInterview = async () => {
+      if (id && !mockSession && !isGenerating) {
+        setIsGenerating(true);
+        try {
+          const session = await startMockInterviewAsync(id);
+          console.log('Mock interview session created:', session);
+          console.log('Questions:', session.questions);
+
           setMockSession(session);
+          setIsGenerating(false);
+
           // Show first question
-          setTimeout(() => {
-            setMessages([
-              {
-                role: 'ai',
-                content: `Welcome! Let's begin your mock interview. ${session.questions[0].text}`,
-              },
-            ]);
-          }, 1000);
-        },
-      });
-    }
-  }, [id, mockSession, startMockInterview, setMockSession]);
+          if (session && session.questions && session.questions.length > 0) {
+            setTimeout(() => {
+              setMessages([
+                {
+                  role: 'ai',
+                  content: `Welcome! Let's begin your mock interview. ${session.questions[0].text}`,
+                },
+              ]);
+            }, 1000);
+          } else {
+            console.error('No questions found in session:', session);
+          }
+        } catch (error) {
+          console.error('Failed to start mock interview:', error);
+          setIsGenerating(false);
+        }
+      }
+    };
+
+    initializeMockInterview();
+  }, [id, mockSession, startMockInterviewAsync, setMockSession, isGenerating]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -58,44 +76,78 @@ export default function MockInterview() {
 
     // Add user message
     setMessages((prev) => [...prev, { role: 'user', content: answer }]);
+    const currentAnswer = answer;
+    const currentQuestion = mockSession.questions[mockSession.currentQuestionIndex];
     setAnswer('');
     setIsTyping(true);
 
     // Submit answer and get feedback
     submitMockAnswer(
-      { sessionId: mockSession.id, answer },
+      { sessionId: mockSession.id, questionId: currentQuestion.id, answer: currentAnswer },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          // Add the response to the session
+          const updatedSession = {
+            ...mockSession,
+            responses: [...mockSession.responses, response],
+          };
+
           // Move to next question or finish
           const nextIndex = mockSession.currentQuestionIndex + 1;
-          
+
           setTimeout(() => {
             setIsTyping(false);
-            
-            if (nextIndex < mockSession.questions.length) {
-              const nextQuestion = mockSession.questions[nextIndex];
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: 'ai',
-                  content: `Great! Next question: ${nextQuestion.text}`,
-                },
-              ]);
-              setMockSession({ ...mockSession, currentQuestionIndex: nextIndex });
-            } else {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: 'ai',
-                  content: 'Excellent work! You have completed all the questions. Let me prepare your results...',
-                },
-              ]);
-              
-              setTimeout(() => {
-                navigate(`/interviews/mock/${id}/results`);
-              }, 2000);
-            }
+
+            // Show AI feedback
+            const feedbackMessage = `Score: ${response.score}/100\n\n${response.feedback}\n\n✓ Strengths:\n${response.strengths.map(s => `  • ${s}`).join('\n')}\n\n⚠ Areas to improve:\n${response.improvements.map(i => `  • ${i}`).join('\n')}`;
+
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: 'ai',
+                content: feedbackMessage,
+              },
+            ]);
+
+            // Wait a bit before showing next question
+            setTimeout(() => {
+              if (nextIndex < mockSession.questions.length) {
+                const nextQuestion = mockSession.questions[nextIndex];
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: 'ai',
+                    content: `Next question: ${nextQuestion.text}`,
+                  },
+                ]);
+                setMockSession({ ...updatedSession, currentQuestionIndex: nextIndex });
+              } else {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: 'ai',
+                    content: 'Excellent work! You have completed all the questions. Let me prepare your complete analysis...',
+                  },
+                ]);
+
+                // Complete the interview
+                setTimeout(() => {
+                  navigate(`/interviews/mock/${mockSession.id}/results`);
+                }, 2000);
+              }
+            }, 2000);
           }, 1500);
+        },
+        onError: (error) => {
+          console.error('Failed to submit answer:', error);
+          setIsTyping(false);
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'ai',
+              content: 'Sorry, there was an error processing your answer. Please try again.',
+            },
+          ]);
         },
       }
     );
@@ -129,8 +181,10 @@ export default function MockInterview() {
   };
 
   const handleEndInterview = () => {
-    if (confirm('Are you sure you want to end this mock interview?')) {
-      navigate(`/interviews/mock/${id}/results`);
+    if (!mockSession) return;
+
+    if (confirm('Are you sure you want to end this mock interview? You can view your results for the questions you answered.')) {
+      navigate(`/interviews/mock/${mockSession.id}/results`);
     }
   };
 
@@ -140,10 +194,19 @@ export default function MockInterview() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (!mockSession) {
+  if (isGenerating || !mockSession) {
     return (
       <div className="container py-8 max-w-4xl">
-        <Skeleton className="h-96" />
+        <div className="flex items-center justify-center min-h-[500px]">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-8">
+              <AIProcessingIndicator
+                message="Generating personalized interview questions..."
+                submessage="This may take up to 30 seconds. We're analyzing the job description, company, and interviewer profile to create tailored questions."
+              />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

@@ -116,6 +116,7 @@ import resumeRoutes from '@/api/routes/resume.routes';
 import jobRoutes from '@/api/routes/job.routes';
 import applicationRoutes from '@/api/routes/application.routes';
 import interviewRoutes from '@/api/routes/interview.routes';
+import mockInterviewRoutes from '@/api/routes/mock-interview.routes';
 import aiRoutes from '@/api/routes/ai.routes';
 import documentRoutes from '@/api/routes/document.routes';
 
@@ -126,6 +127,7 @@ app.use('/api/resumes', resumeRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/interviews', interviewRoutes);
+app.use('/api/mock-interviews', mockInterviewRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/documents', documentRoutes);
 

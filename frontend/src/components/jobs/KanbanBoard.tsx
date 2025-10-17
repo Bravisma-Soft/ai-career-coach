@@ -90,12 +90,10 @@ export const KanbanBoard = ({
     setOverId(null);
 
     if (!over) {
-      console.log('Drag ended but no drop target');
       return;
     }
 
     const jobId = active.id as string;
-    console.log('Drag ended:', { jobId, overId: over.id });
 
     // Check if we dropped on a column (status) or on another job
     let newStatus: JobStatus;
@@ -103,24 +101,18 @@ export const KanbanBoard = ({
     // If dropped on a column directly
     if (columns.some(col => col.id === over.id)) {
       newStatus = over.id as JobStatus;
-      console.log('Dropped on column:', newStatus);
     } else {
       // If dropped on another job, find that job's status
       const targetJob = jobs.find((j) => j.id === over.id);
       if (!targetJob) {
-        console.log('Could not find target job:', over.id);
         return;
       }
       newStatus = targetJob.status;
-      console.log('Dropped on job, using its status:', newStatus);
     }
 
     const job = jobs.find((j) => j.id === jobId);
     if (job && job.status !== newStatus) {
-      console.log('Updating job status from', job.status, 'to', newStatus);
       onUpdateStatus(jobId, newStatus);
-    } else {
-      console.log('Job not found or status unchanged');
     }
   };
 

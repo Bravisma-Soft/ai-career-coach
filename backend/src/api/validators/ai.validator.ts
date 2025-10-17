@@ -39,6 +39,7 @@ export const generateCoverLetterSchema = z.object({
     tone: z.enum(['professional', 'enthusiastic', 'formal', 'conversational']).default('professional').optional(),
     length: z.enum(['short', 'medium', 'long']).default('medium').optional(),
     focusPoints: z.array(z.string()).max(5, 'Maximum 5 focus points allowed').optional(),
+    notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional(),
   }),
 });
 

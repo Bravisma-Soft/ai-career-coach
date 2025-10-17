@@ -30,11 +30,8 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
-    console.log('🔑 Token from store:', token ? 'exists' : 'missing');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      console.warn('⚠️ No token found in auth store');
     }
     return config;
   },

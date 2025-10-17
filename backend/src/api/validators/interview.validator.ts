@@ -3,7 +3,7 @@ import { z } from 'zod';
 // Interview validation
 export const createInterviewSchema = z.object({
   body: z.object({
-    applicationId: z.string().cuid(),
+    jobId: z.string().cuid('Invalid job ID'),
     type: z.enum([
       'PHONE_SCREEN',
       'VIDEO_CALL',
@@ -22,6 +22,7 @@ export const createInterviewSchema = z.object({
       name: z.string().max(200),
       title: z.string().max(200).optional(),
       email: z.string().email().optional(),
+      linkedInUrl: z.string().url().optional().or(z.literal('')),
     })).optional(),
     notes: z.string().max(5000).optional(),
     preparationNotes: z.string().max(5000).optional(),
@@ -61,6 +62,7 @@ export const updateInterviewSchema = z.object({
       name: z.string().max(200),
       title: z.string().max(200).optional(),
       email: z.string().email().optional(),
+      linkedInUrl: z.string().url().optional().or(z.literal('')),
     })).optional(),
     notes: z.string().max(5000).optional(),
     preparationNotes: z.string().max(5000).optional(),
@@ -111,7 +113,7 @@ export const getInterviewsQuerySchema = z.object({
       'RESCHEDULED',
       'NO_SHOW'
     ]).optional(),
-    applicationId: z.string().cuid().optional(),
+    jobId: z.string().cuid().optional(),
     upcoming: z.coerce.boolean().optional(),
     sortBy: z.enum(['createdAt', 'updatedAt', 'scheduledAt']).default('scheduledAt').optional(),
     sortOrder: z.enum(['asc', 'desc']).default('asc').optional(),

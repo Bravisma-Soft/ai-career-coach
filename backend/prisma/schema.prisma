@@ -64,19 +64,23 @@ enum ApplicationStatus {
 }
 
 enum InterviewType {
-  PHONE
-  VIDEO
-  ONSITE
+  PHONE_SCREEN
+  VIDEO_CALL
+  IN_PERSON
   TECHNICAL
   BEHAVIORAL
   PANEL
   FINAL
+  OTHER
 }
 
 enum InterviewOutcome {
+  PENDING
   PASSED
   FAILED
-  PENDING
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
 }
 
 enum DocumentType {
@@ -459,19 +463,27 @@ model Interview {
   interviewType     InterviewType
   scheduledAt       DateTime
   duration          Int?             // Duration in minutes
-  location          String?          // Physical address or video link
-  interviewerName   String?
-  interviewerEmail  String?
-  interviewerPhone  String?
+  location          String?          // Physical address
+  meetingUrl        String?          // Video call link
+  interviewers      Json?            // Array of { name, title, email, linkedInUrl }
+  round             Int?             // Interview round number
 
   // Tracking
   outcome           InterviewOutcome @default(PENDING)
   completedAt       DateTime?
 
-  // Preparation
-  prepNotes         String?          @db.Text
+  // Notes
+  notes             String?          @db.Text  // General notes
+  preparationNotes  String?          @db.Text  // Preparation notes
+  feedback          String?          @db.Text  // Post-interview feedback
+
+  // AI-Generated Preparation
+  aiQuestions       String[]         // AI-generated common questions
+  aiQuestionsToAsk  String[]         // AI-generated questions to ask
+  aiInterviewerBackground String?    @db.Text  // AI-researched interviewer background
+
+  // Legacy fields (keep for now, can remove later)
   questionsAsked    String[]
-  feedback          String?          @db.Text
   followUpSentAt    DateTime?
 
   // Reminders
@@ -483,6 +495,7 @@ model Interview {
 
   user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   job               Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  mockInterviews    MockInterview[]  // Related mock interview practice sessions
 
   @@index([userId])
   @@index([jobId])
@@ -498,14 +511,19 @@ model Interview {
 model MockInterview {
   id                String           @id @default(cuid())
   userId            String
+  interviewId       String?          // Link to scheduled interview (optional)
 
   // Mock Interview Details
   title             String
   interviewType     InterviewType
   targetRole        String?
   targetCompany     String?
-  difficulty        String?          // "Easy", "Medium", "Hard"
+  difficulty        String?          // "easy", "medium", "hard"
   duration          Int?             // Actual duration in minutes
+
+  // Question tracking
+  totalQuestions    Int              @default(0)
+  completedQuestions Int             @default(0)
 
   // Scoring
   overallScore      Float?           // 0-100
@@ -520,18 +538,21 @@ model MockInterview {
   areasToImprove    String[]
 
   // Session Data
-  conversationHistory Json           // Stored conversation messages
+  conversationHistory Json           // Array of { question, answer, evaluation }
 
   // Status
   isCompleted       Boolean          @default(false)
   completedAt       DateTime?
+  startedAt         DateTime         @default(now())
 
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
   user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interview         Interview?       @relation(fields: [interviewId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([interviewId])
   @@index([isCompleted])
   @@index([createdAt])
   @@map("mock_interviews")

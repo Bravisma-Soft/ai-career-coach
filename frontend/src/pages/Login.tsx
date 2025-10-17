@@ -33,32 +33,21 @@ export const Login = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  // Log validation errors
-  console.log('Form validation errors:', errors);
-
   const onSubmit = async (data: LoginFormData) => {
-    console.log('🔥 Login form submitted with data:', { email: data.email });
-    alert('Form submitted!'); // This should popup if form is submitting
     setIsLoading(true);
     try {
-      // Call real API
-      console.log('Calling authService.login...');
       const response = await authService.login({
         email: data.email,
         password: data.password,
       });
 
-      console.log('Login successful:', response);
-      console.log('Setting auth with tokens:', response.tokens);
       setAuth(response.user, response.tokens);
-      console.log('Auth set. Current token:', useAuthStore.getState().token);
       const userName = response.user.firstName || response.user.email;
       toast.success(`Welcome back, ${userName}!`, {
         description: 'You have successfully logged in.',
       });
       navigate('/dashboard');
     } catch (error: any) {
-      console.error('Login error:', error);
       toast.error('Login failed', {
         description: error.response?.data?.message || 'Invalid email or password. Please try again.',
       });
@@ -83,9 +72,7 @@ export const Login = () => {
             <p className="text-xs text-muted-foreground">Email: <span className="font-mono">test@example.com</span></p>
             <p className="text-xs text-muted-foreground">Password: <span className="font-mono">Password123!</span></p>
           </div>
-          <form onSubmit={handleSubmit(onSubmit, (errors) => {
-            console.log('❌ Form validation failed:', errors);
-          })} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -119,7 +106,6 @@ export const Login = () => {
               className="w-full"
               variant="hero"
               disabled={isLoading}
-              onClick={() => console.log('🔘 Button clicked!')}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In

@@ -1,6 +1,7 @@
-import { 
-  Interview, 
-  CreateInterviewData, 
+import { apiClient } from '@/lib/api';
+import {
+  Interview,
+  CreateInterviewData,
   UpdateInterviewData,
   MockInterviewSession,
   MockInterviewResult,
@@ -8,202 +9,260 @@ import {
   MockResponse
 } from '@/types/interview';
 
-// Mock data
-const mockInterviews: Interview[] = [
-  {
-    id: '1',
-    jobId: 'job-1',
-    companyName: 'TechCorp',
-    jobTitle: 'Senior Frontend Developer',
-    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    type: 'Video',
-    status: 'scheduled',
-    interviewer: {
-      name: 'Sarah Johnson',
-      title: 'Engineering Manager',
-      linkedInUrl: 'https://linkedin.com/in/sarahjohnson',
-    },
-    duration: 60,
-    locationOrLink: 'https://zoom.us/j/123456789',
-    notes: 'Prepare React and TypeScript examples',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+/**
+ * Map backend interview response to frontend Interview type
+ */
+function mapBackendInterview(backendInterview: any): Interview {
+  const interviewers = backendInterview.interviewers || [];
+  const firstInterviewer = Array.isArray(interviewers) && interviewers.length > 0
+    ? interviewers[0]
+    : null;
 
-let mockData = [...mockInterviews];
+  return {
+    id: backendInterview.id,
+    jobId: backendInterview.jobId,
+    companyName: backendInterview.job?.company || 'Unknown Company',
+    jobTitle: backendInterview.job?.title || 'Unknown Position',
+    date: backendInterview.scheduledAt,
+    type: backendInterview.interviewType,
+    status: backendInterview.outcome,
+    interviewer: firstInterviewer,
+    interviewers: interviewers,
+    duration: backendInterview.duration || 60,
+    location: backendInterview.location,
+    meetingUrl: backendInterview.meetingUrl,
+    locationOrLink: backendInterview.meetingUrl || backendInterview.location || '',
+    notes: backendInterview.notes,
+    questions: backendInterview.aiQuestions || [],
+    questionsToAsk: backendInterview.aiQuestionsToAsk || [],
+    createdAt: backendInterview.createdAt,
+    updatedAt: backendInterview.updatedAt,
+  };
+}
 
 export const interviewService = {
+  /**
+   * Fetch all interviews for the current user
+   */
   fetchInterviews: async (): Promise<Interview[]> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return mockData;
+    const response = await apiClient.get('/interviews');
+    // Backend returns paginated response: { success, data: [...], pagination }
+    const backendInterviews = response.data.data;
+
+    if (!Array.isArray(backendInterviews)) {
+      console.error('Unexpected response format:', response.data);
+      return [];
+    }
+
+    return backendInterviews.map(mapBackendInterview);
   },
 
+  /**
+   * Create a new interview
+   */
   createInterview: async (data: CreateInterviewData): Promise<Interview> => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    // Find job details from the jobId (you'd fetch this from jobs store/service)
-    const newInterview: Interview = {
-      id: `interview-${Date.now()}`,
-      ...data,
-      companyName: 'Sample Company', // Would come from job data
-      jobTitle: 'Sample Position', // Would come from job data
-      status: 'scheduled',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    mockData.push(newInterview);
-    return newInterview;
+    const response = await apiClient.post('/interviews', data);
+    return mapBackendInterview(response.data.data.interview);
   },
 
+  /**
+   * Update an existing interview
+   */
   updateInterview: async (id: string, data: UpdateInterviewData): Promise<Interview> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
-    const index = mockData.findIndex((i) => i.id === id);
-    if (index === -1) throw new Error('Interview not found');
-    
-    mockData[index] = {
-      ...mockData[index],
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
-    
-    return mockData[index];
+    const response = await apiClient.put(`/interviews/${id}`, data);
+    return mapBackendInterview(response.data.data.interview);
   },
 
+  /**
+   * Delete an interview
+   */
   deleteInterview: async (id: string): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    mockData = mockData.filter((i) => i.id !== id);
+    await apiClient.delete(`/interviews/${id}`);
   },
 
+  /**
+   * Get interviews by job ID
+   */
+  getInterviewsByJob: async (jobId: string): Promise<Interview[]> => {
+    const response = await apiClient.get(`/interviews/job/${jobId}`);
+    const interviews = response.data.data;
+
+    if (!Array.isArray(interviews)) {
+      console.error('Unexpected response format for job interviews:', response.data);
+      return [];
+    }
+
+    return interviews.map(mapBackendInterview);
+  },
+
+  /**
+   * Prepare interview - Generate AI-powered questions and interviewer research
+   * This is called when user clicks "Research Interviewer & Generate Questions"
+   */
   prepareInterview: async (id: string): Promise<{
     questions: string[];
     questionsToAsk: string[];
     interviewerBackground?: string;
+    interviewContext?: string;
   }> => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    
-    return {
-      questions: [
-        'Tell me about yourself and your experience with frontend development.',
-        'Describe a challenging technical problem you solved recently.',
-        'How do you approach code reviews and collaboration with team members?',
-        'What are your thoughts on testing strategies for React applications?',
-        'Where do you see yourself in 5 years?',
-      ],
-      questionsToAsk: [
-        'What does a typical day look like for someone in this role?',
-        'How does the team approach professional development and learning?',
-        'What are the biggest challenges the team is currently facing?',
-        'How do you measure success in this position?',
-        'What is the team culture like?',
-      ],
-      interviewerBackground: 'Sarah Johnson has 10+ years in software engineering, currently leading a team of 8 developers. She previously worked at Microsoft and Google, focusing on frontend architecture and team leadership.',
-    };
+    const response = await apiClient.post(`/interviews/${id}/prepare`);
+    return response.data.data;
   },
 
-  startMockInterview: async (interviewId: string): Promise<MockInterviewSession> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    const mockQuestions: MockQuestion[] = [
-      {
-        id: 'q1',
-        text: 'Tell me about a time when you had to learn a new technology quickly. How did you approach it?',
-        category: 'behavioral',
-        difficulty: 'medium',
-      },
-      {
-        id: 'q2',
-        text: 'Explain the concept of closures in JavaScript and provide a practical example.',
-        category: 'technical',
-        difficulty: 'medium',
-      },
-      {
-        id: 'q3',
-        text: 'Describe a situation where you had to deal with conflicting priorities. How did you handle it?',
-        category: 'behavioral',
-        difficulty: 'medium',
-      },
-      {
-        id: 'q4',
-        text: 'What is your approach to debugging complex issues in production?',
-        category: 'technical',
-        difficulty: 'hard',
-      },
-      {
-        id: 'q5',
-        text: 'How do you stay updated with the latest trends and technologies in web development?',
-        category: 'general',
-        difficulty: 'easy',
-      },
-    ];
-    
-    return {
-      id: `session-${Date.now()}`,
+  /**
+   * Start mock interview session
+   * Creates a new mock interview session with AI-generated questions
+   */
+  startMockInterview: async (
+    interviewId: string,
+    options?: {
+      difficulty?: 'easy' | 'medium' | 'hard';
+      numberOfQuestions?: number;
+    }
+  ): Promise<MockInterviewSession> => {
+    const response = await apiClient.post('/mock-interviews', {
       interviewId,
-      startedAt: new Date().toISOString(),
+      difficulty: options?.difficulty || 'medium',
+      numberOfQuestions: options?.numberOfQuestions || 5,
+    });
+
+    const session = response.data.data.session;
+    const history = session.conversationHistory || {};
+    const questions = history.questions || [];
+
+    return {
+      id: session.id,
+      interviewId: session.interviewId,
+      startedAt: session.startedAt,
+      endedAt: session.completedAt,
       currentQuestionIndex: 0,
-      questions: mockQuestions,
+      questions: questions.map((q: any) => ({
+        id: q.id,
+        text: q.question,
+        category: q.category,
+        difficulty: q.difficulty,
+      })),
       responses: [],
-      isActive: true,
+      isActive: !session.isCompleted,
     };
   },
 
+  /**
+   * Submit answer to a mock interview question
+   */
   submitMockAnswer: async (
-    sessionId: string, 
+    sessionId: string,
+    questionId: string,
     answer: string
   ): Promise<MockResponse> => {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    // Mock AI evaluation
-    const score = Math.floor(Math.random() * 30) + 70; // 70-100
-    
-    return {
-      questionId: `q${Math.floor(Math.random() * 5) + 1}`,
+    const response = await apiClient.post(`/mock-interviews/${sessionId}/answer`, {
+      questionId,
       answer,
-      score,
-      feedback: 'Great answer! You demonstrated clear communication and relevant experience.',
-      strengths: [
-        'Clear structure using STAR method',
-        'Specific examples provided',
-        'Good technical understanding',
-      ],
-      improvements: [
-        'Could provide more metrics or outcomes',
-        'Consider adding a reflection on lessons learned',
-      ],
+    });
+
+    const evaluation = response.data.data.evaluation;
+
+    return {
+      questionId,
+      answer,
+      score: evaluation.score,
+      feedback: evaluation.detailedFeedback,
+      strengths: evaluation.strengths,
+      improvements: evaluation.improvements,
       submittedAt: new Date().toISOString(),
     };
   },
 
+  /**
+   * Complete mock interview and get final results
+   */
   getMockResults: async (sessionId: string): Promise<MockInterviewResult> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // Mock results
+    const response = await apiClient.post(`/mock-interviews/${sessionId}/complete`);
+
+    const session = response.data.data.session;
+    const history = session.conversationHistory || {};
+    const answers = history.answers || [];
+    const questions = history.questions || [];
+
     return {
-      sessionId,
-      overallScore: 82,
-      strengths: [
-        'Strong technical knowledge and clear explanations',
-        'Good use of real-world examples',
-        'Professional communication style',
-        'Demonstrated problem-solving abilities',
-      ],
-      improvements: [
-        'Practice providing more concise answers',
-        'Include more quantifiable achievements',
-        'Prepare more questions about company culture',
-        'Work on reducing filler words',
-      ],
-      questionResults: [],
-      generalAdvice: [
-        'Research the company culture and recent news before the interview',
-        'Prepare 3-4 strong questions to ask the interviewer',
-        'Practice the STAR method for behavioral questions',
-        'Have specific examples ready that showcase your skills',
-      ],
-      completedAt: new Date().toISOString(),
+      sessionId: session.id,
+      interviewId: session.interviewId, // Include interviewId for navigation
+      overallScore: session.overallScore || 0,
+      strengths: session.strengths || [],
+      improvements: session.areasToImprove || [],
+      questionResults: answers.map((a: any) => {
+        const question = questions.find((q: any) => q.id === a.questionId);
+        return {
+          question: {
+            id: a.questionId,
+            text: a.question,
+            category: a.category,
+            difficulty: question?.difficulty || 'medium',
+          },
+          response: {
+            questionId: a.questionId,
+            answer: a.answer,
+            score: a.evaluation.score,
+            feedback: a.evaluation.detailedFeedback,
+            strengths: a.evaluation.strengths,
+            improvements: a.evaluation.improvements,
+            submittedAt: a.submittedAt,
+          },
+        };
+      }),
+      generalAdvice: session.aiSuggestions || [],
+      completedAt: session.completedAt || new Date().toISOString(),
     };
+  },
+
+  /**
+   * Get mock interview session by ID
+   */
+  getMockInterviewSession: async (sessionId: string): Promise<MockInterviewSession> => {
+    const response = await apiClient.get(`/mock-interviews/${sessionId}`);
+
+    const session = response.data.data.session;
+    const history = session.conversationHistory || {};
+    const questions = history.questions || [];
+    const answers = history.answers || [];
+
+    return {
+      id: session.id,
+      interviewId: session.interviewId,
+      startedAt: session.startedAt,
+      endedAt: session.completedAt,
+      currentQuestionIndex: answers.length,
+      questions: questions.map((q: any) => ({
+        id: q.id,
+        text: q.question,
+        category: q.category,
+        difficulty: q.difficulty,
+      })),
+      responses: answers.map((a: any) => ({
+        questionId: a.questionId,
+        answer: a.answer,
+        score: a.evaluation.score,
+        feedback: a.evaluation.detailedFeedback,
+        strengths: a.evaluation.strengths,
+        improvements: a.evaluation.improvements,
+        submittedAt: a.submittedAt,
+      })),
+      isActive: !session.isCompleted,
+    };
+  },
+
+  /**
+   * Get all mock interview sessions for a scheduled interview
+   */
+  getMockInterviewsByInterview: async (interviewId: string) => {
+    const response = await apiClient.get(`/mock-interviews/interview/${interviewId}/sessions`);
+    return response.data.data.sessions;
+  },
+
+  /**
+   * Delete a mock interview session
+   */
+  deleteMockInterview: async (sessionId: string): Promise<void> => {
+    await apiClient.delete(`/mock-interviews/${sessionId}`);
   },
 };

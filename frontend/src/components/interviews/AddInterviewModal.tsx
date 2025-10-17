@@ -35,9 +35,10 @@ const interviewSchema = z.object({
   jobId: z.string().min(1, 'Please select a job'),
   date: z.string().min(1, 'Date is required'),
   time: z.string().min(1, 'Time is required'),
-  type: z.enum(['Phone', 'Video', 'Onsite', 'Technical', 'Behavioral', 'Panel']),
+  type: z.enum(['PHONE_SCREEN', 'VIDEO_CALL', 'IN_PERSON', 'TECHNICAL', 'BEHAVIORAL', 'PANEL', 'FINAL', 'OTHER']),
   duration: z.coerce.number().min(15, 'Duration must be at least 15 minutes'),
-  locationOrLink: z.string().min(1, 'Location or link is required'),
+  location: z.string().optional(),
+  meetingUrl: z.string().url().optional().or(z.literal('')),
   interviewerName: z.string().optional(),
   interviewerTitle: z.string().optional(),
   interviewerLinkedIn: z.string().url().optional().or(z.literal('')),
@@ -51,13 +52,15 @@ interface AddInterviewModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const interviewTypes: InterviewType[] = [
-  'Phone',
-  'Video',
-  'Onsite',
-  'Technical',
-  'Behavioral',
-  'Panel',
+const interviewTypes = [
+  { value: 'PHONE_SCREEN', label: 'Phone Screen' },
+  { value: 'VIDEO_CALL', label: 'Video Call' },
+  { value: 'IN_PERSON', label: 'In Person' },
+  { value: 'TECHNICAL', label: 'Technical' },
+  { value: 'BEHAVIORAL', label: 'Behavioral' },
+  { value: 'PANEL', label: 'Panel' },
+  { value: 'FINAL', label: 'Final Round' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 export const AddInterviewModal = ({ open, onOpenChange }: AddInterviewModalProps) => {
@@ -70,9 +73,10 @@ export const AddInterviewModal = ({ open, onOpenChange }: AddInterviewModalProps
       jobId: '',
       date: '',
       time: '',
-      type: 'Video',
+      type: 'VIDEO_CALL',
       duration: 60,
-      locationOrLink: '',
+      location: '',
+      meetingUrl: '',
       interviewerName: '',
       interviewerTitle: '',
       interviewerLinkedIn: '',
@@ -82,20 +86,21 @@ export const AddInterviewModal = ({ open, onOpenChange }: AddInterviewModalProps
 
   const onSubmit = (data: InterviewFormData) => {
     const dateTime = new Date(`${data.date}T${data.time}`);
-    
+
     createInterview(
       {
         jobId: data.jobId,
-        date: dateTime.toISOString(),
-        type: data.type,
+        scheduledAt: dateTime.toISOString(),
+        type: data.type as any,
         duration: data.duration,
-        locationOrLink: data.locationOrLink,
-        interviewer: data.interviewerName
-          ? {
+        location: data.location,
+        meetingUrl: data.meetingUrl,
+        interviewers: data.interviewerName
+          ? [{
               name: data.interviewerName,
               title: data.interviewerTitle,
               linkedInUrl: data.interviewerLinkedIn,
-            }
+            }]
           : undefined,
         notes: data.notes,
       },
@@ -190,8 +195,8 @@ export const AddInterviewModal = ({ open, onOpenChange }: AddInterviewModalProps
                       </FormControl>
                       <SelectContent>
                         {interviewTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -216,19 +221,35 @@ export const AddInterviewModal = ({ open, onOpenChange }: AddInterviewModalProps
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="locationOrLink"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location or Meeting Link</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Zoom link, address, or phone number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Office address or phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="meetingUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Meeting Link (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Zoom, Teams, or Google Meet link" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="space-y-4 pt-4 border-t">
               <h3 className="text-sm font-medium">Interviewer Information (Optional)</h3>

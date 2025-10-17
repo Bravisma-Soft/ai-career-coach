@@ -107,7 +107,7 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/interviews/mock/:id/results"
+                  path="/interviews/mock/:sessionId/results"
                   element={
                     <ProtectedRoute>
                       <MockInterviewResults />

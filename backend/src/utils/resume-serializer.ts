@@ -74,14 +74,6 @@ export function serializeResume(resume: Resume): SerializedResume {
       current: exp.isCurrent || false,
       description: exp.achievements || [],
     };
-    // Log for debugging
-    if (index === 0) {
-      console.log('Serializing experience 0:', {
-        hasAchievements: !!exp.achievements,
-        achievementsLength: exp.achievements?.length,
-        descriptionLength: result.description?.length
-      });
-    }
     return result;
   });
 

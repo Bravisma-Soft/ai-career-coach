@@ -60,6 +60,22 @@ router.get(
 );
 
 /**
+ * @route   GET /api/v1/interviews/job/:jobId
+ * @desc    Get all interviews for a specific job
+ * @access  Private
+ */
+router.get(
+  '/job/:jobId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.userId!;
+    const { jobId } = req.params;
+
+    const interviews = await interviewService.getInterviewsByJob(jobId!, userId);
+    sendSuccess(res, interviews, 'Job interviews retrieved');
+  })
+);
+
+/**
  * @route   GET /api/v1/interviews/past
  * @desc    Get past interviews
  * @access  Private
@@ -152,6 +168,23 @@ router.delete(
 
     await interviewService.deleteInterview(id!, userId);
     sendSuccess(res, null, 'Interview deleted successfully');
+  })
+);
+
+/**
+ * @route   POST /api/v1/interviews/:id/prepare
+ * @desc    Generate AI-powered interview preparation (questions & interviewer research)
+ * @access  Private
+ */
+router.post(
+  '/:id/prepare',
+  validate(getInterviewSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.userId!;
+    const { id } = req.params;
+
+    const result = await interviewService.prepareInterview(id!, userId);
+    sendSuccess(res, result, 'Interview preparation generated successfully');
   })
 );
 

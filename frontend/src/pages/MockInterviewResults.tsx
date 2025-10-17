@@ -12,25 +12,67 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { ArrowLeft, CheckCircle2, AlertCircle, RotateCcw, Share2, Trophy } from 'lucide-react';
+import { format } from 'date-fns';
 import { useInterviews } from '@/hooks/useInterviews';
 import { useInterviewsStore } from '@/store/interviewsStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MockInterviewResults() {
-  const { id } = useParams<{ id: string }>();
+  const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { getMockResults, mockResults } = useInterviews();
   const { mockSession } = useInterviewsStore();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (mockSession && !mockResults) {
-      getMockResults(mockSession.id);
+    if (sessionId && !mockResults) {
+      console.log('Fetching results for session:', sessionId);
+      getMockResults(sessionId);
     }
-  }, [mockSession, mockResults, getMockResults]);
+  }, [sessionId, mockResults, getMockResults]);
 
   const handleRetry = () => {
-    navigate(`/interviews/mock/${id}`);
+    const interviewId = mockResults?.interviewId || mockSession?.interviewId;
+    if (interviewId) {
+      // Clear the current session and start a new one
+      navigate(`/interviews/mock/${interviewId}`);
+      window.location.reload(); // Force reload to start fresh
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Could not find interview to retry',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleShare = () => {
+    // Copy results summary to clipboard
+    const summary = `Mock Interview Results
+Overall Score: ${mockResults?.overallScore}/100
+
+Strengths:
+${mockResults?.strengths.map(s => `• ${s}`).join('\n')}
+
+Areas for Improvement:
+${mockResults?.improvements.map(i => `• ${i}`).join('\n')}
+
+Completed: ${mockResults?.completedAt ? format(new Date(mockResults.completedAt), 'MMM dd, yyyy') : 'N/A'}`;
+
+    navigator.clipboard.writeText(summary).then(() => {
+      toast({
+        title: 'Results Copied!',
+        description: 'Interview results have been copied to your clipboard',
+      });
+    }).catch(() => {
+      toast({
+        title: 'Error',
+        description: 'Failed to copy results',
+        variant: 'destructive',
+      });
+    });
   };
 
   const getScoreColor = (score: number) => {
@@ -59,7 +101,12 @@ export default function MockInterviewResults() {
     <div className="container py-8 max-w-5xl">
       <Button
         variant="ghost"
-        onClick={() => navigate(`/interviews/${id}`)}
+        onClick={() => {
+          const interviewId = mockResults?.interviewId || mockSession?.interviewId;
+          if (interviewId) {
+            navigate(`/interviews/${interviewId}`);
+          }
+        }}
         className="mb-6"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
@@ -113,7 +160,7 @@ export default function MockInterviewResults() {
               <RotateCcw className="h-4 w-4 mr-2" />
               Retry Interview
             </Button>
-            <Button variant="outline" size="lg">
+            <Button variant="outline" size="lg" onClick={handleShare}>
               <Share2 className="h-4 w-4 mr-2" />
               Share Results
             </Button>
@@ -165,7 +212,7 @@ export default function MockInterviewResults() {
         </Card>
 
         {/* Detailed Question Feedback */}
-        {mockSession && mockSession.questions.length > 0 && (
+        {mockResults && mockResults.questionResults && mockResults.questionResults.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Question-by-Question Feedback</CardTitle>
@@ -175,42 +222,39 @@ export default function MockInterviewResults() {
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
-                {mockSession.questions.map((question, i) => {
-                  const score = Math.floor(Math.random() * 30) + 70; // Mock score
+                {mockResults.questionResults.map((result, i) => {
                   return (
-                    <AccordionItem key={question.id} value={`item-${i}`}>
+                    <AccordionItem key={result.question.id} value={`item-${i}`}>
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center justify-between w-full pr-4">
                           <span className="text-left font-normal">
                             <Badge variant="secondary" className="mr-2">
                               Q{i + 1}
                             </Badge>
-                            {question.text}
+                            {result.question.text}
                           </span>
-                          <Badge className={cn(getScoreColor(score))}>
-                            {score}/100
+                          <Badge className={cn(getScoreColor(result.response.score))}>
+                            {result.response.score}/100
                           </Badge>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="space-y-4">
                         <div>
                           <h4 className="text-sm font-semibold mb-2">Your Answer:</h4>
-                          <p className="text-sm text-muted-foreground">
-                            [Answer would be displayed here]
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {result.response.answer}
                           </p>
                         </div>
-                        
+
                         <Separator />
-                        
+
                         <div>
                           <h4 className="text-sm font-semibold mb-2">Feedback:</h4>
-                          <p className="text-sm">
-                            Great answer! You demonstrated clear communication and provided
-                            relevant examples. Consider adding more specific metrics to
-                            strengthen your response.
+                          <p className="text-sm whitespace-pre-wrap">
+                            {result.response.feedback}
                           </p>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
@@ -218,8 +262,9 @@ export default function MockInterviewResults() {
                               What Worked
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
-                              <li>• Clear structure</li>
-                              <li>• Specific examples</li>
+                              {result.response.strengths.map((strength, idx) => (
+                                <li key={idx}>• {strength}</li>
+                              ))}
                             </ul>
                           </div>
                           <div>
@@ -228,8 +273,9 @@ export default function MockInterviewResults() {
                               To Improve
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
-                              <li>• Add more metrics</li>
-                              <li>• Include outcomes</li>
+                              {result.response.improvements.map((improvement, idx) => (
+                                <li key={idx}>• {improvement}</li>
+                              ))}
                             </ul>
                           </div>
                         </div>

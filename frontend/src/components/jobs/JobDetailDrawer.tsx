@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Job } from '@/types/job';
 import { Document } from '@/types/document';
+import { Interview } from '@/types/interview';
 import { TailoredResume } from '@/types/ai';
 import {
   Sheet,
@@ -27,11 +29,16 @@ import {
   Sparkles,
   Download,
   Eye,
+  Clock,
+  Plus,
 } from 'lucide-react';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { TailorResumeModal } from '@/components/ai/TailorResumeModal';
 import { CoverLetterModal } from '@/components/ai/CoverLetterModal';
+import { CoverLetterViewer } from '@/components/ai/CoverLetterViewer';
 import { documentService } from '@/services/documentService';
+import { interviewService } from '@/services/interviewService';
 import { toast } from '@/hooks/use-toast';
 import { useResumes } from '@/hooks/useResumes';
 
@@ -50,19 +57,29 @@ const workModeColors: Record<Job['workMode'], string> = {
 };
 
 export const JobDetailDrawer = ({ open, onClose, job, onEdit, onDelete }: JobDetailDrawerProps) => {
+  const navigate = useNavigate();
   const [showTailorModal, setShowTailorModal] = useState(false);
   const [showCoverLetterModal, setShowCoverLetterModal] = useState(false);
+  const [showCoverLetterViewer, setShowCoverLetterViewer] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [loadingInterviews, setLoadingInterviews] = useState(false);
   const [selectedTailoredResume, setSelectedTailoredResume] = useState<TailoredResume | undefined>();
+  const [selectedCoverLetter, setSelectedCoverLetter] = useState<{
+    content: string;
+    metadata: any;
+    title: string;
+  } | null>(null);
 
   // Load resumes for the tailor modal
   useResumes();
 
-  // Fetch documents when job changes or modal opens
+  // Fetch documents and interviews when job changes or modal opens
   useEffect(() => {
     if (job && open) {
       loadDocuments();
+      loadInterviews();
     }
   }, [job?.id, open]);
 
@@ -82,6 +99,25 @@ export const JobDetailDrawer = ({ open, onClose, job, onEdit, onDelete }: JobDet
       });
     } finally {
       setLoadingDocuments(false);
+    }
+  };
+
+  const loadInterviews = async () => {
+    if (!job) return;
+
+    setLoadingInterviews(true);
+    try {
+      const jobInterviews = await interviewService.getInterviewsByJob(job.id);
+      setInterviews(jobInterviews);
+    } catch (error) {
+      console.error('Error loading interviews:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load interviews',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoadingInterviews(false);
     }
   };
 
@@ -124,10 +160,26 @@ export const JobDetailDrawer = ({ open, onClose, job, onEdit, onDelete }: JobDet
       setSelectedTailoredResume(tailoredResume);
       setShowTailorModal(true);
     } catch (error) {
-      console.error('Error parsing tailored resume:', error);
       toast({
         title: 'Error',
         description: 'Failed to load tailored resume',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleOpenCoverLetter = (doc: Document) => {
+    try {
+      setSelectedCoverLetter({
+        content: doc.content || '',
+        metadata: doc.metadata || {},
+        title: doc.title,
+      });
+      setShowCoverLetterViewer(true);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load cover letter',
         variant: 'destructive'
       });
     }
@@ -298,16 +350,84 @@ export const JobDetailDrawer = ({ open, onClose, job, onEdit, onDelete }: JobDet
             <TabsContent value="interview" className="space-y-4 mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Interview Preparation</CardTitle>
-                  <CardDescription>Get ready for your interview</CardDescription>
+                  <CardTitle className="text-lg">Scheduled Interviews</CardTitle>
+                  <CardDescription>Manage and prepare for your interviews</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    No interview scheduled yet. Once you schedule an interview, you can prepare here.
-                  </p>
-                  <Button variant="outline" className="w-full">
-                    Schedule Interview
-                  </Button>
+                  {loadingInterviews ? (
+                    <div className="text-center py-8">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <p className="text-sm text-muted-foreground mt-2">Loading interviews...</p>
+                    </div>
+                  ) : interviews.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground mb-4">
+                        No interviews scheduled yet for this position.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          onClose();
+                          navigate('/interviews');
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Schedule Interview
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {interviews.map((interview) => (
+                        <div
+                          key={interview.id}
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                          onClick={() => {
+                            onClose();
+                            navigate(`/interviews/${interview.id}`);
+                          }}
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Badge variant="outline">{interview.type}</Badge>
+                              <Badge
+                                variant={interview.status === 'PENDING' ? 'default' : 'secondary'}
+                              >
+                                {interview.status}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="h-4 w-4" />
+                              <span>{format(new Date(interview.date), 'MMM dd, yyyy')}</span>
+                              <Clock className="h-4 w-4 ml-2" />
+                              <span>{format(new Date(interview.date), 'h:mm a')}</span>
+                            </div>
+                            {interview.interviewer && (
+                              <p className="text-sm mt-1">
+                                with {interview.interviewer.name}
+                                {interview.interviewer.title && ` (${interview.interviewer.title})`}
+                              </p>
+                            )}
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            View Details
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        variant="outline"
+                        className="w-full mt-4"
+                        onClick={() => {
+                          onClose();
+                          navigate('/interviews');
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Schedule Another Interview
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -348,12 +468,14 @@ export const JobDetailDrawer = ({ open, onClose, job, onEdit, onDelete }: JobDet
                           key={doc.id}
                           className={cn(
                             "flex items-start justify-between p-3 border rounded-lg transition-colors",
-                            doc.documentType === 'RESUME' && "cursor-pointer hover:bg-accent hover:border-primary/50",
-                            doc.documentType !== 'RESUME' && "hover:bg-accent/50"
+                            (doc.documentType === 'RESUME' || doc.documentType === 'COVER_LETTER') && "cursor-pointer hover:bg-accent hover:border-primary/50",
+                            doc.documentType !== 'RESUME' && doc.documentType !== 'COVER_LETTER' && "hover:bg-accent/50"
                           )}
                           onClick={() => {
                             if (doc.documentType === 'RESUME') {
                               handleOpenTailoredResume(doc);
+                            } else if (doc.documentType === 'COVER_LETTER') {
+                              handleOpenCoverLetter(doc);
                             }
                           }}
                         >
@@ -454,11 +576,22 @@ export const JobDetailDrawer = ({ open, onClose, job, onEdit, onDelete }: JobDet
       existingTailoredResume={selectedTailoredResume}
     />
 
-    <CoverLetterModal 
+    <CoverLetterModal
       job={job}
       open={showCoverLetterModal}
       onOpenChange={setShowCoverLetterModal}
+      onSaveComplete={loadDocuments}
     />
+
+    {selectedCoverLetter && (
+      <CoverLetterViewer
+        open={showCoverLetterViewer}
+        onOpenChange={setShowCoverLetterViewer}
+        coverLetterContent={selectedCoverLetter.content}
+        metadata={selectedCoverLetter.metadata}
+        title={selectedCoverLetter.title}
+      />
+    )}
     </>
   );
 };

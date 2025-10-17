@@ -78,8 +78,6 @@ export const jobService = {
       }
     });
 
-    console.log('Sending to backend:', backendData); // Debug log
-
     const response = await apiClient.put<{ success: boolean; data: { job: Job } }>(`/jobs/${id}`, backendData);
     return response.data.data.job;
   },
@@ -89,7 +87,6 @@ export const jobService = {
   },
 
   updateJobStatus: async (id: string, status: JobStatus): Promise<Job> => {
-    console.log('Updating job status:', { id, status }); // Debug log
     const response = await apiClient.put<{ success: boolean; data: { job: Job } }>(`/jobs/${id}/status`, { status });
     return response.data.data.job;
   },

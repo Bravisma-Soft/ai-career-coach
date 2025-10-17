@@ -10,6 +10,7 @@ import { Job } from '@/types/job';
 import { useResumesStore } from '@/store/resumesStore';
 import { useAIStore } from '@/store/aiStore';
 import { aiService } from '@/services/aiService';
+import { documentService } from '@/services/documentService';
 import { AIProcessingIndicator } from './AIProcessingIndicator';
 import { toast } from '@/hooks/use-toast';
 
@@ -17,9 +18,10 @@ interface CoverLetterModalProps {
   job: Job;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSaveComplete?: () => void;
 }
 
-export function CoverLetterModal({ job, open, onOpenChange }: CoverLetterModalProps) {
+export function CoverLetterModal({ job, open, onOpenChange, onSaveComplete }: CoverLetterModalProps) {
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
   const [tone, setTone] = useState<'professional' | 'enthusiastic' | 'formal'>('professional');
   const [notes, setNotes] = useState('');
@@ -87,13 +89,54 @@ export function CoverLetterModal({ job, open, onOpenChange }: CoverLetterModalPr
     });
   };
 
-  const handleSave = () => {
-    toast({
-      title: 'Cover letter saved',
-      description: 'Your cover letter has been saved'
-    });
-    onOpenChange(false);
-    reset();
+  const handleSave = async () => {
+    if (!coverLetter || !selectedResume) return;
+
+    try {
+      // Save as a document linked to this job
+      await documentService.createDocument({
+        jobId: job.id,
+        documentType: 'COVER_LETTER',
+        title: `Cover Letter - ${job.company} ${job.title}`,
+        fileName: `cover-letter-${job.company}-${Date.now()}.txt`,
+        fileUrl: 'data:text/plain;base64,' + btoa(editedContent),
+        fileSize: editedContent.length,
+        mimeType: 'text/plain',
+        description: `AI-generated cover letter for ${job.company} - ${job.title}. Tone: ${coverLetter.tone}`,
+        content: editedContent,
+        metadata: {
+          tone: coverLetter.tone,
+          originalResumeId: selectedResume.id,
+          generatedForJob: job.id,
+          wordCount: coverLetter.wordCount,
+          keyPoints: coverLetter.keyPoints,
+          suggestions: coverLetter.suggestions,
+          subject: coverLetter.subject,
+        },
+      });
+
+      toast({
+        title: 'Cover letter saved',
+        description: `Your cover letter has been saved to the job's Documents tab`
+      });
+
+      // Call the callback to reload documents
+      if (onSaveComplete) {
+        onSaveComplete();
+      }
+
+      onOpenChange(false);
+      reset();
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to save cover letter';
+      console.error('Save cover letter error:', error);
+      console.error('Error details:', errorMessage);
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleRegenerate = () => {

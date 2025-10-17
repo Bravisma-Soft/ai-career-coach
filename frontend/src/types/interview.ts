@@ -1,15 +1,20 @@
-export type InterviewType = 
-  | 'Phone' 
-  | 'Video' 
-  | 'Onsite' 
-  | 'Technical' 
-  | 'Behavioral' 
-  | 'Panel';
+export type InterviewType =
+  | 'PHONE_SCREEN'
+  | 'VIDEO_CALL'
+  | 'IN_PERSON'
+  | 'TECHNICAL'
+  | 'BEHAVIORAL'
+  | 'PANEL'
+  | 'FINAL'
+  | 'OTHER';
 
-export type InterviewStatus = 
-  | 'scheduled' 
-  | 'completed' 
-  | 'cancelled';
+export type InterviewStatus =
+  | 'PENDING'
+  | 'PASSED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'RESCHEDULED'
+  | 'NO_SHOW';
 
 export interface Interviewer {
   name?: string;
@@ -23,26 +28,30 @@ export interface Interview {
   jobId: string;
   companyName: string;
   jobTitle: string;
-  date: string; // ISO string
+  date: string; // ISO string - maps to scheduledAt
   type: InterviewType;
-  status: InterviewStatus;
-  interviewer?: Interviewer;
+  status: InterviewStatus; // maps to outcome
+  interviewer?: Interviewer; // First interviewer from interviewers array
+  interviewers?: Interviewer[]; // Full array from backend
   duration: number; // minutes
-  locationOrLink: string;
+  location?: string;
+  locationOrLink?: string; // Legacy field, maps to meetingUrl or location
+  meetingUrl?: string;
   notes?: string;
-  questions?: string[]; // AI-generated questions
-  questionsToAsk?: string[]; // AI-generated questions to ask
+  questions?: string[]; // AI-generated questions (from aiQuestions)
+  questionsToAsk?: string[]; // AI-generated questions to ask (from aiQuestionsToAsk)
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateInterviewData {
   jobId: string;
-  date: string;
+  scheduledAt: string; // ISO string
   type: InterviewType;
-  interviewer?: Partial<Interviewer>;
-  duration: number;
-  locationOrLink: string;
+  interviewers?: Interviewer[];
+  duration?: number;
+  location?: string;
+  meetingUrl?: string;
   notes?: string;
 }
 
@@ -80,6 +89,7 @@ export interface MockResponse {
 
 export interface MockInterviewResult {
   sessionId: string;
+  interviewId?: string; // For navigation back to interview
   overallScore: number; // 0-100
   strengths: string[];
   improvements: string[];

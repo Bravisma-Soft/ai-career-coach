@@ -10,6 +10,7 @@ import {
   GetInterviewsQuery,
 } from '@/api/validators/interview.validator';
 import { Interview } from '@prisma/client';
+import { mockInterviewAgent } from '@/ai/agents/mock-interview.agent';
 
 export class InterviewService {
   /**
@@ -19,44 +20,50 @@ export class InterviewService {
     userId: string,
     data: CreateInterviewInput
   ): Promise<Interview> {
-    // Verify application exists and belongs to user
-    const application = await prisma.application.findUnique({
-      where: { id: data.applicationId },
-      include: { job: true },
+    // Verify job exists and belongs to user
+    const job = await prisma.job.findUnique({
+      where: { id: data.jobId },
     });
 
-    if (!application) {
-      throw new NotFoundError('Application not found');
+    if (!job) {
+      throw new NotFoundError('Job not found');
     }
 
-    if (application.userId !== userId) {
+    if (job.userId !== userId) {
       throw new ForbiddenError(
-        'Not authorized to create interview for this application'
+        'Not authorized to create interview for this job'
       );
     }
 
     const interview = await prisma.interview.create({
       data: {
-        ...data,
+        userId,
+        jobId: data.jobId,
+        interviewType: data.type,
         scheduledAt: new Date(data.scheduledAt),
+        duration: data.duration,
+        location: data.location,
+        meetingUrl: data.meetingUrl,
+        interviewers: data.interviewers as any, // JSON field
+        round: data.round,
+        notes: data.notes,
+        preparationNotes: data.preparationNotes,
+        feedback: data.feedback,
+        outcome: data.outcome || 'PENDING',
       },
       include: {
-        application: {
-          include: {
-            job: {
-              select: {
-                id: true,
-                title: true,
-                company: true,
-              },
-            },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            company: true,
           },
         },
       },
     });
 
     logger.info(
-      `Interview created: ${interview.id} for application: ${data.applicationId}`
+      `Interview created: ${interview.id} for job: ${data.jobId}`
     );
     return interview;
   }
@@ -70,7 +77,7 @@ export class InterviewService {
       limit = 10,
       type,
       outcome,
-      applicationId,
+      jobId,
       upcoming,
       sortBy = 'scheduledAt',
       sortOrder = 'asc',
@@ -80,21 +87,19 @@ export class InterviewService {
 
     // Build where clause
     const where: any = {
-      application: {
-        userId,
-      },
+      userId,
     };
 
     if (type) {
-      where.type = type;
+      where.interviewType = type;
     }
 
     if (outcome) {
       where.outcome = outcome;
     }
 
-    if (applicationId) {
-      where.applicationId = applicationId;
+    if (jobId) {
+      where.jobId = jobId;
     }
 
     // Filter for upcoming interviews
@@ -128,16 +133,23 @@ export class InterviewService {
         take: limit,
         orderBy,
         include: {
-          application: {
-            include: {
-              job: {
-                select: {
-                  id: true,
-                  title: true,
-                  company: true,
-                  location: true,
-                },
-              },
+          job: {
+            select: {
+              id: true,
+              title: true,
+              company: true,
+              location: true,
+            },
+          },
+          mockInterviews: {
+            select: {
+              id: true,
+              overallScore: true,
+              isCompleted: true,
+              createdAt: true,
+            },
+            orderBy: {
+              createdAt: 'desc',
             },
           },
         },
@@ -168,16 +180,10 @@ export class InterviewService {
     const interview = await prisma.interview.findUnique({
       where: { id: interviewId },
       include: {
-        application: {
-          include: {
-            job: true,
-            resume: {
-              select: {
-                id: true,
-                title: true,
-                fileName: true,
-              },
-            },
+        job: true,
+        mockInterviews: {
+          orderBy: {
+            createdAt: 'desc',
           },
         },
       },
@@ -187,7 +193,7 @@ export class InterviewService {
       throw new NotFoundError('Interview not found');
     }
 
-    if (interview.application.userId !== userId) {
+    if (interview.userId !== userId) {
       throw new ForbiddenError('Not authorized to access this interview');
     }
 
@@ -211,19 +217,21 @@ export class InterviewService {
       updateData.scheduledAt = new Date(data.scheduledAt);
     }
 
+    // Map 'type' to 'interviewType'
+    if (data.type) {
+      updateData.interviewType = data.type;
+      delete updateData.type;
+    }
+
     const updated = await prisma.interview.update({
       where: { id: interviewId },
       data: updateData,
       include: {
-        application: {
-          include: {
-            job: {
-              select: {
-                id: true,
-                title: true,
-                company: true,
-              },
-            },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            company: true,
           },
         },
       },
@@ -253,9 +261,7 @@ export class InterviewService {
   async getUpcomingInterviews(userId: string, limit: number = 10) {
     const interviews = await prisma.interview.findMany({
       where: {
-        application: {
-          userId,
-        },
+        userId,
         scheduledAt: {
           gte: new Date(),
         },
@@ -264,16 +270,12 @@ export class InterviewService {
       orderBy: { scheduledAt: 'asc' },
       take: limit,
       include: {
-        application: {
-          include: {
-            job: {
-              select: {
-                id: true,
-                title: true,
-                company: true,
-                location: true,
-              },
-            },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            company: true,
+            location: true,
           },
         },
       },
@@ -288,9 +290,7 @@ export class InterviewService {
   async getPastInterviews(userId: string, limit: number = 10) {
     const interviews = await prisma.interview.findMany({
       where: {
-        application: {
-          userId,
-        },
+        userId,
         scheduledAt: {
           lt: new Date(),
         },
@@ -298,16 +298,12 @@ export class InterviewService {
       orderBy: { scheduledAt: 'desc' },
       take: limit,
       include: {
-        application: {
-          include: {
-            job: {
-              select: {
-                id: true,
-                title: true,
-                company: true,
-                location: true,
-              },
-            },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            company: true,
+            location: true,
           },
         },
       },
@@ -322,12 +318,10 @@ export class InterviewService {
   async getInterviewStats(userId: string) {
     const interviews = await prisma.interview.findMany({
       where: {
-        application: {
-          userId,
-        },
+        userId,
       },
       select: {
-        type: true,
+        interviewType: true,
         outcome: true,
         scheduledAt: true,
       },
@@ -344,7 +338,7 @@ export class InterviewService {
       totalInterviews++;
 
       // Count by type
-      typeCounts[interview.type] = (typeCounts[interview.type] || 0) + 1;
+      typeCounts[interview.interviewType] = (typeCounts[interview.interviewType] || 0) + 1;
 
       // Count by outcome
       outcomeCounts[interview.outcome] =
@@ -365,28 +359,120 @@ export class InterviewService {
   }
 
   /**
-   * Get interviews by application ID
+   * Get interviews by job ID
    */
-  async getInterviewsByApplication(applicationId: string, userId: string) {
-    // Verify application exists and belongs to user
-    const application = await prisma.application.findUnique({
-      where: { id: applicationId },
+  async getInterviewsByJob(jobId: string, userId: string) {
+    // Verify job exists and belongs to user
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
     });
 
-    if (!application) {
-      throw new NotFoundError('Application not found');
+    if (!job) {
+      throw new NotFoundError('Job not found');
     }
 
-    if (application.userId !== userId) {
-      throw new ForbiddenError('Not authorized to access this application');
+    if (job.userId !== userId) {
+      throw new ForbiddenError('Not authorized to access this job');
     }
 
     const interviews = await prisma.interview.findMany({
-      where: { applicationId },
+      where: { jobId },
       orderBy: { scheduledAt: 'asc' },
+      include: {
+        mockInterviews: {
+          select: {
+            id: true,
+            overallScore: true,
+            isCompleted: true,
+          },
+        },
+      },
     });
 
     return interviews;
+  }
+
+  /**
+   * Prepare interview with AI-generated questions and interviewer research
+   */
+  async prepareInterview(interviewId: string, userId: string) {
+    // Get interview with job and interviewer details
+    const interview = await prisma.interview.findUnique({
+      where: { id: interviewId },
+      include: {
+        job: true,
+      },
+    });
+
+    if (!interview) {
+      throw new NotFoundError('Interview not found');
+    }
+
+    if (interview.userId !== userId) {
+      throw new ForbiddenError('Not authorized to access this interview');
+    }
+
+    logger.info('Preparing interview with AI', {
+      interviewId,
+      jobTitle: interview.job.title,
+      company: interview.job.company,
+    });
+
+    try {
+      // Generate questions using AI based on job context and interviewer profile
+      const generatedQuestions = await mockInterviewAgent.generateQuestions({
+        jobTitle: interview.job.title,
+        companyName: interview.job.company,
+        jobDescription: interview.job.jobDescription || undefined,
+        interviewType: interview.interviewType,
+        difficulty: 'medium',
+        numberOfQuestions: 10,
+        interviewers: interview.interviewers as any,
+      });
+
+      // Extract just the question text for common questions
+      const commonQuestions = generatedQuestions.questions.map((q) => q.question);
+
+      // Generate questions to ask the interviewer (these are smart questions the candidate should ask)
+      const questionsToAsk = generatedQuestions.tips || [
+        'What does success look like in this role after 3-6 months?',
+        'How does the team approach collaboration and communication?',
+        'What are the biggest challenges the team is currently facing?',
+        'What opportunities are there for growth and learning?',
+        'How do you measure and evaluate performance in this role?',
+      ];
+
+      // Update interview with AI-generated content
+      const updatedInterview = await prisma.interview.update({
+        where: { id: interviewId },
+        data: {
+          aiQuestions: commonQuestions,
+          aiQuestionsToAsk: questionsToAsk,
+          aiInterviewerBackground: generatedQuestions.interviewContext,
+        },
+        include: {
+          job: true,
+        },
+      });
+
+      logger.info('Interview preparation completed', {
+        interviewId,
+        questionsGenerated: commonQuestions.length,
+      });
+
+      return {
+        questions: commonQuestions,
+        questionsToAsk,
+        interviewerBackground: generatedQuestions.interviewContext,
+        interviewContext: generatedQuestions.interviewContext,
+      };
+    } catch (error: any) {
+      logger.error('Failed to prepare interview', {
+        error: error.message,
+        interviewId,
+      });
+      throw new Error(`Failed to prepare interview: ${error.message}`);
+    }
   }
 }
 

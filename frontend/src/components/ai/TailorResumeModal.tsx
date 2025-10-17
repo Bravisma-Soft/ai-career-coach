@@ -133,7 +133,6 @@ export function TailorResumeModal({ job, open, onOpenChange, onSaveComplete, exi
       onOpenChange(false);
       reset();
     } catch (error) {
-      console.error('Error saving tailored resume:', error);
       toast({
         title: 'Error',
         description: 'Failed to save tailored resume. Please try again.',
@@ -173,13 +172,6 @@ export function TailorResumeModal({ job, open, onOpenChange, onSaveComplete, exi
         skills: tailoredResume.tailoredContent.skills,
       };
 
-      console.log('Creating resume with data:', resumeData);
-      console.log('Experience descriptions:', resumeData.experience.map(exp => ({
-        company: exp.company,
-        descriptionCount: exp.description?.length || 0,
-        descriptions: exp.description
-      })));
-
       const jsonString = JSON.stringify(resumeData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const file = new File([blob], `tailored-${Date.now()}.json`, { type: 'application/json' });
@@ -190,17 +182,13 @@ export function TailorResumeModal({ job, open, onOpenChange, onSaveComplete, exi
         description: 'Please wait while we prepare your resume for editing'
       });
 
-      console.log('Uploading resume file...');
       let newResume = await resumeService.uploadResume({
         name: resumeName,
         type: 'tailored',
         file: file,
       });
 
-      console.log('Resume created successfully:', newResume);
-
       // Now update the resume with parsed data so it's immediately editable
-      console.log('Updating resume with parsed data...');
       const updatedResume = await resumeService.updateResume(newResume.id, {
         name: resumeName,
         personalInfo: tailoredResume.tailoredContent.personalInfo,
@@ -209,8 +197,6 @@ export function TailorResumeModal({ job, open, onOpenChange, onSaveComplete, exi
         education: tailoredResume.tailoredContent.education,
         skills: tailoredResume.tailoredContent.skills,
       });
-
-      console.log('Resume updated with parsed data:', updatedResume);
 
       toast({
         title: 'Resume created',
@@ -234,8 +220,6 @@ export function TailorResumeModal({ job, open, onOpenChange, onSaveComplete, exi
         });
       }, 800);
     } catch (error: any) {
-      console.error('Error creating editable resume:', error);
-      console.error('Error details:', error?.response?.data || error?.message);
       toast({
         title: 'Error',
         description: error?.response?.data?.message || error?.message || 'Failed to create editable resume. Please try again.',
@@ -322,7 +306,6 @@ export function TailorResumeModal({ job, open, onOpenChange, onSaveComplete, exi
         description: `Your tailored resume has been downloaded as ${fileName}`
       });
     } catch (error) {
-      console.error('Error generating PDF:', error);
       toast({
         title: 'Error',
         description: 'Failed to generate PDF. Please try again.',
