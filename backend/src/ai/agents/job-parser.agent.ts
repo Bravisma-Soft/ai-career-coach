@@ -143,10 +143,9 @@ export class JobParserAgent extends BaseAgent<JobParserInput, ParsedJobData> {
         'Accept-Language': 'en-US,en;q=0.9',
       },
       timeout: 15000,
-      maxRedirects: 5,
-    });
+    } as any);
 
-    return this.extractTextFromHTML(response.data);
+    return this.extractTextFromHTML(response.data as string);
   }
 
   /**
