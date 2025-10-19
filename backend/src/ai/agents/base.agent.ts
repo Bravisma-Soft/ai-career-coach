@@ -12,10 +12,7 @@ import {
   AgentConfig,
   AgentExecutionOptions,
   AIMessage,
-  ClaudeResponse,
-  StreamingChunk,
 } from '@/types/ai.types';
-import { InternalServerError } from '@/utils/ApiError';
 
 /**
  * Base Agent Class
@@ -150,7 +147,7 @@ export abstract class BaseAgent<TInput = any, TOutput = any> {
           totalTokens: response.usage.input_tokens + response.usage.output_tokens,
         },
         model: response.model,
-        stopReason: response.stop_reason,
+        stopReason: response.stop_reason || undefined,
       };
     } catch (error) {
       return this.handleError(error, startTime);
@@ -218,7 +215,7 @@ export abstract class BaseAgent<TInput = any, TOutput = any> {
       });
 
       // Create streaming request
-      const stream = await this.client.messages.create(request);
+      const stream = await this.client.messages.create(request) as any;
 
       // Process stream
       for await (const event of stream) {

@@ -8,7 +8,6 @@ import {
   RESUME_PARSER_SYSTEM_PROMPT,
 } from '@/ai/prompts/resume-parser.prompt';
 import { logger } from '@/config/logger';
-import { BadRequestError } from '@/utils/ApiError';
 
 /**
  * Resume Parser Agent
@@ -98,7 +97,7 @@ export class ResumeParserAgent extends BaseAgent<ResumeParserInput, ParsedResume
         error: response.error,
         fileName,
       });
-      return response;
+      return response as AgentResponse<ParsedResumeData>;
     }
 
     // Parse JSON response

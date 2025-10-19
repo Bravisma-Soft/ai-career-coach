@@ -31,7 +31,7 @@ export class JobParserAgent extends BaseAgent<JobParserInput, ParsedJobData> {
 
   async execute(
     input: JobParserInput,
-    options?: AgentExecutionOptions
+    _options?: AgentExecutionOptions
   ): Promise<AgentResponse<ParsedJobData>> {
     const startTime = Date.now();
 
@@ -54,6 +54,9 @@ export class JobParserAgent extends BaseAgent<JobParserInput, ParsedJobData> {
       let parsedData: ParsedJobData;
       try {
         // Extract JSON from response (in case there's extra text)
+        if (!response.data) {
+          throw new Error('No data in response');
+        }
         const jsonMatch = response.data.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
           throw new Error('No JSON found in response');
@@ -78,13 +81,6 @@ export class JobParserAgent extends BaseAgent<JobParserInput, ParsedJobData> {
       return {
         success: true,
         data: validatedData,
-        metadata: {
-          duration,
-          model: this.config.model,
-          inputTokens: response.metadata?.inputTokens,
-          outputTokens: response.metadata?.outputTokens,
-          cost: response.metadata?.cost,
-        },
       };
     } catch (error: any) {
       const duration = Date.now() - startTime;
@@ -99,11 +95,9 @@ export class JobParserAgent extends BaseAgent<JobParserInput, ParsedJobData> {
         error: {
           code: 'JOB_PARSING_FAILED',
           message: error.message || 'Failed to parse job from URL',
+          type: 'parsing_error',
+          retryable: false,
           details: error,
-        },
-        metadata: {
-          duration,
-          model: this.config.model,
         },
       };
     }

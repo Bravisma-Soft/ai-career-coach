@@ -264,7 +264,7 @@ export class CoverLetterAgent extends BaseAgent<CoverLetterInput, GenerateCoverL
     // Work Experience (most important for cover letter)
     if (resume.experiences && resume.experiences.length > 0) {
       sections.push('# WORK EXPERIENCE');
-      resume.experiences.forEach((exp, idx) => {
+      resume.experiences.forEach((exp) => {
         sections.push(`\n## ${exp.position} at ${exp.company}`);
         sections.push(`Duration: ${exp.startDate} - ${exp.endDate || 'Present'}`);
         if (exp.location) sections.push(`Location: ${exp.location}`);
