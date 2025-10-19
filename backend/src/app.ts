@@ -12,6 +12,13 @@ import { generalLimiter } from '@/api/middleware/rateLimiter';
 const app: Application = express();
 
 // =================================
+// TRUST PROXY (for Railway, Heroku, etc.)
+// =================================
+// Railway uses a reverse proxy, so we need to trust it
+// This allows express-rate-limit and other middleware to see real client IPs
+app.set('trust proxy', 1); // Trust first proxy
+
+// =================================
 // STATIC FILE SERVING (for local uploads)
 // =================================
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
