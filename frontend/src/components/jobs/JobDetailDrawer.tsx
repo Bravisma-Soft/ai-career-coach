@@ -247,8 +247,8 @@ export const JobDetailDrawer = ({ open, onClose, job, onEdit, onDelete }: JobDet
               <Briefcase className="h-3 w-3 mr-1" />
               {job.jobType}
             </Badge>
-            {job.matchScore && (
-              <Badge variant="secondary" className="bg-primary/10 text-primary">
+            {job.matchScore !== null && job.matchScore !== undefined && (
+              <Badge className="text-sm bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30">
                 {job.matchScore}% match
               </Badge>
             )}

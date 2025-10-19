@@ -1,0 +1,65 @@
+John Doe
+Senior Software Engineer
+Email: john.doe@email.com | Phone: (555) 123-4567
+LinkedIn: linkedin.com/in/johndoe | GitHub: github.com/johndoe
+San Francisco, CA
+
+PROFESSIONAL SUMMARY
+Experienced software engineer with 8+ years of expertise in full-stack development, cloud architecture, and team leadership. Proven track record of delivering scalable web applications and leading cross-functional teams. Passionate about clean code, system design, and mentoring junior developers.
+
+WORK EXPERIENCE
+
+Senior Software Engineer
+Tech Corp | San Francisco, CA | January 2020 - Present
+• Led development of microservices architecture serving 10M+ users, reducing latency by 40%
+• Mentored team of 5 junior developers, improving code quality and delivery speed
+• Implemented CI/CD pipelines using GitHub Actions, reducing deployment time from 2 hours to 15 minutes
+• Designed and built RESTful APIs using Node.js, Express, and PostgreSQL
+• Collaborated with product managers to define technical requirements and roadmaps
+
+Software Engineer
+StartupXYZ | Palo Alto, CA | June 2017 - December 2019
+• Developed customer-facing features using React, TypeScript, and Redux
+• Built real-time chat functionality using WebSockets and Socket.io
+• Optimized database queries, improving page load times by 60%
+• Participated in code reviews and maintained 90%+ test coverage
+• Contributed to open-source projects and technical blog posts
+
+Full Stack Developer
+Digital Agency Inc | San Jose, CA | August 2015 - May 2017
+• Created responsive web applications for Fortune 500 clients
+• Integrated third-party APIs including Stripe, Twilio, and SendGrid
+• Managed AWS infrastructure (EC2, S3, RDS, Lambda)
+• Worked in Agile/Scrum environment with 2-week sprints
+
+EDUCATION
+
+Bachelor of Science in Computer Science
+Stanford University | Stanford, CA | 2011 - 2015
+GPA: 3.8/4.0
+Relevant Coursework: Data Structures, Algorithms, Database Systems, Computer Networks
+
+SKILLS
+
+Programming Languages: JavaScript, TypeScript, Python, Java, Go
+Frontend: React, Vue.js, Next.js, HTML5, CSS3, Tailwind CSS
+Backend: Node.js, Express, Django, Spring Boot
+Databases: PostgreSQL, MongoDB, Redis, MySQL
+Cloud & DevOps: AWS, Docker, Kubernetes, CI/CD, GitHub Actions
+Tools: Git, Jest, Webpack, Prisma, GraphQL
+
+CERTIFICATIONS
+• AWS Certified Solutions Architect - Associate (2022)
+• Google Cloud Professional Developer (2021)
+
+PROJECTS
+
+E-Commerce Platform (GitHub: johndoe/ecommerce)
+• Built full-stack e-commerce platform with Next.js and Stripe integration
+• Implemented shopping cart, payment processing, and order management
+• Deployed on Vercel with PostgreSQL database
+
+Task Management API (GitHub: johndoe/task-api)
+• RESTful API built with Node.js, Express, and MongoDB
+• JWT authentication and role-based access control
+• Comprehensive test suite with 95% coverage

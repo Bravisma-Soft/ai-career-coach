@@ -14,6 +14,8 @@ import {
 } from '@/api/validators/job.validator';
 import { Job, StatusChange, JobStatus } from '@prisma/client';
 import { JobParserAgent, ParsedJobData } from '@/ai/agents/job-parser.agent';
+import { resumeTailorAgent } from '@/ai/agents/resume-tailor.agent';
+import { ParsedResumeData } from '@/ai/prompts/resume-parser.prompt';
 
 // Status transition rules - flexible for Kanban board
 const VALID_STATUS_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
@@ -83,7 +85,115 @@ export class JobService {
     }
 
     logger.info(`Job created: ${job.id} by user: ${userId}`);
+
+    // Calculate match score if master resume exists and job has description
+    if (job.jobDescription && job.jobDescription.length > 20) {
+      this.calculateMatchScoreAsync(userId, job.id, job.title, job.company, job.jobDescription)
+        .catch(error => {
+          logger.error('Failed to calculate match score for job', {
+            jobId: job.id,
+            error: error.message,
+          });
+        });
+    }
+
     return job;
+  }
+
+  /**
+   * Calculate match score asynchronously (non-blocking)
+   * Private method called after job creation
+   */
+  private async calculateMatchScoreAsync(
+    userId: string,
+    jobId: string,
+    jobTitle: string,
+    companyName: string,
+    jobDescription: string
+  ): Promise<void> {
+    try {
+      logger.info('Calculating match score for job', { jobId, jobTitle });
+
+      // Get master resume
+      const masterResume = await prisma.resume.findFirst({
+        where: {
+          userId,
+          isPrimary: true,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          parsedData: true,
+        },
+      });
+
+      if (!masterResume || !masterResume.parsedData) {
+        logger.info('No master resume found or resume not parsed, skipping match score calculation', {
+          jobId,
+          userId,
+        });
+        return;
+      }
+
+      const parsedData = masterResume.parsedData as unknown as ParsedResumeData;
+
+      // Validate parsed data has minimum requirements
+      if (!parsedData.experiences || parsedData.experiences.length === 0) {
+        logger.warn('Master resume has no experiences, skipping match score', {
+          jobId,
+          resumeId: masterResume.id,
+        });
+        return;
+      }
+
+      // Calculate match score using Resume Tailor Agent
+      const matchResult = await resumeTailorAgent.calculateMatchScore({
+        resume: parsedData,
+        jobDescription,
+        jobTitle,
+        companyName,
+      });
+
+      if (!matchResult.success || !matchResult.data) {
+        logger.error('Match score calculation failed', {
+          jobId,
+          error: matchResult.error,
+        });
+        return;
+      }
+
+      const { matchScore, matchedSkills, missingSkills, strengthAreas, gapAreas, quickSummary } = matchResult.data;
+
+      // Update job with match score and analysis
+      await prisma.job.update({
+        where: { id: jobId },
+        data: {
+          matchScore,
+          aiAnalysis: {
+            matchedSkills,
+            missingSkills,
+            strengthAreas,
+            gapAreas,
+            summary: quickSummary,
+            calculatedAt: new Date().toISOString(),
+          },
+        },
+      });
+
+      logger.info('Match score calculated and saved', {
+        jobId,
+        matchScore,
+        matchedSkills: matchedSkills.length,
+        missingSkills: missingSkills.length,
+      });
+    } catch (error: any) {
+      logger.error('Error in calculateMatchScoreAsync', {
+        jobId,
+        error: error.message,
+        stack: error.stack,
+      });
+      // Don't throw - this is a background operation
+    }
   }
 
   /**

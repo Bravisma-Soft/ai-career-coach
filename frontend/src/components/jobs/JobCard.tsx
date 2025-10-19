@@ -101,7 +101,7 @@ export const JobCard = ({ job, onView, onEdit, onDelete }: JobCardProps) => {
             <MapPin className="h-3 w-3" />
             <span className="truncate">{job.location}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className={cn('text-xs', workModeColors[job.workMode])}>
               {job.workMode}
             </Badge>
@@ -109,19 +109,17 @@ export const JobCard = ({ job, onView, onEdit, onDelete }: JobCardProps) => {
               <Briefcase className="h-3 w-3 mr-1" />
               {job.jobType}
             </Badge>
+            {job.matchScore !== null && job.matchScore !== undefined && (
+              <Badge className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30">
+                {job.matchScore}% match
+              </Badge>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3" />
-            <span>{job.appliedAt ? new Date(job.appliedAt).toLocaleDateString() : new Date(job.createdAt).toLocaleDateString()}</span>
-          </div>
-          {job.matchScore && (
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              {job.matchScore}% match
-            </Badge>
-          )}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground pt-2 border-t">
+          <Calendar className="h-3 w-3" />
+          <span>{job.appliedAt ? new Date(job.appliedAt).toLocaleDateString() : new Date(job.createdAt).toLocaleDateString()}</span>
         </div>
       </div>
     </Card>

@@ -274,12 +274,16 @@ export default function Resumes() {
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Master Resume</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Upload a resume and set it as your master template
+                {resumes.length === 0
+                  ? 'Upload a resume and set it as your master template'
+                  : 'Select a resume below and set it as your master template'}
               </p>
-              <Button onClick={() => setUploadModalOpen(true)}>
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Your First Resume
-              </Button>
+              {resumes.length === 0 && (
+                <Button onClick={() => setUploadModalOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Your First Resume
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}

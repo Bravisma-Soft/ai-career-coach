@@ -1,0 +1,17 @@
+Jane Smith
+Data Analyst
+
+EXPERIENCE
+Data Analyst at Analytics Co (2021-Present)
+- Analyzed customer data
+- Created reports and dashboards
+
+Junior Analyst at DataCorp (2019-2021)
+- Assisted with data analysis
+- Maintained databases
+
+EDUCATION
+BS in Mathematics, State University, 2019
+
+SKILLS
+Python, SQL, Excel, Tableau

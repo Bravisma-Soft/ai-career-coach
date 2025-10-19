@@ -552,6 +552,157 @@ export class ResumeTailorAgent extends BaseAgent<ResumeTailorInput, TailorResume
   }
 
   /**
+   * Calculate match score only (lightweight version without full tailoring)
+   * Useful for quick job-resume compatibility checks
+   */
+  async calculateMatchScore(input: {
+    resume: ParsedResumeData;
+    jobDescription: string;
+    jobTitle: string;
+    companyName?: string;
+  }): Promise<AgentResponse<{
+    matchScore: number;
+    matchedSkills: string[];
+    missingSkills: string[];
+    strengthAreas: string[];
+    gapAreas: string[];
+    quickSummary: string;
+  }>> {
+    const { resume, jobDescription, jobTitle, companyName } = input;
+
+    // Validate basic input
+    if (!resume || !jobDescription || jobDescription.length < 20) {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_INPUT',
+          message: 'Resume and job description are required',
+          type: 'validation_error',
+          retryable: false,
+        },
+      };
+    }
+
+    // Build lightweight prompt for match calculation
+    const resumeText = this.formatResumeForPrompt(resume);
+
+    const matchPrompt = `Analyze how well this resume matches the job posting and provide a quick compatibility assessment.
+
+JOB POSTING:
+Title: ${jobTitle}
+${companyName ? `Company: ${companyName}` : ''}
+Description: ${jobDescription}
+
+CANDIDATE RESUME:
+${resumeText}
+
+Please analyze the match and respond with ONLY a JSON object in this exact format:
+{
+  "matchScore": <number 0-100>,
+  "matchedSkills": ["skill1", "skill2", ...],
+  "missingSkills": ["skill1", "skill2", ...],
+  "strengthAreas": ["area1", "area2", ...],
+  "gapAreas": ["area1", "area2", ...],
+  "quickSummary": "<2-3 sentence summary of the match>"
+}
+
+Be concise and focus on:
+- Technical skills match
+- Experience relevance
+- Role alignment
+- Key qualifications`;
+
+    logger.info('Calculating match score', {
+      jobTitle,
+      companyName: companyName || 'Not specified',
+    });
+
+    try {
+      // Call Claude with lighter configuration
+      const response = await this.callClaude({
+        userMessage: matchPrompt,
+        temperature: 0.3, // Lower temperature for more consistent scoring
+        maxTokens: 1500, // Much smaller than full tailoring
+      });
+
+      if (!response.success) {
+        logger.error('Match score calculation failed', {
+          error: response.error,
+          jobTitle,
+        });
+        return response as unknown as AgentResponse<any>;
+      }
+
+      // Parse JSON response
+      const jsonResult = ResponseParser.parseJSON<{
+        matchScore: number;
+        matchedSkills: string[];
+        missingSkills: string[];
+        strengthAreas: string[];
+        gapAreas: string[];
+        quickSummary: string;
+      }>(response.data!);
+
+      if (!jsonResult.success) {
+        return {
+          success: false,
+          error: {
+            code: 'PARSE_ERROR',
+            message: 'Failed to parse match score response',
+            type: 'parsing_error',
+            retryable: true,
+          },
+        };
+      }
+
+      const data = jsonResult.data!;
+
+      // Validate match score
+      if (typeof data.matchScore !== 'number' || data.matchScore < 0 || data.matchScore > 100) {
+        logger.warn('Invalid match score, defaulting to 50', { matchScore: data.matchScore });
+        data.matchScore = 50;
+      }
+
+      // Ensure arrays exist
+      data.matchedSkills = data.matchedSkills || [];
+      data.missingSkills = data.missingSkills || [];
+      data.strengthAreas = data.strengthAreas || [];
+      data.gapAreas = data.gapAreas || [];
+      data.quickSummary = data.quickSummary || 'Match analysis completed';
+
+      logger.info('Match score calculated successfully', {
+        jobTitle,
+        matchScore: data.matchScore,
+        matchedSkills: data.matchedSkills.length,
+        missingSkills: data.missingSkills.length,
+        usage: response.usage,
+      });
+
+      return {
+        success: true,
+        data,
+        rawResponse: response.rawResponse,
+        usage: response.usage,
+        model: response.model,
+      };
+    } catch (error: any) {
+      logger.error('Match score calculation error', {
+        error: error.message,
+        jobTitle,
+      });
+      return {
+        success: false,
+        error: {
+          code: 'EXECUTION_ERROR',
+          message: error.message || 'Failed to calculate match score',
+          type: 'api_error',
+          retryable: true,
+        },
+      };
+    }
+  }
+
+  /**
    * Compare original and tailored resume to generate diff
    */
   generateDiff(original: ParsedResumeData, tailored: ParsedResumeData): Array<{

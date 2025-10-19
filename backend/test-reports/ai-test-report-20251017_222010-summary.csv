@@ -1,0 +1,6 @@
+Suite,Total Tests,Passed,Failed,Duration (s),Status
+resume-tailor,15,15,0,630.74,passed
+mock-interview,14,10,4,241.14,failed
+resume-parser,19,4,15,3.10,failed
+job-parser,17,9,8,1.79,failed
+TOTAL,65,38,27,-,failed

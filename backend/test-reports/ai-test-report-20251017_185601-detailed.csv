@@ -1,0 +1,66 @@
+Suite,Test Name,Status,Duration (s),Error Message
+mock-interview,should initialize agent successfully,passed,0.00,
+mock-interview,should generate technical interview questions,failed,33.27,Error: expect(received).toBeDefined() |  | Received: undefined
+mock-interview,should generate behavioral questions,passed,18.32,
+mock-interview,should generate system design questions,failed,32.33,Error: expect(received).toBeGreaterThanOrEqual(expected) |  | Matcher error: received value must be a number or bigint
+mock-interview,should adjust difficulty level,passed,45.80,
+mock-interview,should include interviewer context when provided,passed,20.87,
+mock-interview,should evaluate a good technical answer,failed,33.33,Error: expect(received).toBeDefined() |  | Received: undefined
+mock-interview,should evaluate a poor answer with lower score,failed,22.41,TypeError: Cannot read properties of undefined (reading 'toLowerCase') |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/mock-interview.test.ts:331:34) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+mock-interview,should provide constructive feedback,failed,30.82,Error: expect(received).toBeTruthy() |  | Received: undefined
+mock-interview,should analyze complete interview session,failed,0.00,Error: Session analysis failed: Cannot read properties of undefined (reading 'title') |     at MockInterviewAgent.analyzeSession (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/src/ai/agents/mock-interview.agent.ts:274:13) |     at /Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/mock-interview.test.ts:406:17
+mock-interview,should calculate category-specific scores,failed,0.00,Error: Session analysis failed: Cannot read properties of undefined (reading 'title') |     at MockInterviewAgent.analyzeSession (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/src/ai/agents/mock-interview.agent.ts:274:13) |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/mock-interview.test.ts:496:38)
+mock-interview,should handle invalid input gracefully,failed,4.96,Error: expect(received).rejects.toThrow() |  | Received promise resolved instead of rejected
+mock-interview,should handle empty answers,passed,15.22,
+mock-interview,should generate consistent question count,passed,25.87,
+resume-parser,should initialize agent successfully,passed,N/A,
+resume-parser,should reject empty resume text,passed,N/A,
+resume-parser,should reject whitespace-only resume text,passed,0.00,
+resume-parser,should parse comprehensive resume correctly,failed,21.84,Error: expect(received).toBeLessThan(expected) |  | Expected: < 0.05
+resume-parser,should parse minimal resume correctly,passed,6.53,
+resume-parser,should extract all work experiences chronologically,passed,21.46,
+resume-parser,should extract achievements with quantifiable metrics,passed,22.72,
+resume-parser,should extract and categorize technologies,passed,20.74,
+resume-parser,should categorize skills correctly,passed,21.88,
+resume-parser,should extract education with GPA when present,passed,22.34,
+resume-parser,should extract certifications with details,passed,22.35,
+resume-parser,should normalize dates to YYYY-MM format,passed,21.71,
+resume-parser,should mark current positions correctly,passed,21.71,
+resume-parser,should handle very long resumes (truncation),passed,3.68,
+resume-parser,should handle resumes with special characters,passed,3.58,
+resume-parser,should handle resumes with minimal contact info,passed,6.06,
+resume-parser,should produce consistent results with temperature=0,failed,0.01,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+resume-parser,should handle malformed resume gracefully,passed,3.10,
+resume-parser,should return data matching expected structure,passed,21.35,
+resume-tailor,should initialize agent successfully,passed,N/A,
+resume-tailor,should validate input - reject missing resume,passed,N/A,
+resume-tailor,should validate input - reject empty job description,passed,0.00,
+resume-tailor,should validate input - reject short job description,failed,N/A,"Error: expect(received).toContain(expected) // indexOf |  | Expected substring: ""too short"""
+resume-tailor,should tailor resume for job posting,failed,52.67,Error: expect(received).toBeLessThan(expected) |  | Expected: < 0.15
+resume-tailor,should produce higher match score for relevant experience,passed,52.36,
+resume-tailor,should identify matched and missing keywords,passed,66.72,
+resume-tailor,should provide actionable recommendations,passed,58.87,
+resume-tailor,should preserve personal information exactly,passed,62.17,
+resume-tailor,should not fabricate experience,passed,66.45,
+resume-tailor,should not fabricate education,passed,61.41,
+resume-tailor,should track all modifications made,passed,53.05,
+resume-tailor,should handle resume with minimal experience,passed,59.77,
+resume-tailor,should handle very long job descriptions,passed,65.42,
+resume-tailor,should calculate reasonable match scores,passed,62.90,
+job-parser,should initialize agent successfully,passed,N/A,
+job-parser,should parse job from HTML content successfully,failed,4.54,"Error: expect(received).toContain(expected) // indexOf |  | Expected substring: ""CloudTech"""
+job-parser,should extract job type correctly,passed,4.74,
+job-parser,should extract work mode correctly,failed,4.74,"Error: expect(received).toBe(expected) // Object.is equality |  | Expected: ""REMOTE"""
+job-parser,should extract salary range when present,passed,5.06,
+job-parser,should extract comprehensive job description,passed,4.81,
+job-parser,should clean and format extracted content,passed,4.94,
+job-parser,should handle network errors gracefully,passed,0.01,
+job-parser,should handle timeout errors,passed,0.00,
+job-parser,should handle 404 errors,passed,0.00,
+job-parser,should handle 403 forbidden errors,passed,0.00,
+job-parser,should handle pages with insufficient content,passed,0.00,
+job-parser,should handle malformed HTML gracefully,passed,0.00,
+job-parser,should default to valid enum values when extraction fails,passed,3.66,
+job-parser,should extract location information,passed,5.02,
+job-parser,should complete parsing within acceptable time,passed,4.92,
+job-parser,should stay within cost budget,passed,4.99,

@@ -4,6 +4,7 @@ import { logger } from '@/config/logger';
 import { JOB_PARSER_SYSTEM_PROMPT, buildJobParserPrompt } from '@/ai/prompts/job-parser.prompt';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import puppeteer from 'puppeteer';
 
 export interface JobParserInput {
   url: string;
@@ -110,84 +111,163 @@ export class JobParserAgent extends BaseAgent<JobParserInput, ParsedJobData> {
 
   /**
    * Fetch job posting content from URL
+   * First tries simple HTTP fetch, falls back to Puppeteer for JavaScript-rendered pages
    */
   private async fetchJobContent(url: string): Promise<string> {
+    // First attempt: Try simple axios fetch (faster, works for static HTML)
     try {
-      // Fetch the page
-      const response = await axios.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        },
-        timeout: 10000, // 10 second timeout
+      logger.info('Attempting simple HTTP fetch', { url });
+      const content = await this.fetchWithAxios(url);
+
+      if (content.length >= 100) {
+        logger.info('Successfully fetched content with simple HTTP', {
+          url,
+          contentLength: content.length
+        });
+        return content;
+      }
+    } catch (error: any) {
+      logger.warn('Simple HTTP fetch failed, will try Puppeteer', {
+        url,
+        error: error.message
+      });
+    }
+
+    // Second attempt: Use Puppeteer for JavaScript-rendered pages
+    logger.info('Using Puppeteer for JavaScript-rendered page', { url });
+    return await this.fetchWithPuppeteer(url);
+  }
+
+  /**
+   * Fetch content using simple HTTP request (fast, but doesn't execute JavaScript)
+   */
+  private async fetchWithAxios(url: string): Promise<string> {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      timeout: 15000,
+      maxRedirects: 5,
+    });
+
+    return this.extractTextFromHTML(response.data);
+  }
+
+  /**
+   * Fetch content using Puppeteer (handles JavaScript-rendered pages)
+   */
+  private async fetchWithPuppeteer(url: string): Promise<string> {
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+        ],
       });
 
-      // Parse HTML with cheerio
-      const $ = cheerio.load(response.data);
+      const page = await browser.newPage();
 
-      // Remove script and style elements
-      $('script, style, nav, header, footer, iframe').remove();
+      // Set viewport and user agent
+      await page.setViewport({ width: 1920, height: 1080 });
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
-      // Try to find the main content area (common patterns)
-      let content = '';
+      // Navigate to page
+      await page.goto(url, {
+        waitUntil: 'networkidle2',
+        timeout: 30000,
+      });
 
-      // Try common job posting container selectors
-      const selectors = [
-        'article',
-        '[role="main"]',
-        'main',
-        '.job-description',
-        '.job-detail',
-        '.job-content',
-        '#job-description',
-        '.description',
-        'body',
-      ];
+      // Wait for content to load (common patterns for job sites)
+      try {
+        await Promise.race([
+          page.waitForSelector('article', { timeout: 5000 }),
+          page.waitForSelector('[role="main"]', { timeout: 5000 }),
+          page.waitForSelector('.job-description', { timeout: 5000 }),
+          page.waitForSelector('main', { timeout: 5000 }),
+          new Promise(resolve => setTimeout(resolve, 5000)), // Fallback timeout
+        ]);
+      } catch (e) {
+        // Continue even if specific selectors don't load
+        logger.info('No specific content selectors found, proceeding with full page');
+      }
 
-      for (const selector of selectors) {
-        const element = $(selector);
-        if (element.length > 0) {
-          content = element.text();
-          if (content.length > 200) {
-            // Found substantial content
-            break;
-          }
+      // Get the full HTML
+      const html = await page.content();
+
+      await browser.close();
+
+      return this.extractTextFromHTML(html);
+    } catch (error: any) {
+      if (browser) {
+        await browser.close();
+      }
+
+      if (error.name === 'TimeoutError') {
+        throw new Error('Page load timeout. The website may be slow or unreachable.');
+      }
+
+      throw new Error(`Failed to fetch job posting with browser: ${error.message}`);
+    }
+  }
+
+  /**
+   * Extract clean text from HTML
+   */
+  private extractTextFromHTML(html: string): string {
+    const $ = cheerio.load(html);
+
+    // Remove unwanted elements
+    $('script, style, nav, header, footer, iframe, noscript, .cookie-banner, #cookie-banner').remove();
+
+    // Try to find the main content area
+    let content = '';
+
+    const selectors = [
+      'article',
+      '[role="main"]',
+      'main',
+      '.job-description',
+      '.job-detail',
+      '.job-content',
+      '#job-description',
+      '.description',
+      '[data-automation-id="jobPostingDescription"]', // Workday specific
+      '.jobdetails', // LinkedIn specific
+      'body',
+    ];
+
+    for (const selector of selectors) {
+      const element = $(selector);
+      if (element.length > 0) {
+        content = element.text();
+        if (content.length > 200) {
+          break;
         }
       }
-
-      // Fallback to body if no good content found
-      if (!content || content.length < 200) {
-        content = $('body').text();
-      }
-
-      // Clean up the text
-      content = content
-        .replace(/\s+/g, ' ')
-        .replace(/\n+/g, '\n')
-        .trim();
-
-      if (content.length < 100) {
-        throw new Error('Insufficient content extracted from URL. The page may be JavaScript-rendered or access-restricted.');
-      }
-
-      // Limit content length to avoid token limits
-      if (content.length > 15000) {
-        content = content.substring(0, 15000) + '...';
-      }
-
-      return content;
-    } catch (error: any) {
-      if (error.code === 'ENOTFOUND') {
-        throw new Error('URL not found. Please check the URL and try again.');
-      } else if (error.code === 'ETIMEDOUT') {
-        throw new Error('Request timed out. The server may be slow or unreachable.');
-      } else if (error.response?.status === 403) {
-        throw new Error('Access forbidden. The website may be blocking automated requests.');
-      } else if (error.response?.status === 404) {
-        throw new Error('Job posting not found at this URL.');
-      } else {
-        throw new Error(`Failed to fetch job posting: ${error.message}`);
-      }
     }
+
+    // Clean up the text
+    content = content
+      .replace(/\s+/g, ' ')
+      .replace(/\n+/g, '\n')
+      .trim();
+
+    if (content.length < 100) {
+      throw new Error('Insufficient content extracted. The page may be access-restricted or empty.');
+    }
+
+    // Limit content length
+    if (content.length > 15000) {
+      content = content.substring(0, 15000) + '...';
+    }
+
+    return content;
   }
 
   /**

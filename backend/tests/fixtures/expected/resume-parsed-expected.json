@@ -1,0 +1,79 @@
+{
+  "personalInfo": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@email.com",
+    "phone": "(555) 123-4567",
+    "location": "San Francisco, CA",
+    "linkedin": "linkedin.com/in/johndoe",
+    "github": "github.com/johndoe"
+  },
+  "summary": "Experienced software engineer with 8+ years of expertise in full-stack development, cloud architecture, and team leadership. Proven track record of delivering scalable web applications and leading cross-functional teams. Passionate about clean code, system design, and mentoring junior developers.",
+  "experience": [
+    {
+      "company": "Tech Corp",
+      "title": "Senior Software Engineer",
+      "location": "San Francisco, CA",
+      "startDate": "2020-01",
+      "current": true
+    },
+    {
+      "company": "StartupXYZ",
+      "title": "Software Engineer",
+      "location": "Palo Alto, CA",
+      "startDate": "2017-06",
+      "endDate": "2019-12"
+    },
+    {
+      "company": "Digital Agency Inc",
+      "title": "Full Stack Developer",
+      "location": "San Jose, CA",
+      "startDate": "2015-08",
+      "endDate": "2017-05"
+    }
+  ],
+  "education": [
+    {
+      "institution": "Stanford University",
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "location": "Stanford, CA",
+      "startDate": "2011",
+      "endDate": "2015",
+      "gpa": "3.8"
+    }
+  ],
+  "skills": {
+    "technical": [
+      "JavaScript",
+      "TypeScript",
+      "Python",
+      "Java",
+      "Go",
+      "React",
+      "Vue.js",
+      "Next.js",
+      "Node.js",
+      "Express",
+      "Django",
+      "PostgreSQL",
+      "MongoDB",
+      "Redis",
+      "AWS",
+      "Docker",
+      "Kubernetes"
+    ]
+  },
+  "certifications": [
+    {
+      "name": "AWS Certified Solutions Architect - Associate",
+      "issuer": "AWS",
+      "date": "2022"
+    },
+    {
+      "name": "Google Cloud Professional Developer",
+      "issuer": "Google Cloud",
+      "date": "2021"
+    }
+  ]
+}

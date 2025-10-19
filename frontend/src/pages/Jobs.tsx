@@ -289,7 +289,7 @@ export default function Jobs() {
                   <div className="space-y-4">
                     {/* Header */}
                     <div>
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
                             {job.company}
@@ -304,6 +304,11 @@ export default function Jobs() {
                         <Badge className={cn('text-xs', workModeColors[job.workMode])}>
                           {job.workMode}
                         </Badge>
+                        {job.matchScore !== null && job.matchScore !== undefined && (
+                          <Badge className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30">
+                            {job.matchScore}% match
+                          </Badge>
+                        )}
                       </div>
                     </div>
 
@@ -326,18 +331,6 @@ export default function Jobs() {
                         </div>
                       )}
                     </div>
-
-                    {/* Match Score */}
-                    {job.matchScore && (
-                      <div className="pt-3 border-t">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Match Score</span>
-                          <Badge variant="secondary" className="bg-primary/10 text-primary">
-                            {job.matchScore}%
-                          </Badge>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>

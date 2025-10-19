@@ -1,9 +1,9 @@
 # AI Career Coach Backend - Current Status
 
-## Latest Update (Oct 16, 2025)
-✅ **AI-Powered Interview Preparation System** - Complete implementation with mock interviews, real-time feedback, and comprehensive results
+## Latest Update (Oct 17, 2025)
+✅ **MVP Features & Comprehensive Polish** - Jobs page, auto-parse, job URL parsing, PDF improvements, and UI/UX fixes
 
-## Completed Features (As of Oct 16, 2025)
+## Completed Features (As of Oct 17, 2025)
 
 ✅ **Prompt 1-7**: Core Backend Infrastructure
 - Project structure, database schema, authentication
@@ -19,12 +19,19 @@
 - Side-by-side comparison view
 - Reopening saved tailored resumes
 
-✅ **Interview Preparation System** (NEW - Oct 16)
+✅ **Interview Preparation System** (Oct 16)
 - AI-generated interview questions based on job + interviewer context
 - Mock interview with real-time AI feedback after each answer
 - Comprehensive results analysis with scores and improvements
 - Past session management with cached results
 - Job-interview linking in job detail drawer
+
+✅ **MVP Feature Completion** (NEW - Oct 17)
+- Jobs page with filtering, search, and sorting
+- AI-powered job URL parsing (Cheerio + Claude)
+- Auto-parse resumes on upload with progress indicator
+- Professional PDF generation for tailored resumes
+- Health check endpoints for monitoring
 
 ## Current Architecture
 
@@ -47,38 +54,74 @@
 - `BaseAgent` - Abstract base class for all AI agents
 - `ResumeParserAgent` - Extracts structured data from resumes
 - `ResumeTailorAgent` - Tailors resumes for specific jobs ✅ WORKING
-- `MockInterviewAgent` - Generates questions, evaluates answers, analyzes sessions ✅ NEW
+- `MockInterviewAgent` - Generates questions, evaluates answers, analyzes sessions
+- `JobParserAgent` - Scrapes and parses job postings from URLs ✅ NEW (Oct 17)
 
 ### API Routes
 ```
 /api/auth/* - Authentication endpoints
 /api/users/* - User management
 /api/resumes/* - Resume CRUD operations
+/api/resumes/:id/download - Download resume file (fixed Oct 17)
 /api/jobs/* - Job tracking
-/api/interviews/* - Interview scheduling and preparation ✅ UPDATED
-/api/interviews/:id/prepare - Generate questions & research ✅ NEW
-/api/interviews/job/:jobId - Get interviews by job ✅ NEW
-/api/mock-interviews/* - Mock interview sessions ✅ NEW
+/api/jobs/parse-url - Parse job posting from URL ✅ NEW (Oct 17)
+/api/interviews/* - Interview scheduling and preparation
+/api/interviews/:id/prepare - Generate questions & research
+/api/interviews/job/:jobId - Get interviews by job
+/api/mock-interviews/* - Mock interview sessions
 /api/ai/resumes/tailor - Resume tailoring
 /api/documents/* - Document management
+/api/health/* - Health check endpoints ✅ NEW (Oct 17)
+  /api/health - Basic health check
+  /api/health/queue - BullMQ status
+  /api/health/database - PostgreSQL connection
+  /api/health/redis - Redis connection
 ```
 
-## Recent Fixes & Updates
+## Recent Fixes & Updates (Oct 17, 2025)
 
-### 1. Resume Tailoring Timeout (FIXED)
-- **Issue**: AI operations timed out after 60 seconds
-- **Fix**: Increased timeout to 300 seconds (5 minutes) in `src/config/claude.config.ts:31`
-- **Result**: Complex resume tailoring now completes successfully
+### 1. JWT Session Extension (FIXED)
+- **Issue**: Sessions expired after 15 minutes
+- **Fix**: Extended JWT expiration from 15m to 24h in `src/config/env.ts`
+- **Result**: Users stay logged in for a full day
 
-### 2. Resume File Name Serialization (FIXED)
-- **Issue**: Resume cards showed "Version 1" instead of actual file names
-- **Fix**: Added `fileName` field to `SerializedResume` in `src/utils/resume-serializer.ts`
-- **Result**: Resume cards now display correct file names and types
+### 2. Kanban Board Layout (FIXED)
+- **Issue**: Columns squished on wide screens
+- **Fix**: Changed from CSS grid to flexbox with min/max widths (300-350px)
+- **Result**: Proper column sizing on all screen sizes
 
-### 3. Document Storage for Tailored Resumes (IMPLEMENTED)
+### 3. Dashboard Stats Accuracy (FIXED)
+- **Issue**: Incorrect job counts in stat cards
+- **Fix**: Updated filter logic for each stat card
+- **Result**: Accurate counts for all application stages
+
+### 4. PDF Generation Overhaul (IMPLEMENTED)
+- Created shared `pdfGenerator.ts` utility for consistent PDFs
+- Fixed tailored resume downloads (PDF instead of JSON)
+- Improved date formatting (no "null" or extra hyphens)
+- Professional layout with proper sections and spacing
+
+### 5. Resume Download 500 Error (FIXED)
+- **Issue**: Backend returned 500 error on resume download
+- **Fix**: Changed `resume.mimeType` to `resume.fileType` in download route
+- **Result**: Resume downloads work correctly
+
+### 6. Master Resume Persistence (FIXED)
+- **Issue**: Master resume reset on page reload
+- **Fix**: Compute from fetched data instead of cached store value
+- **Result**: Master resume persists across sessions
+
+## Previous Fixes & Updates (Oct 16, 2025)
+
+### Resume Tailoring Timeout (FIXED)
+- Increased timeout to 300 seconds (5 minutes) in `src/config/claude.config.ts:31`
+
+### Resume File Name Serialization (FIXED)
+- Added `fileName` field to `SerializedResume` in `src/utils/resume-serializer.ts`
+
+### Document Storage for Tailored Resumes (IMPLEMENTED)
 - Created `DocumentService` for storing tailored resumes
-- Added `/api/documents` routes
-- Stores full JSON resume data + metadata (match score, changes, recommendations)
+- Stores full JSON resume data + metadata
 
 ## Current File Structure
 ```
@@ -183,7 +226,8 @@ REDIS_URL=redis://localhost:6379
 
 # Authentication
 JWT_SECRET=your-secret-key-change-in-production
-JWT_EXPIRES_IN=7d
+JWT_EXPIRES_IN=24h  # Updated Oct 17 (was 7d/15m)
+JWT_REFRESH_EXPIRES_IN=7d
 
 # Claude AI
 ANTHROPIC_API_KEY=sk-ant-api03-xxx
@@ -214,10 +258,12 @@ npx prisma migrate dev
 npm run dev  # Runs on port 3000
 ```
 
-### Optional: Resume Parser Worker
+### Resume Parser Worker (Required for Auto-Parse)
 ```bash
-# In separate terminal (only needed for resume parsing, not tailoring)
-npx ts-node-dev src/jobs/workers/resume-parse.worker.ts
+# In separate terminal - REQUIRED for auto-parse feature
+npm run worker:resume
+# or
+npx ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/jobs/workers/resume-parse.worker.ts
 ```
 
 ## Testing Status

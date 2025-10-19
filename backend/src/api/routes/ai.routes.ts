@@ -128,7 +128,7 @@ router.post(
     const masterResume = await prisma.resume.findFirst({
       where: {
         userId,
-        isMaster: true,
+        isPrimary: true,
       },
     });
 

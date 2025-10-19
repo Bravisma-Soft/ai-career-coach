@@ -1,0 +1,29 @@
+{
+  "title": "Senior Full Stack Engineer",
+  "company": "Acme Technologies Inc.",
+  "location": "San Francisco, CA (Hybrid)",
+  "jobType": "FULL_TIME",
+  "workMode": "HYBRID",
+  "description": "We are seeking an experienced Senior Full Stack Engineer to join our growing engineering team. You will be responsible for designing and implementing scalable web applications that serve millions of users.\n\nResponsibilities:\n• Design and develop full-stack web applications using modern frameworks\n• Build RESTful APIs and microservices architecture\n• Collaborate with product managers and designers to deliver features\n• Mentor junior engineers and conduct code reviews\n• Optimize application performance and scalability\n• Participate in architecture and design decisions\n\nRequirements:\n• 5+ years of professional software engineering experience\n• Strong proficiency in JavaScript/TypeScript and Node.js\n• Experience with React, Next.js, or Vue.js\n• Solid understanding of database systems (PostgreSQL, MongoDB)\n• Experience with cloud platforms (AWS, GCP, or Azure)\n• Knowledge of CI/CD pipelines and DevOps practices\n• Excellent problem-solving and communication skills\n\nNice to Have:\n• Experience with microservices architecture\n• Knowledge of containerization (Docker, Kubernetes)\n• Contributions to open-source projects\n• Experience with GraphQL\n\nBenefits:\n• Competitive salary ($180k-$230k)\n• Equity package\n• Health, dental, and vision insurance\n• 401(k) matching\n• Unlimited PTO\n• Remote work flexibility",
+  "salaryRange": "$180,000 - $230,000",
+  "requirements": [
+    "5+ years of professional software engineering experience",
+    "Strong proficiency in JavaScript/TypeScript and Node.js",
+    "Experience with React, Next.js, or Vue.js",
+    "Solid understanding of database systems (PostgreSQL, MongoDB)",
+    "Experience with cloud platforms (AWS, GCP, or Azure)"
+  ],
+  "responsibilities": [
+    "Design and develop full-stack web applications",
+    "Build RESTful APIs and microservices",
+    "Mentor junior engineers",
+    "Optimize application performance"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Equity package",
+    "Health insurance",
+    "401(k) matching",
+    "Unlimited PTO"
+  ]
+}

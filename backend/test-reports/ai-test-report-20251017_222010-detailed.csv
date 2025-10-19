@@ -1,0 +1,66 @@
+Suite,Test Name,Status,Duration (s),Error Message
+resume-tailor,should initialize agent successfully,passed,0.00,
+resume-tailor,should validate input - reject missing resume,passed,N/A,
+resume-tailor,should validate input - reject empty job description,passed,0.00,
+resume-tailor,should validate input - reject short job description,passed,N/A,
+resume-tailor,should tailor resume for job posting,passed,64.46,
+resume-tailor,should produce higher match score for relevant experience,passed,56.29,
+resume-tailor,should identify matched and missing keywords,passed,54.37,
+resume-tailor,should provide actionable recommendations,passed,59.91,
+resume-tailor,should preserve personal information exactly,passed,55.63,
+resume-tailor,should not fabricate experience,passed,57.20,
+resume-tailor,should not fabricate education,passed,65.53,
+resume-tailor,should track all modifications made,passed,54.37,
+resume-tailor,should handle resume with minimal experience,passed,57.86,
+resume-tailor,should handle very long job descriptions,passed,52.52,
+resume-tailor,should calculate reasonable match scores,passed,52.23,
+mock-interview,should initialize agent successfully,passed,0.00,
+mock-interview,should generate technical interview questions,passed,34.53,
+mock-interview,should generate behavioral questions,failed,18.65,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+mock-interview,should generate system design questions,passed,29.86,
+mock-interview,should adjust difficulty level,passed,38.31,
+mock-interview,should include interviewer context when provided,passed,23.56,
+mock-interview,should evaluate a good technical answer,passed,31.70,
+mock-interview,should evaluate a poor answer with lower score,passed,21.69,
+mock-interview,should provide constructive feedback,passed,24.25,
+mock-interview,should analyze complete interview session,passed,17.63,
+mock-interview,should calculate category-specific scores,failed,0.14,"Error: Session analysis failed: 400 {""type"":""error"",""error"":{""type"":""invalid_request_error"",""message"":""Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.""},""request_id"":""req_011CUE7uoXrgZ12BoFoCqWar""} |     at MockInterviewAgent.analyzeSession (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/src/ai/agents/mock-interview.agent.ts:274:13) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)"
+mock-interview,should handle invalid input gracefully,passed,0.30,
+mock-interview,should handle empty answers,failed,0.12,"Error: Answer evaluation failed: 400 {""type"":""error"",""error"":{""type"":""invalid_request_error"",""message"":""Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.""},""request_id"":""req_011CUE7uqRxYMhfmNC1aAEC2""} |     at MockInterviewAgent.evaluateAnswer (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/src/ai/agents/mock-interview.agent.ts:194:13) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)"
+mock-interview,should generate consistent question count,failed,0.14,"Error: Question generation failed: 400 {""type"":""error"",""error"":{""type"":""invalid_request_error"",""message"":""Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.""},""request_id"":""req_011CUE7ur1w4KWvXQzwaYd1W""} |     at MockInterviewAgent.generateQuestions (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/src/ai/agents/mock-interview.agent.ts:121:13) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)"
+resume-parser,should initialize agent successfully,passed,0.00,
+resume-parser,should reject empty resume text,passed,0.00,
+resume-parser,should reject whitespace-only resume text,passed,0.00,
+resume-parser,should parse comprehensive resume correctly,failed,0.13,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+resume-parser,should parse minimal resume correctly,failed,0.35,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+resume-parser,should extract all work experiences chronologically,failed,0.15,TypeError: Cannot read properties of undefined (reading 'experiences') |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/resume-parser.test.ts:210:42) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+resume-parser,should extract achievements with quantifiable metrics,failed,0.14,TypeError: Cannot read properties of undefined (reading 'experiences') |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/resume-parser.test.ts:241:42) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+resume-parser,should extract and categorize technologies,failed,0.15,TypeError: Cannot read properties of undefined (reading 'experiences') |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/resume-parser.test.ts:272:42) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+resume-parser,should categorize skills correctly,failed,0.37,TypeError: Cannot read properties of undefined (reading 'skills') |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/resume-parser.test.ts:304:37) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+resume-parser,should extract education with GPA when present,failed,0.14,TypeError: Cannot read properties of undefined (reading 'educations') |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/resume-parser.test.ts:334:41) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+resume-parser,should extract certifications with details,failed,0.15,TypeError: Cannot read properties of undefined (reading 'certifications') |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/resume-parser.test.ts:358:45) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+resume-parser,should normalize dates to YYYY-MM format,failed,0.15,TypeError: Cannot read properties of undefined (reading 'experiences') |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/resume-parser.test.ts:382:42) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+resume-parser,should mark current positions correctly,failed,0.14,TypeError: Cannot read properties of undefined (reading 'experiences') |     at Object.<anonymous> (/Users/gauravc/Projects/ai-ml/ai-career-coach/backend/tests/ai/agents/resume-parser.test.ts:406:42) |     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+resume-parser,should handle very long resumes (truncation),failed,0.15,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+resume-parser,should handle resumes with special characters,failed,0.14,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+resume-parser,should handle resumes with minimal contact info,failed,0.14,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+resume-parser,should produce consistent results with temperature=0,failed,0.01,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+resume-parser,should handle malformed resume gracefully,passed,0.13,
+resume-parser,should return data matching expected structure,failed,0.16,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+job-parser,should initialize agent successfully,passed,N/A,
+job-parser,should parse job from HTML content successfully,failed,0.14,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+job-parser,should extract job type correctly,failed,0.15,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+job-parser,should extract work mode correctly,failed,0.14,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+job-parser,should extract salary range when present,failed,0.16,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+job-parser,should extract comprehensive job description,failed,0.21,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+job-parser,should clean and format extracted content,failed,0.15,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+job-parser,should handle network errors gracefully,passed,0.01,
+job-parser,should handle timeout errors,passed,0.00,
+job-parser,should handle 404 errors,passed,0.00,
+job-parser,should handle 403 forbidden errors,passed,0.00,
+job-parser,should handle pages with insufficient content,passed,0.01,
+job-parser,should handle malformed HTML gracefully,passed,0.00,
+job-parser,should default to valid enum values when extraction fails,passed,0.14,
+job-parser,should extract location information,failed,0.17,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+job-parser,should complete parsing within acceptable time,failed,0.15,Error: expect(received).toBe(expected) // Object.is equality |  | Expected: true
+job-parser,should stay within cost budget,passed,0.14,
