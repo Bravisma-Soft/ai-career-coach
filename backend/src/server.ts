@@ -105,11 +105,9 @@ const startServer = async (): Promise<void> => {
         case 'EACCES':
           logger.error(`❌ Port ${env.PORT} requires elevated privileges`);
           process.exit(1);
-          break;
         case 'EADDRINUSE':
           logger.error(`❌ Port ${env.PORT} is already in use`);
           process.exit(1);
-          break;
         default:
           throw error;
       }

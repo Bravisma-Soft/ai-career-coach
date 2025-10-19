@@ -19,7 +19,7 @@ export const errorHandler = (
     if (error instanceof ZodError) {
       const statusCode = 400;
       const message = 'Validation Error';
-      const errors = error.errors?.map((e) => ({
+      const errors = error.issues?.map((e: any) => ({
         field: e.path.join('.'),
         message: e.message,
       })) || [];

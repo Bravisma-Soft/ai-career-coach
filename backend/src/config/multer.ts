@@ -1,4 +1,5 @@
 import multer from 'multer';
+import { Request, Response, NextFunction } from 'express';
 import { BadRequestError } from '@/utils/ApiError';
 import {
   ALLOWED_MIME_TYPES,
@@ -50,9 +51,9 @@ export const upload = multer({
 // Error handler for multer errors
 export const handleMulterError = (
   error: unknown,
-  req: Express.Request,
-  res: Express.Response,
-  next: Express.NextFunction
+  req: Request,
+  res: Response,
+  next: NextFunction
 ) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {

@@ -131,12 +131,16 @@ export class ApplicationService {
         orderBy,
         include: {
           job: {
-            select: {
-              id: true,
-              title: true,
-              company: true,
-              location: true,
-              status: true,
+            include: {
+              interviews: {
+                orderBy: { scheduledAt: 'asc' },
+                select: {
+                  id: true,
+                  interviewType: true,
+                  scheduledAt: true,
+                  outcome: true,
+                },
+              },
             },
           },
           resume: {
@@ -144,20 +148,6 @@ export class ApplicationService {
               id: true,
               title: true,
               fileName: true,
-            },
-          },
-          interviews: {
-            orderBy: { scheduledAt: 'asc' },
-            select: {
-              id: true,
-              type: true,
-              scheduledAt: true,
-              outcome: true,
-            },
-          },
-          _count: {
-            select: {
-              interviews: true,
             },
           },
         },
@@ -188,7 +178,13 @@ export class ApplicationService {
     const application = await prisma.application.findUnique({
       where: { id: applicationId },
       include: {
-        job: true,
+        job: {
+          include: {
+            interviews: {
+              orderBy: { scheduledAt: 'asc' },
+            },
+          },
+        },
         resume: {
           select: {
             id: true,
@@ -196,9 +192,6 @@ export class ApplicationService {
             fileName: true,
             fileUrl: true,
           },
-        },
-        interviews: {
-          orderBy: { scheduledAt: 'asc' },
         },
       },
     });
@@ -277,9 +270,9 @@ export class ApplicationService {
     // Verify ownership
     const application = await this.getApplicationById(applicationId, userId);
 
-    // Check for related interviews
+    // Check for related interviews (through job)
     const interviewCount = await prisma.interview.count({
-      where: { applicationId },
+      where: { jobId: application.jobId },
     });
 
     if (interviewCount > 0) {
@@ -317,19 +310,18 @@ export class ApplicationService {
       where: { jobId, userId },
       orderBy: { createdAt: 'desc' },
       include: {
+        job: {
+          include: {
+            interviews: {
+              orderBy: { scheduledAt: 'asc' },
+            },
+          },
+        },
         resume: {
           select: {
             id: true,
             title: true,
             fileName: true,
-          },
-        },
-        interviews: {
-          orderBy: { scheduledAt: 'asc' },
-        },
-        _count: {
-          select: {
-            interviews: true,
           },
         },
       },

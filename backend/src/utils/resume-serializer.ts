@@ -60,7 +60,7 @@ export interface SerializedResume {
  * Serialize a Resume model to the API response format
  */
 export function serializeResume(resume: Resume): SerializedResume {
-  const parsedData = resume.parsedData as ParsedResumeData | null;
+  const parsedData = resume.parsedData as unknown as ParsedResumeData | null;
 
   // Transform parsed experience data
   const experience = parsedData?.experiences?.map((exp, index) => {
@@ -87,7 +87,7 @@ export function serializeResume(resume: Resume): SerializedResume {
     startDate: edu.startDate || '',
     endDate: edu.endDate || null,
     current: edu.isCurrent || false,
-    gpa: edu.gpa,
+    gpa: edu.gpa ? String(edu.gpa) : undefined,
   }));
 
   // Transform parsed skills data

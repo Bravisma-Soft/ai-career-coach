@@ -1,7 +1,35 @@
 # AI Career Coach Backend - Current Status
 
-## Latest Update (Oct 17, 2025)
+## Latest Update (Jan 19, 2025)
+🚀 **Production Deployment in Progress** - Railway + AWS S3 setup, TypeScript fixes for production build
+
+## Recent Update (Oct 17, 2025)
 ✅ **MVP Features & Comprehensive Polish** - Jobs page, auto-parse, job URL parsing, PDF improvements, and UI/UX fixes
+
+## Production Deployment Status (Jan 19, 2025)
+
+### Railway Setup ✅
+- PostgreSQL database provisioned
+- Redis instance provisioned
+- Environment variables configured
+- Database migrations completed
+
+### Current Blockers 🚧
+- **TypeScript Build Errors**: Railway deployment failing due to old cached build
+- **Status**: Fixes pushed (commit `43ad9471`), awaiting manual redeploy trigger
+- **Next**: Force Railway to rebuild using latest code
+
+### Deployment Guides Created
+- `PRODUCTION_DEPLOYMENT_GUIDE.md` - Complete 12-step walkthrough
+- `DEPLOYMENT_CHECKLIST.md` - Progress tracking
+
+### Recent Production Fixes (Jan 19)
+1. **Master Resume Persistence Bug** - Fixed `isMaster` → `isPrimary` field mismatch
+2. **Match Score Feature** - Purple badge showing job-resume compatibility
+3. **Job Parser Enhancement** - Puppeteer support for JS-rendered sites (Workday, etc.)
+4. **TypeScript Compilation** - Relaxed strict checks, fixed type errors for production
+
+---
 
 ## Completed Features (As of Oct 17, 2025)
 

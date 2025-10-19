@@ -22,7 +22,7 @@ export interface AgentResponse<T = any> {
     totalTokens: number;
   };
   model?: string;
-  stopReason?: 'end_turn' | 'max_tokens' | 'stop_sequence';
+  stopReason?: string;
 }
 
 // Agent Error
@@ -84,7 +84,7 @@ export interface ClaudeResponse {
   role: 'assistant';
   content: ClaudeContent[];
   model: string;
-  stop_reason: 'end_turn' | 'max_tokens' | 'stop_sequence';
+  stop_reason: string;
   stop_sequence?: string;
   usage: {
     input_tokens: number;

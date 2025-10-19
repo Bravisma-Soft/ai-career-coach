@@ -494,13 +494,11 @@ export class JobService {
       where: { userId },
       select: {
         status: true,
-        priority: true,
         createdAt: true,
       },
     });
 
     const statusCounts: Record<string, number> = {};
-    const priorityCounts: Record<number, number> = {};
     let totalJobs = 0;
 
     jobs.forEach((job) => {
@@ -508,11 +506,6 @@ export class JobService {
 
       // Count by status
       statusCounts[job.status] = (statusCounts[job.status] || 0) + 1;
-
-      // Count by priority
-      if (job.priority) {
-        priorityCounts[job.priority] = (priorityCounts[job.priority] || 0) + 1;
-      }
     });
 
     // Calculate jobs added this month
@@ -538,7 +531,6 @@ export class JobService {
       total: totalJobs,
       active: activeJobs,
       byStatus: statusCounts,
-      byPriority: priorityCounts,
       addedThisMonth: jobsThisMonth,
     };
   }
@@ -552,7 +544,7 @@ export class JobService {
 
     const statusChanges = await prisma.statusChange.findMany({
       where: { jobId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { changedAt: 'asc' },
     });
 
     return statusChanges;

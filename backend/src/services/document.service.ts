@@ -46,7 +46,7 @@ class DocumentService {
       return document;
     } catch (error) {
       console.error('Error creating document:', error);
-      throw new ApiError('Failed to create document', 500);
+      throw new ApiError(500, 'Failed to create document');
     }
   }
 
@@ -84,7 +84,7 @@ class DocumentService {
       };
     } catch (error) {
       console.error('Error fetching documents:', error);
-      throw new ApiError('Failed to fetch documents', 500);
+      throw new ApiError(500, 'Failed to fetch documents');
     }
   }
 
@@ -99,22 +99,22 @@ class DocumentService {
           job: {
             select: {
               id: true,
-              companyName: true,
-              jobTitle: true,
+              company: true,
+              title: true,
             },
           },
         },
       });
 
       if (!document) {
-        throw new ApiError('Document not found', 404);
+        throw new ApiError(404, 'Document not found');
       }
 
       return document;
     } catch (error) {
       if (error instanceof ApiError) throw error;
       console.error('Error fetching document:', error);
-      throw new ApiError('Failed to fetch document', 500);
+      throw new ApiError(500, 'Failed to fetch document');
     }
   }
 
@@ -128,7 +128,7 @@ class DocumentService {
       });
 
       if (!document) {
-        throw new ApiError('Document not found', 404);
+        throw new ApiError(404, 'Document not found');
       }
 
       await prisma.document.delete({
@@ -139,7 +139,7 @@ class DocumentService {
     } catch (error) {
       if (error instanceof ApiError) throw error;
       console.error('Error deleting document:', error);
-      throw new ApiError('Failed to delete document', 500);
+      throw new ApiError(500, 'Failed to delete document');
     }
   }
 
@@ -156,7 +156,7 @@ class DocumentService {
       return documents;
     } catch (error) {
       console.error('Error fetching job documents:', error);
-      throw new ApiError('Failed to fetch job documents', 500);
+      throw new ApiError(500, 'Failed to fetch job documents');
     }
   }
 
@@ -178,7 +178,7 @@ class DocumentService {
       return document;
     } catch (error) {
       console.error('Error updating document:', error);
-      throw new ApiError('Failed to update document', 500);
+      throw new ApiError(500, 'Failed to update document');
     }
   }
 }

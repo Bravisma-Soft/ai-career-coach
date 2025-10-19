@@ -281,7 +281,6 @@ router.post(
     // Build response in expected format
     const response: GenerateCoverLetterResponse = {
       coverLetter: result.coverLetter,
-      subject: result.subject,
       keyPoints: result.keyPoints,
       suggestions: result.suggestions,
       tone: result.tone,

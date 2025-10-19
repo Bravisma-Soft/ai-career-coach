@@ -374,7 +374,7 @@ export class ResumeService {
 
     if (resume.parsedData && !hasError) {
       logger.info(`Resume already parsed successfully: ${resumeId}`);
-      return resume;
+      return serializeResume(resume);
     }
 
     if (hasError) {
@@ -686,7 +686,6 @@ export class ResumeService {
         isPrimary: false,
         isActive: true,
         parsedData: tailoredData as any, // Store tailored version
-        notes: `Automatically tailored for ${job.company} - ${job.title} position`,
       },
     });
 

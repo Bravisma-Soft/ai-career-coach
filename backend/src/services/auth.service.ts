@@ -64,14 +64,16 @@ export class AuthService {
     };
 
     // Generate Access Token (short-lived)
+    const accessExpiresIn = env.JWT_EXPIRES_IN;
     const accessToken = jwt.sign(accessPayload, env.JWT_SECRET, {
-      expiresIn: env.JWT_EXPIRES_IN,
-    });
+      expiresIn: accessExpiresIn,
+    } as jwt.SignOptions);
 
     // Generate Refresh Token (long-lived)
+    const refreshExpiresIn = env.JWT_REFRESH_EXPIRES_IN;
     const refreshToken = jwt.sign(refreshPayload, env.JWT_REFRESH_SECRET, {
-      expiresIn: env.JWT_REFRESH_EXPIRES_IN,
-    });
+      expiresIn: refreshExpiresIn,
+    } as jwt.SignOptions);
 
     // Calculate expiry time in seconds
     const expiresIn = this.parseExpiryToSeconds(env.JWT_EXPIRES_IN);

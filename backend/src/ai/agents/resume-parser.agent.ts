@@ -97,7 +97,7 @@ export class ResumeParserAgent extends BaseAgent<ResumeParserInput, ParsedResume
         error: response.error,
         fileName,
       });
-      return response as AgentResponse<ParsedResumeData>;
+      return response as unknown as AgentResponse<ParsedResumeData>;
     }
 
     // Parse JSON response
