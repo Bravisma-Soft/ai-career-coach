@@ -1,7 +1,3 @@
-[build]
-builder = "NIXPACKS"
-buildCommand = "npm run build"
-
 [deploy]
 startCommand = "npm run start:migrate"
 restartPolicyType = "ON_FAILURE"
