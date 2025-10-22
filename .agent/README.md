@@ -245,6 +245,9 @@ These files capture the state of the project at specific points in time:
 | **Backend setup** | [/backend/QUICKSTART.md](/backend/QUICKSTART.md) |
 | **Frontend setup** | [/frontend/README.md](/frontend/README.md) |
 | **Deployment guide** | [/PRODUCTION_DEPLOYMENT_GUIDE.md](/PRODUCTION_DEPLOYMENT_GUIDE.md) |
+| **AWS S3 permissions** | [Production Deployment § AWS S3](/PRODUCTION_DEPLOYMENT_GUIDE.md#aws-s3) |
+| **Email setup (SendGrid)** | [/backend/docs/EMAIL_SETUP_GUIDE.md](/backend/docs/EMAIL_SETUP_GUIDE.md) |
+| **JWT token issues** | [/backend/docs/JWT_TOKEN_TROUBLESHOOTING.md](/backend/docs/JWT_TOKEN_TROUBLESHOOTING.md) |
 | **API reference** | [/backend/docs/API_ENDPOINTS_SUMMARY.md](/backend/docs/API_ENDPOINTS_SUMMARY.md) |
 | **Product requirements** | [/backend/career_coach_prd.md](/backend/career_coach_prd.md) |
 

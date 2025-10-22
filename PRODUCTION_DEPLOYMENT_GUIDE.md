@@ -153,6 +153,39 @@ AWS_SECRET_ACCESS_KEY=<your-aws-secret-key>
 AWS_S3_BUCKET_NAME=<your-s3-bucket-name>
 ```
 
+**⚠️ Important: Configure IAM Permissions**
+
+Your IAM user must have the following S3 permissions. In AWS IAM Console:
+
+1. Go to **IAM** → **Users** → Select your user (e.g., `ai-career-coach-app-user`)
+2. Click **Add permissions** → **Create inline policy**
+3. Use this JSON policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::your-bucket-name/*",
+        "arn:aws:s3:::your-bucket-name"
+      ]
+    }
+  ]
+}
+```
+
+4. Name it `S3ResumeUploadPolicy` and save
+
+**Common Error:** If you see `User is not authorized to perform: s3:PutObject`, this policy is missing.
+
 ### CORS (update after frontend deployed)
 ```env
 CORS_ORIGIN=https://your-frontend-domain.com
@@ -465,10 +498,28 @@ railway run npx prisma db push
 
 ### Issue: S3 Upload Failing
 
+**Error:** `User is not authorized to perform: s3:PutObject`
+
 **Solution**:
-- Verify AWS credentials
-- Check S3 bucket permissions
-- Ensure bucket region matches `AWS_REGION`
+1. **Add IAM Policy** (see Step 5 → AWS S3 section above for full policy)
+2. Verify AWS credentials are correct in Railway variables
+3. Check bucket name matches exactly (case-sensitive)
+4. Ensure bucket region matches `AWS_REGION` environment variable
+
+**Quick Fix via AWS CLI**:
+```bash
+aws iam put-user-policy \
+  --user-name your-iam-user-name \
+  --policy-name S3ResumeUploadPolicy \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Effect": "Allow",
+      "Action": ["s3:PutObject","s3:GetObject","s3:DeleteObject","s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::your-bucket-name/*","arn:aws:s3:::your-bucket-name"]
+    }]
+  }'
+```
 
 ### Issue: CORS Errors
 
