@@ -11,9 +11,6 @@ import {
   tailorResumeSchema,
   analyzeResumeSchema,
   generateCoverLetterSchema,
-  startMockInterviewSchema,
-  respondToInterviewSchema,
-  endMockInterviewSchema,
   prepareInterviewSchema,
   matchJobsSchema,
   analyzeJobSchema,
@@ -24,9 +21,6 @@ import {
   TailorResumeResponse,
   AnalyzeResumeResponse,
   GenerateCoverLetterResponse,
-  StartMockInterviewResponse,
-  RespondToInterviewResponse,
-  EndMockInterviewResponse,
   PrepareInterviewResponse,
   MatchJobsResponse,
   AnalyzeJobResponse,
@@ -303,163 +297,11 @@ router.post(
 // MOCK INTERVIEW AI ROUTES
 // =================================
 
-/**
- * @route   POST /api/ai/interviews/mock/start
- * @desc    Start a mock interview session
- * @access  Private
- */
-router.post(
-  '/interviews/mock/start',
-  validate(startMockInterviewSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.userId!;
-    const { jobId, interviewType, difficulty, numberOfQuestions, focusAreas } = req.body;
-
-    logger.info(`AI: Starting mock interview - User: ${userId}, Job: ${jobId}, Type: ${interviewType}`);
-
-    // TODO: Implement MockInterviewAgent
-    // const agent = new MockInterviewAgent();
-    // const result = await agent.execute({ jobId, interviewType, difficulty, numberOfQuestions, focusAreas, userId });
-
-    // Temporary placeholder response
-    const response: StartMockInterviewResponse = {
-      sessionId: 'mock_session_placeholder',
-      interviewType,
-      difficulty: difficulty || 'mid',
-      totalQuestions: numberOfQuestions || 10,
-      currentQuestion: {
-        questionNumber: 1,
-        question: 'Tell me about a time when you faced a challenging technical problem.',
-        category: 'behavioral',
-        tips: [
-          'Use the STAR method (Situation, Task, Action, Result)',
-          'Be specific about the technical challenge',
-          'Emphasize your problem-solving approach',
-        ],
-      },
-      expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours
-    };
-
-    logger.info(`AI: Mock interview started - Session: ${response.sessionId}`);
-
-    sendSuccess(res, response, 'Mock interview session started', 201);
-  })
-);
-
-/**
- * @route   POST /api/ai/interviews/mock/:sessionId/respond
- * @desc    Submit answer and get next question in mock interview
- * @access  Private
- */
-router.post(
-  '/interviews/mock/:sessionId/respond',
-  validate(respondToInterviewSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.userId!;
-    const { sessionId } = req.params;
-    const { answer } = req.body;
-
-    logger.info(`AI: Processing mock interview response - Session: ${sessionId}`);
-
-    // TODO: Implement MockInterviewAgent response handler
-    // const agent = new MockInterviewAgent();
-    // const result = await agent.processResponse({ sessionId, answer, userId });
-
-    // Temporary placeholder response
-    const response: RespondToInterviewResponse = {
-      feedback: {
-        score: 8,
-        strengths: [
-          'Good use of STAR method',
-          'Clear explanation of the problem',
-        ],
-        improvements: [
-          'Could provide more specific metrics',
-          'Consider discussing the impact on the team',
-        ],
-        detailedFeedback: 'Your answer demonstrates strong problem-solving skills...',
-      },
-      nextQuestion: {
-        questionNumber: 2,
-        question: 'How do you handle disagreements with team members?',
-        category: 'behavioral',
-        tips: [
-          'Show emotional intelligence',
-          'Demonstrate conflict resolution skills',
-          'Focus on positive outcomes',
-        ],
-      },
-      isComplete: false,
-    };
-
-    logger.info(`AI: Feedback provided - Score: ${response.feedback.score}/10`);
-
-    sendSuccess(res, response, 'Response processed successfully');
-  })
-);
-
-/**
- * @route   POST /api/ai/interviews/mock/:sessionId/end
- * @desc    End mock interview and get comprehensive feedback
- * @access  Private
- */
-router.post(
-  '/interviews/mock/:sessionId/end',
-  validate(endMockInterviewSchema),
-  asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.userId!;
-    const { sessionId } = req.params;
-
-    logger.info(`AI: Ending mock interview - Session: ${sessionId}`);
-
-    // TODO: Implement MockInterviewAgent session end handler
-    // const agent = new MockInterviewAgent();
-    // const result = await agent.endSession({ sessionId, userId });
-
-    // Temporary placeholder response
-    const response: EndMockInterviewResponse = {
-      summary: {
-        overallScore: 8.2,
-        totalQuestions: 5,
-        averageScore: 8.2,
-        duration: '28 minutes',
-      },
-      performance: {
-        strengths: [
-          'Excellent use of STAR method',
-          'Strong technical knowledge',
-          'Clear communication',
-        ],
-        weaknesses: [
-          'Could provide more quantifiable results',
-          'Limited discussion of team collaboration',
-        ],
-        recommendations: [
-          'Practice discussing metrics and impact',
-          'Prepare more examples of teamwork',
-          'Work on concise answers (aim for 2-3 minutes)',
-        ],
-      },
-      questionResults: [
-        {
-          question: 'Tell me about a challenging technical problem...',
-          category: 'behavioral',
-          answer: 'User answer would be stored here...',
-          score: 8,
-          feedback: 'Strong answer with good structure...',
-        },
-      ],
-    };
-
-    logger.info(`AI: Mock interview ended - Overall Score: ${response.summary.overallScore}/10`);
-
-    sendSuccess(res, response, 'Mock interview completed');
-  })
-);
-
 // =================================
 // INTERVIEW PREPARATION ROUTES
 // =================================
+// Note: Mock interview functionality is implemented in /api/mock-interviews/*
+// See backend/src/api/routes/mock-interview.routes.ts for real AI implementation
 
 /**
  * @route   POST /api/ai/interviews/prepare

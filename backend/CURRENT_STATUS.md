@@ -1,3 +1,14 @@
+# ⚠️ DEPRECATED - DO NOT USE
+
+**This file is outdated and no longer maintained.**
+
+**Please use the new centralized status file:**
+👉 **[/PROJECT_STATUS.md](../PROJECT_STATUS.md)** 👈
+
+**Last updated here:** January 19, 2025 (superseded October 21, 2025)
+
+---
+
 # AI Career Coach Backend - Current Status
 
 ## Latest Update (Jan 19, 2025)

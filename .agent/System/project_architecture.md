@@ -9,7 +9,7 @@
 
 ## 1. Project Overview
 
-**AI Career Coach** is an intelligent career transition platform that leverages Claude AI to help job seekers optimize their resumes, prepare for interviews, and manage their job search efficiently.
+**AI Career Coach** is an intelligent career transition platform that leverages Claude AI (Sonnet 4.5) to help job seekers optimize their resumes, prepare for interviews, and manage their job search efficiently.
 
 ### Project Goals
 - Provide AI-powered career guidance and coaching
@@ -17,6 +17,13 @@
 - Offer mock interview sessions with AI-driven feedback
 - Facilitate comprehensive job application tracking
 - Deliver personalized career development recommendations
+- Automate job discovery and matching (Phase 2)
+
+### Current Status
+- **Version**: 1.0 MVP
+- **Deployment**: Production on Railway (Backend)
+- **Completion**: 90% MVP Phase 1 Complete
+- **Production URL**: https://ai-career-coach-backend.railway.app
 
 ---
 
@@ -28,8 +35,9 @@ The system follows a **monorepo structure** with separate frontend and backend a
 ai-career-coach/
 ├── frontend/           # React + TypeScript SPA
 ├── backend/            # Node.js + Express API
-├── docker-compose.yml  # Infrastructure setup
-└── .agent/             # Project documentation
+├── docker-compose.yml  # Local infrastructure setup
+├── .agent/             # Project documentation
+└── docs/               # Additional documentation
 ```
 
 ### Architecture Diagram
@@ -40,9 +48,9 @@ ai-career-coach/
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │  React 18 + TypeScript + Vite                             │  │
 │  │  - Zustand (State Management)                             │  │
-│  │  - React Query (Server State)                             │  │
 │  │  - Axios (HTTP Client)                                    │  │
 │  │  - Shadcn/ui + Tailwind CSS (UI Components)              │  │
+│  │  - React Router v6 (Client Routing)                      │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └────────────────────────┬────────────────────────────────────────┘
                          │ HTTP/REST API
@@ -50,10 +58,12 @@ ai-career-coach/
 │                      API Gateway Layer                           │
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │  Express.js + TypeScript                                  │  │
-│  │  - JWT Authentication                                     │  │
-│  │  - Rate Limiting                                          │  │
+│  │  - JWT Authentication (24h expiry)                        │  │
+│  │  - Rate Limiting (express-rate-limit)                    │  │
 │  │  - CORS + Helmet Security                                │  │
 │  │  - Request Validation (Zod)                              │  │
+│  │  - Error Handling Middleware                             │  │
+│  │  - Logging (Winston)                                     │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └────────────────────────┬────────────────────────────────────────┘
                          │
@@ -62,24 +72,29 @@ ai-career-coach/
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
 │  │   Services   │  │  AI Agents   │  │   Job Processors     │  │
 │  │              │  │              │  │   (BullMQ)           │  │
-│  │ - Auth       │  │ - Base Agent │  │                      │  │
-│  │ - Resume     │  │ - Parser     │  │ - Resume Parsing     │  │
-│  │ - Job        │  │ - Tailor     │  │ - AI Processing      │  │
-│  │ - Interview  │  │ - Coach      │  │ - Background Tasks   │  │
-│  │ - User       │  │              │  │                      │  │
+│  │ - Auth       │  │ ✅ Parser    │  │                      │  │
+│  │ - User       │  │ ✅ Tailor    │  │ ✅ Resume Parsing    │  │
+│  │ - Resume     │  │ ✅ Cover Ltr │  │ - Email Queue        │  │
+│  │ - Job        │  │ ✅ Mock Int  │  │ - Notification Queue │  │
+│  │ - Interview  │  │ ✅ Job Parse │  │                      │  │
+│  │ - Document   │  │ ❌ Analyzer  │  │                      │  │
+│  │ - Application│  │ ❌ Matcher   │  │                      │  │
+│  │ - Storage    │  │ ❌ Research  │  │                      │  │
 │  └──────────────┘  └──────────────┘  └──────────────────────┘  │
 └────────────────────────┬────────────────────────────────────────┘
                          │
 ┌────────────────────────┴────────────────────────────────────────┐
 │                       Data Layer                                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
-│  │  PostgreSQL  │  │    Redis     │  │   AWS S3 / Local     │  │
+│  │  PostgreSQL  │  │    Redis     │  │   Local / S3         │  │
 │  │   (Prisma)   │  │   (Cache)    │  │   (File Storage)     │  │
 │  │              │  │              │  │                      │  │
-│  │ - User Data  │  │ - Sessions   │  │ - Resumes            │  │
-│  │ - Jobs       │  │ - Rate Limit │  │ - Documents          │  │
-│  │ - Resumes    │  │ - Queue Jobs │  │ - Profile Pictures   │  │
+│  │ - 15+ Models │  │ - Sessions   │  │ - Resumes (PDF/DOCX)│  │
+│  │ - User Data  │  │ - Rate Limit │  │ - Documents          │  │
+│  │ - Jobs       │  │ - Queue Jobs │  │ - Profile Pictures   │  │
+│  │ - Resumes    │  │              │  │                      │  │
 │  │ - Interviews │  │              │  │                      │  │
+│  │ - Mock Tests │  │              │  │                      │  │
 │  └──────────────┘  └──────────────┘  └──────────────────────┘  │
 └────────────────────────┬────────────────────────────────────────┘
                          │
@@ -87,9 +102,10 @@ ai-career-coach/
 │                    External Services                             │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │  Anthropic Claude API (AI Model)                         │   │
-│  │  - claude-sonnet-4-5 (Primary)                           │   │
-│  │  - claude-opus-4 (Advanced tasks)                        │   │
-│  │  - claude-3-5-haiku (Quick tasks)                        │   │
+│  │  - claude-sonnet-4-5-20250929 (Primary)                 │   │
+│  │  - Temperature: 0.3-0.7 (task-dependent)                │   │
+│  │  - Max Tokens: 2048-8000 (task-dependent)               │   │
+│  │  - Timeout: 300s (5 minutes)                            │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -98,18 +114,17 @@ ai-career-coach/
 
 ## 3. Technology Stack
 
-### Frontend (`/frontend`)
+### Frontend (`/frontend`) - 127 TypeScript files
 
 | Category | Technology | Purpose |
 |----------|-----------|---------|
-| **Framework** | React 18 | UI library |
-| **Language** | TypeScript | Type safety |
-| **Build Tool** | Vite | Fast builds, HMR |
+| **Framework** | React 18.2.0 | UI library |
+| **Language** | TypeScript 5.x | Type safety |
+| **Build Tool** | Vite 5.x | Fast builds, HMR |
 | **Router** | React Router v6 | Client-side routing |
-| **State Management** | Zustand | Global state |
-| **Server State** | React Query (TanStack Query) | Data fetching, caching |
+| **State Management** | Zustand 4.x | Global state (7 stores) |
 | **HTTP Client** | Axios | API requests |
-| **Styling** | Tailwind CSS | Utility-first CSS |
+| **Styling** | Tailwind CSS 3.x | Utility-first CSS |
 | **UI Components** | Radix UI + Shadcn/ui | Accessible components |
 | **Forms** | React Hook Form + Zod | Form handling, validation |
 | **Icons** | Lucide React | Icon library |
@@ -118,513 +133,762 @@ ai-career-coach/
 | **PDF Viewer** | react-pdf | Resume preview |
 | **Date Utils** | date-fns | Date formatting |
 
-### Backend (`/backend`)
+#### Zustand Stores
+1. `authStore.ts` - Authentication state
+2. `profileStore.ts` - User profile state
+3. `resumesStore.ts` - Resume management
+4. `jobsStore.ts` - Job tracking
+5. `interviewsStore.ts` - Interview management
+6. `aiStore.ts` - AI operations state
+7. `uiStore.ts` - UI state (modals, toasts)
+
+#### Frontend Pages
+- `Dashboard.tsx` - Main dashboard with stats
+- `Jobs.tsx` - Job tracking Kanban board
+- `Resumes.tsx` - Resume management
+- `Interviews.tsx` - Interview list/calendar
+- `InterviewDetail.tsx` - Single interview view
+- `MockInterview.tsx` - Mock interview UI
+- `MockInterviewResults.tsx` - Session results
+- `Profile.tsx` - User profile management
+- `Settings.tsx` - User settings
+- `Login.tsx` / `Register.tsx` - Auth pages
+- `Landing.tsx` - Landing page
+- `NotFound.tsx` - 404 page
+- `StyleGuide.tsx` - UI component showcase
+
+### Backend (`/backend`) - 70 TypeScript files
 
 | Category | Technology | Purpose |
 |----------|-----------|---------|
 | **Runtime** | Node.js 18+ | JavaScript runtime |
 | **Framework** | Express 5 | Web framework |
-| **Language** | TypeScript | Type safety |
-| **Database ORM** | Prisma | Database toolkit |
-| **Database** | PostgreSQL 15+ | Primary database |
-| **Cache/Queue** | Redis 7+ | Caching, sessions, queues |
-| **Job Queue** | BullMQ | Background jobs |
+| **Language** | TypeScript 5.x | Type safety |
+| **Database ORM** | Prisma 5.x | Database toolkit |
+| **Database** | PostgreSQL 15+ | Primary database (Railway) |
+| **Cache/Queue** | Redis 7+ | Caching, sessions, queues (Railway) |
+| **Job Queue** | BullMQ 5.x | Background jobs |
 | **Authentication** | JWT + bcryptjs | Secure auth |
 | **Validation** | Zod | Schema validation |
 | **Security** | Helmet + CORS + Rate Limiting | Security middleware |
 | **Logging** | Winston | Structured logging |
 | **File Upload** | Multer | Multipart form data |
-| **AI Integration** | Anthropic SDK | Claude AI |
-| **Storage** | AWS S3 (optional) / Local | File storage |
+| **AI Integration** | @anthropic-ai/sdk | Claude AI |
+| **Storage** | Local FS (S3 planned) | File storage |
+| **PDF Parsing** | pdf-parse | Resume extraction |
+| **DOCX Parsing** | mammoth | Resume extraction |
+| **Web Scraping** | Cheerio + Puppeteer | Job URL parsing |
+
+#### Backend Services (9 services)
+1. `auth.service.ts` - Authentication, JWT, password reset
+2. `user.service.ts` - User CRUD operations
+3. `resume.service.ts` - Resume upload, parse, tailor
+4. `job.service.ts` - Job CRUD, status management
+5. `application.service.ts` - Application tracking
+6. `interview.service.ts` - Interview scheduling
+7. `mock-interview.service.ts` - Mock interview sessions
+8. `document.service.ts` - Document storage
+9. `storage.service.ts` - File upload/download
+
+#### API Routes (11 route groups)
+1. `auth.routes.ts` - `/api/auth/*`
+2. `user.routes.ts` - `/api/profile/*`
+3. `resume.routes.ts` - `/api/resumes/*`
+4. `job.routes.ts` - `/api/jobs/*`
+5. `application.routes.ts` - `/api/applications/*`
+6. `interview.routes.ts` - `/api/interviews/*`
+7. `mock-interview.routes.ts` - `/api/mock-interviews/*`
+8. `document.routes.ts` - `/api/documents/*`
+9. `ai.routes.ts` - `/api/ai/*` (placeholder agents)
+10. `health.routes.ts` - `/api/health/*`
+11. `index.ts` - Route aggregation
 
 ### Infrastructure
 
-| Service | Technology | Purpose |
-|---------|-----------|---------|
-| **Database** | PostgreSQL 15 Alpine | Relational data |
-| **Cache** | Redis 7 Alpine | Caching, sessions |
-| **Containerization** | Docker Compose | Local development |
-| **File Storage** | AWS S3 / Local FS | Resume/document storage |
+| Service | Technology | Environment | Purpose |
+|---------|-----------|-------------|---------|
+| **Database** | PostgreSQL 15 | Railway | Relational data |
+| **Cache** | Redis 7 | Railway | Sessions, rate limiting, queue |
+| **Container** | Docker Compose | Local dev | PostgreSQL + Redis |
+| **File Storage** | Local FS | Development | Resume/document storage |
+| **Deployment** | Railway | Production | Backend hosting |
+| **Worker** | BullMQ Worker | Railway | Resume parsing queue |
 
 ---
 
 ## 4. Project Structure
 
-### Frontend Structure
-
-```
-frontend/
-├── src/
-│   ├── components/              # React components
-│   │   ├── ui/                 # Base UI components (Shadcn)
-│   │   ├── jobs/               # Job tracking components
-│   │   ├── interviews/         # Interview components
-│   │   ├── resumes/            # Resume management
-│   │   ├── ai/                 # AI-specific features
-│   │   ├── Header.tsx          # App header
-│   │   ├── MobileNav.tsx       # Mobile navigation
-│   │   ├── ProtectedRoute.tsx  # Auth guard
-│   │   └── ErrorBoundary.tsx   # Error handling
-│   │
-│   ├── pages/                  # Route pages
-│   │   ├── Landing.tsx         # Landing page
-│   │   ├── Login.tsx           # Authentication
-│   │   ├── Register.tsx        # Registration
-│   │   ├── Dashboard.tsx       # Main dashboard
-│   │   ├── Resumes.tsx         # Resume management
-│   │   ├── Interviews.tsx      # Interview list
-│   │   ├── InterviewDetail.tsx # Interview details
-│   │   ├── MockInterview.tsx   # AI mock interview
-│   │   ├── Profile.tsx         # User profile
-│   │   └── Settings.tsx        # App settings
-│   │
-│   ├── services/               # API service layer
-│   │   ├── authService.ts      # Authentication API
-│   │   ├── resumeService.ts    # Resume operations
-│   │   ├── jobService.ts       # Job tracking
-│   │   └── interviewService.ts # Interview management
-│   │
-│   ├── store/                  # Zustand stores
-│   │   ├── authStore.ts        # Auth state
-│   │   ├── jobsStore.ts        # Jobs state
-│   │   ├── resumesStore.ts     # Resumes state
-│   │   └── interviewsStore.ts  # Interviews state
-│   │
-│   ├── hooks/                  # Custom React hooks
-│   │   └── use-mobile.tsx      # Mobile detection
-│   │
-│   ├── lib/                    # Utility functions
-│   │   ├── api.ts              # Axios instance
-│   │   └── utils.ts            # Helper functions
-│   │
-│   ├── types/                  # TypeScript types
-│   │
-│   ├── App.tsx                 # Root component
-│   ├── main.tsx                # App entry point
-│   └── index.css               # Global styles
-│
-├── public/                     # Static assets
-├── index.html                  # HTML template
-├── vite.config.ts              # Vite configuration
-├── tailwind.config.ts          # Tailwind configuration
-├── tsconfig.json               # TypeScript config
-└── package.json                # Dependencies
-```
-
 ### Backend Structure
-
 ```
 backend/
 ├── src/
-│   ├── api/                    # API layer
-│   │   ├── routes/            # Route definitions
-│   │   │   ├── index.ts       # Route aggregator
-│   │   │   ├── auth.routes.ts
-│   │   │   ├── user.routes.ts
-│   │   │   ├── resume.routes.ts
-│   │   │   ├── job.routes.ts
-│   │   │   ├── application.routes.ts
-│   │   │   └── interview.routes.ts
-│   │   │
-│   │   ├── middleware/        # Express middleware
-│   │   │   ├── auth.middleware.ts   # JWT verification
-│   │   │   ├── errorHandler.ts      # Error handling
-│   │   │   ├── rateLimiter.ts       # Rate limiting
-│   │   │   └── validate.ts          # Request validation
-│   │   │
-│   │   └── validators/        # Zod validation schemas
+│   ├── ai/                          # AI Integration
+│   │   ├── agents/                  # AI Agents (6 files)
+│   │   │   ├── base.agent.ts        # ✅ Abstract base class
+│   │   │   ├── resume-parser.agent.ts      # ✅ Parse resumes
+│   │   │   ├── resume-tailor.agent.ts      # ✅ Tailor resumes
+│   │   │   ├── cover-letter.agent.ts       # ✅ Generate cover letters
+│   │   │   ├── mock-interview.agent.ts     # ✅ Mock interviews
+│   │   │   └── job-parser.agent.ts         # ✅ Parse job URLs
+│   │   ├── prompts/                 # AI Prompts (5 files)
+│   │   │   ├── resume-parser.prompt.ts
+│   │   │   ├── resume-tailor.prompt.ts
+│   │   │   ├── cover-letter.prompt.ts
+│   │   │   ├── mock-interview.prompt.ts
+│   │   │   └── job-parser.prompt.ts
+│   │   └── utils/                   # AI Utilities
+│   │       ├── response-parser.ts
+│   │       └── prompt-builder.ts
+│   │
+│   ├── api/
+│   │   ├── routes/                  # API Routes (11 files)
+│   │   ├── middleware/              # Express Middleware
+│   │   │   ├── auth.middleware.ts
+│   │   │   ├── error.middleware.ts
+│   │   │   ├── validate.middleware.ts
+│   │   │   └── rate-limit.middleware.ts
+│   │   └── validators/              # Zod Schemas
 │   │       ├── auth.validator.ts
 │   │       ├── resume.validator.ts
 │   │       ├── job.validator.ts
-│   │       └── interview.validator.ts
+│   │       └── ai.validator.ts
 │   │
-│   ├── services/              # Business logic
-│   │   ├── auth.service.ts
-│   │   ├── user.service.ts
-│   │   ├── resume.service.ts
-│   │   ├── job.service.ts
-│   │   ├── interview.service.ts
-│   │   ├── application.service.ts
-│   │   └── storage.service.ts       # File uploads
+│   ├── services/                    # Business Logic (9 files)
 │   │
-│   ├── ai/                    # AI integration
-│   │   ├── agents/            # AI agent classes
-│   │   │   ├── base.agent.ts         # Abstract base class
-│   │   │   └── resume-parser.agent.ts # Resume parsing
-│   │   │
-│   │   ├── prompts/           # AI prompt templates
-│   │   │   └── resume-parser.prompt.ts
-│   │   │
-│   │   └── utils/             # AI utilities
-│   │       ├── prompt-builder.ts
-│   │       └── response-parser.ts
+│   ├── jobs/                        # Background Jobs
+│   │   ├── workers/
+│   │   │   └── resume-parse.worker.ts
+│   │   └── processors/
+│   │       └── resume-parse.processor.ts
 │   │
-│   ├── jobs/                  # Background jobs
-│   │   ├── processors/        # Job processors
-│   │   │   └── resume-parse.processor.ts
-│   │   │
-│   │   └── workers/           # Job workers
-│   │       └── resume-parse.worker.ts
+│   ├── config/                      # Configuration
+│   │   ├── env.ts                   # Environment variables
+│   │   ├── logger.ts                # Winston logger
+│   │   ├── claude.config.ts         # Claude AI config
+│   │   ├── queue.ts                 # BullMQ config
+│   │   └── redis.ts                 # Redis config
 │   │
-│   ├── database/              # Database layer
-│   │   ├── client.ts          # Prisma client
-│   │   └── prisma.ts          # DB connection
+│   ├── database/                    # Database
+│   │   └── prisma.ts                # Prisma client
 │   │
-│   ├── config/                # Configuration
-│   │   ├── env.ts             # Environment variables
-│   │   ├── logger.ts          # Winston logger
-│   │   ├── redis.ts           # Redis connection
-│   │   ├── queue.ts           # BullMQ setup
-│   │   ├── claude.config.ts   # Claude AI config
-│   │   └── multer.ts          # File upload config
-│   │
-│   ├── utils/                 # Utility functions
-│   │   ├── ApiError.ts        # Custom error classes
-│   │   ├── response.ts        # API response helpers
-│   │   ├── asyncHandler.ts    # Async route wrapper
-│   │   ├── document-parser.ts # Document parsing
-│   │   └── constants.ts       # App constants
-│   │
-│   ├── types/                 # TypeScript types
-│   │   ├── index.ts
-│   │   ├── auth.types.ts
+│   ├── types/                       # TypeScript Types
 │   │   ├── ai.types.ts
-│   │   └── express.d.ts       # Express type extensions
+│   │   ├── ai-api.types.ts
+│   │   └── express.d.ts
 │   │
-│   ├── app.ts                 # Express app setup
-│   └── server.ts              # Server entry point
+│   ├── utils/                       # Utilities
+│   │   ├── resume-serializer.ts
+│   │   ├── response.ts
+│   │   └── pdfGenerator.ts
+│   │
+│   ├── app.ts                       # Express app setup
+│   └── server.ts                    # Server entry point
 │
-├── prisma/                    # Prisma ORM
-│   ├── schema.prisma          # Database schema
-│   ├── migrations/            # DB migrations
-│   └── seed.ts                # Seed data
+├── prisma/
+│   ├── schema.prisma                # Database schema (15 models)
+│   └── migrations/                  # Database migrations
 │
-├── logs/                      # Log files (generated)
-├── uploads/                   # Local file uploads (generated)
-├── dist/                      # Compiled output (generated)
-├── tsconfig.json              # TypeScript config
-└── package.json               # Dependencies
+├── uploads/                         # Local file storage
+├── tests/                           # Test files
+└── package.json
+```
+
+### Frontend Structure
+```
+frontend/
+├── src/
+│   ├── pages/                       # Route Pages (14 files)
+│   │
+│   ├── components/                  # React Components
+│   │   ├── resumes/                 # Resume components
+│   │   │   ├── ResumeList.tsx
+│   │   │   ├── ResumePreview.tsx
+│   │   │   ├── ResumeEditor.tsx
+│   │   │   └── TailoredResumeView.tsx
+│   │   ├── jobs/                    # Job components
+│   │   │   ├── JobCard.tsx
+│   │   │   ├── JobKanban.tsx
+│   │   │   ├── JobDetailDrawer.tsx
+│   │   │   └── JobForm.tsx
+│   │   ├── interviews/              # Interview components
+│   │   │   ├── InterviewCard.tsx
+│   │   │   ├── InterviewForm.tsx
+│   │   │   └── MockInterviewSession.tsx
+│   │   ├── dashboard/               # Dashboard components
+│   │   │   ├── StatsCard.tsx
+│   │   │   └── RecentActivity.tsx
+│   │   ├── layout/                  # Layout components
+│   │   │   ├── AppLayout.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   └── Header.tsx
+│   │   └── ui/                      # Shadcn/ui components
+│   │
+│   ├── store/                       # Zustand Stores (7 files)
+│   │
+│   ├── services/                    # API Services (7 files)
+│   │   ├── authService.ts
+│   │   ├── profileService.ts
+│   │   ├── resumeService.ts
+│   │   ├── jobService.ts
+│   │   ├── interviewService.ts
+│   │   ├── aiService.ts
+│   │   └── documentService.ts
+│   │
+│   ├── hooks/                       # Custom Hooks
+│   │   ├── useAuth.ts
+│   │   ├── useApi.ts
+│   │   └── useToast.ts
+│   │
+│   ├── lib/                         # Utilities
+│   │   ├── api.ts                   # Axios instance
+│   │   └── utils.ts                 # Helper functions
+│   │
+│   ├── types/                       # TypeScript Types
+│   │   ├── api.types.ts
+│   │   └── models.types.ts
+│   │
+│   ├── App.tsx                      # Root component
+│   └── main.tsx                     # Entry point
+│
+├── public/                          # Static assets
+└── package.json
 ```
 
 ---
 
-## 5. Core Modules & Functionalities
+## 5. Core Functionalities
 
-### 5.1 Authentication & User Management
-- **JWT-based authentication** with access and refresh tokens
-- **User registration and login** with email and password
-- **Password hashing** using bcryptjs
-- **Session management** with Redis
-- **Protected routes** requiring authentication
-- **User profile management** (name, email, avatar)
+### Authentication System ✅
+- **JWT-based authentication** with 24-hour expiration
+- **Refresh tokens** stored in Redis (7-day expiration)
+- **Multi-device session management**
+- **Password reset flow** (email service pending)
+- **Protected routes** with middleware
+- **Rate limiting** on auth endpoints
 
-### 5.2 Resume Management
-- **Upload resumes** (PDF, DOC, DOCX)
-- **AI-powered parsing** to extract structured data
-- **Resume versioning** with primary resume selection
-- **Resume tailoring** for specific job descriptions
-- **Resume comparison** showing before/after changes
-- **Resume preview** with PDF viewer
+**Files:**
+- `backend/src/services/auth.service.ts`
+- `backend/src/api/routes/auth.routes.ts`
+- `backend/src/api/middleware/auth.middleware.ts`
+- `frontend/src/store/authStore.ts`
 
-### 5.3 Job Tracking
-- **Job board** with Kanban-style interface
-- **Job status tracking** (Interested, Applied, Interview, Offer, etc.)
-- **Job details** (title, company, location, salary, description)
-- **AI match scoring** between resume and job description
-- **Status history** tracking job application progress
-- **Notes and deadlines** for each job
+### Resume Management ✅
+- **Upload** PDF/DOCX files
+- **AI-powered parsing** (background job with BullMQ)
+- **Structured data extraction** (personal info, experience, education, skills)
+- **Master resume selection** (`isPrimary` flag)
+- **Resume preview** and download
+- **Version tracking**
 
-### 5.4 Interview Management
-- **Interview scheduling** with date/time/location
-- **Interview types** (Phone, Video, Onsite, Technical, Behavioral)
-- **Interview preparation** notes and questions
-- **Mock interviews** with AI interviewer
-- **Interview feedback** and scoring
-- **Follow-up tracking**
+**AI Agent:** `ResumeParserAgent`
+- Temperature: 0.3 (consistent extraction)
+- Max Tokens: 4096
+- Processing: Background queue (1-2 minutes)
 
-### 5.5 AI-Powered Features
-- **Resume parsing** - Extract structured data from documents
-- **Resume tailoring** - Optimize resume for job descriptions
-- **Cover letter generation** - AI-generated personalized letters
-- **Mock interviews** - Interactive AI interview practice
-- **Interview feedback** - Scoring and improvement suggestions
-- **Job matching** - Calculate fit between resume and job
-- **Career advice** - Personalized coaching and recommendations
+**Files:**
+- `backend/src/services/resume.service.ts`
+- `backend/src/ai/agents/resume-parser.agent.ts`
+- `backend/src/jobs/processors/resume-parse.processor.ts`
+- `frontend/src/components/resumes/*`
 
-### 5.6 User Profile & Career Data
-- **Professional profile** (bio, location, links)
-- **Work experience** tracking with achievements
-- **Education history** with GPA and coursework
-- **Skills inventory** with proficiency levels
-- **Certifications** with expiry dates
-- **Career preferences** (desired roles, salary, work mode)
+### Resume Tailoring ✅
+- **AI-powered customization** for specific jobs
+- **Match score** calculation (0-100%)
+- **Keyword alignment** analysis
+- **Change tracking** with explanations
+- **ATS optimization** scoring
+- **Side-by-side comparison** view
+- **Document storage** for tailored versions
+
+**AI Agent:** `ResumeTailorAgent`
+- Temperature: 0.5 (balanced creativity)
+- Max Tokens: 8000
+- Processing: 2-5 minutes (synchronous)
+
+**Files:**
+- `backend/src/services/resume.service.ts` (`tailorResumeForJob`)
+- `backend/src/ai/agents/resume-tailor.agent.ts`
+- `frontend/src/components/resumes/TailoredResumeView.tsx`
+
+### Cover Letter Generation ✅
+- **AI-generated personalized cover letters**
+- **Tone selection** (professional, enthusiastic, formal)
+- **Length control** (short, medium, long)
+- **Key points extraction**
+- **Match to job requirements**
+- **Word count and read time**
+
+**AI Agent:** `CoverLetterAgent`
+- Temperature: 0.7 (creative writing)
+- Max Tokens: 2048
+- Processing: 30-60 seconds
+
+**Files:**
+- `backend/src/ai/agents/cover-letter.agent.ts`
+- `backend/src/api/routes/ai.routes.ts` (endpoint)
+
+### Job Tracking ✅
+- **Kanban-style board** with drag-and-drop
+- **8 status columns** (INTERESTED → ACCEPTED)
+- **Job URL parsing** with AI (Cheerio + Puppeteer)
+- **Match score display** (purple badge)
+- **Filter by status, work mode, job type**
+- **Search and sort** functionality
+- **Status change timeline**
+
+**Statuses:**
+1. INTERESTED
+2. APPLIED
+3. INTERVIEW_SCHEDULED
+4. INTERVIEW_COMPLETED
+5. OFFER_RECEIVED
+6. REJECTED
+7. ACCEPTED
+8. WITHDRAWN
+
+**AI Agent:** `JobParserAgent`
+- Scrapes job postings from URLs
+- Extracts title, company, description, requirements
+- Supports Indeed, LinkedIn, company career pages
+
+**Files:**
+- `backend/src/services/job.service.ts`
+- `backend/src/ai/agents/job-parser.agent.ts`
+- `frontend/src/components/jobs/JobKanban.tsx`
+- `frontend/src/pages/Jobs.tsx`
+
+### Mock Interview System ✅
+- **AI-generated questions** based on job/company/interviewer
+- **3 question generation methods:**
+  1. Job-based questions
+  2. Job + company context
+  3. Full context (job + company + interviewer)
+- **Real-time answer evaluation** with scores
+- **Comprehensive feedback** (strengths, improvements, key points)
+- **Session analysis** with overall performance
+- **Interview types supported:**
+  - PHONE_SCREEN
+  - VIDEO_CALL
+  - IN_PERSON
+  - TECHNICAL
+  - BEHAVIORAL
+  - PANEL
+  - FINAL
+  - OTHER
+- **Past session history** with cached results
+
+**AI Agent:** `MockInterviewAgent`
+- Temperature: 0.7 (balanced)
+- Max Tokens: 4096
+- Methods:
+  - `generateQuestions()` - 20-40 seconds
+  - `evaluateAnswer()` - 10-20 seconds
+  - `analyzeSession()` - 30-60 seconds
+
+**Files:**
+- `backend/src/services/mock-interview.service.ts`
+- `backend/src/ai/agents/mock-interview.agent.ts`
+- `backend/src/api/routes/mock-interview.routes.ts`
+- `frontend/src/pages/MockInterview.tsx`
+- `frontend/src/pages/MockInterviewResults.tsx`
+
+### Interview Management ✅
+- **Schedule interviews** with date/time
+- **Interviewer tracking** (name, title, email, LinkedIn)
+- **Interview round tracking**
+- **Outcome recording** (PENDING, PASSED, FAILED, etc.)
+- **Preparation notes**
+- **Link to jobs**
+- **Link to mock interview practice**
+
+**Files:**
+- `backend/src/services/interview.service.ts`
+- `backend/src/api/routes/interview.routes.ts`
+- `frontend/src/pages/Interviews.tsx`
+
+### Document Management ✅
+- **Store tailored resumes** with metadata
+- **Document types:** RESUME, COVER_LETTER, PORTFOLIO, etc.
+- **Version control**
+- **Link to jobs**
+- **Metadata storage** (match scores, changes, recommendations)
+
+**Files:**
+- `backend/src/services/document.service.ts`
+- `backend/src/api/routes/document.routes.ts`
+
+### Background Job Processing ✅
+- **BullMQ + Redis** for job queue
+- **Resume parsing worker** (auto-start in production)
+- **Retry logic** (3 retries, 2s delay)
+- **Job monitoring** via health check endpoint
+
+**Files:**
+- `backend/src/jobs/workers/resume-parse.worker.ts`
+- `backend/src/jobs/processors/resume-parse.processor.ts`
+- `backend/src/config/queue.ts`
 
 ---
 
 ## 6. Integration Points
 
-### 6.1 External Services
-
-#### Anthropic Claude API
-- **Purpose**: AI-powered features (parsing, tailoring, coaching)
-- **Models Used**:
-  - `claude-sonnet-4-5`: Primary model (balanced cost/performance)
-  - `claude-opus-4`: Advanced tasks (complex analysis)
-  - `claude-3-5-haiku`: Quick tasks (simple queries)
-- **Cost Tracking**: Token usage logging for cost monitoring
-- **Error Handling**: Retry logic with exponential backoff
-
-#### AWS S3 (Optional)
-- **Purpose**: Resume and document storage
-- **Alternative**: Local file system storage
-- **Bucket Structure**: Organized by user ID and file type
-
-### 6.2 Internal Integration
+### Internal Integration
 
 #### Frontend ↔ Backend
-- **Protocol**: REST API over HTTPS
-- **Authentication**: JWT Bearer tokens in Authorization header
-- **Error Handling**: Standardized error responses
-- **Request Format**: JSON
-- **Response Format**: JSON with success/error wrapper
+- **Protocol:** RESTful HTTP API
+- **Base URL (Production):** `https://ai-career-coach-backend.railway.app`
+- **Authentication:** JWT Bearer tokens
+- **Request format:** JSON
+- **Response format:** Standardized JSON with `success`, `data`, `error` fields
 
 #### Backend ↔ Database
-- **ORM**: Prisma for type-safe database access
-- **Migration Strategy**: Version-controlled migrations
-- **Connection Pool**: Configured for production load
+- **ORM:** Prisma
+- **Connection:** PostgreSQL on Railway
+- **Migrations:** Automated on deploy
+- **Connection pooling:** Yes
 
 #### Backend ↔ Redis
-- **Purpose**: Session storage, rate limiting, job queues
-- **Key Patterns**:
-  - `session:{sessionId}` - User sessions
-  - `rate-limit:{ip}:{endpoint}` - Rate limiting
-  - `bull:*` - BullMQ job queues
+- **Client:** ioredis
+- **Uses:**
+  - Session storage (JWT refresh tokens)
+  - Rate limiting counters
+  - BullMQ job queue
+- **Connection:** Redis on Railway
+
+#### Backend ↔ AI Agents
+- **Pattern:** Service → Agent → Claude API
+- **Client Manager:** Singleton `ClaudeClientManager`
+- **Error handling:** Retry logic with exponential backoff
+- **Cost tracking:** Token usage logging
+
+### External Integration
+
+#### Anthropic Claude API
+- **SDK:** `@anthropic-ai/sdk`
+- **Model:** `claude-sonnet-4-5-20250929`
+- **Authentication:** API key in environment variable
+- **Timeout:** 300 seconds (5 minutes)
+- **Rate limiting:** Handled by SDK
+- **Cost tracking:** Logged per request
+
+**Token Usage:**
+- Resume parsing: ~3,000-5,000 tokens
+- Resume tailoring: ~8,000-12,000 tokens
+- Cover letter: ~4,000-6,000 tokens
+- Mock interview questions: ~3,000-5,000 tokens
+- Answer evaluation: ~2,000-4,000 tokens
+- Session analysis: ~6,000-10,000 tokens
+
+#### File Storage
+- **Current:** Local filesystem (`/backend/uploads`)
+- **Planned:** AWS S3 or Vercel Blob
+- **Upload handling:** Multer middleware
+- **Supported formats:** PDF, DOCX
+
+#### Web Scraping (Job URLs)
+- **Libraries:** Cheerio (static pages), Puppeteer (JS-rendered pages)
+- **Supports:** Indeed, LinkedIn, company career pages
+- **Fallback:** Claude AI for unstructured content
 
 ---
 
 ## 7. Security Architecture
 
-### 7.1 Authentication & Authorization
-- **JWT tokens** with short expiration (15 minutes)
-- **Refresh tokens** for extended sessions (7 days)
-- **Password hashing** with bcrypt (10 rounds)
-- **Role-based access control** (USER, ADMIN)
-- **Session invalidation** on logout
+### Authentication & Authorization
+- ✅ **JWT tokens** with 24-hour expiration
+- ✅ **Refresh tokens** stored securely in Redis
+- ✅ **bcrypt password hashing** (10 salt rounds)
+- ✅ **Protected routes** with auth middleware
+- ✅ **Role-based access control** (USER, ADMIN)
+- ⏳ **Email verification** (infrastructure exists, not enforced)
 
-### 7.2 API Security
-- **Helmet.js** for secure HTTP headers
-- **CORS** with whitelist of allowed origins
-- **Rate limiting** per IP and endpoint
-- **Input validation** with Zod schemas
-- **SQL injection prevention** via Prisma ORM
-- **XSS protection** through React escaping
+### API Security
+- ✅ **CORS** configured with allowed origins
+- ✅ **Helmet** for HTTP header security
+- ✅ **Rate limiting** (100 requests/15min general, 20/15min AI)
+- ✅ **Request validation** with Zod schemas
+- ✅ **SQL injection protection** (Prisma parameterized queries)
+- ✅ **XSS protection** via Helmet
 
-### 7.3 File Upload Security
-- **File type validation** (PDF, DOC, DOCX only)
-- **File size limits** (10MB max)
-- **Virus scanning** (optional integration)
-- **Secure storage** with access controls
+### Data Security
+- ✅ **Environment variables** for secrets
+- ✅ **Password reset tokens** with expiration
+- ✅ **File upload validation** (type, size limits)
+- ✅ **User data isolation** (userId checks in queries)
+- ⏳ **Encryption at rest** (planned for S3)
 
-### 7.4 Data Privacy
-- **Password encryption** at rest
-- **Token encryption** in transit (HTTPS)
-- **PII handling** following best practices
-- **User data deletion** on account removal
+### Production Security
+- ✅ **HTTPS only** (Railway handles SSL)
+- ✅ **Trust proxy** enabled for Railway reverse proxy
+- ✅ **Secure session cookies** (httpOnly, secure in production)
+- ⏳ **Error monitoring** (Sentry planned)
 
 ---
 
 ## 8. Performance Optimization
 
-### Frontend
-- **Code splitting** with React.lazy()
-- **Route-based lazy loading**
-- **Image optimization** with proper formats
-- **Memoization** for expensive computations
-- **Virtualized lists** for large datasets
-- **Service worker** for offline support (future)
+### Frontend Optimization
+- ✅ **Lazy loading** for routes
+- ✅ **Code splitting** with Vite
+- ✅ **Zustand** for efficient state management
+- ✅ **Debouncing** on search inputs
+- ⏳ **React Query** for server state caching (partially implemented)
 
-### Backend
-- **Database indexing** on frequently queried fields
-- **Query optimization** with Prisma
-- **Redis caching** for frequent queries
-- **Connection pooling** for database
-- **Compression** middleware for responses
-- **Background jobs** for long-running tasks
+### Backend Optimization
+- ✅ **Database indexing** on frequently queried fields
+- ✅ **Redis caching** for sessions
+- ✅ **Connection pooling** (Prisma default)
+- ✅ **Background job queue** for heavy operations
+- ⏳ **Response caching** for AI results (planned)
+- ⏳ **Claude API streaming** (infrastructure exists, not used)
+
+### Database Optimization
+- ✅ **Proper indexes** on foreign keys, status fields, dates
+- ✅ **Cascading deletes** for related records
+- ✅ **Efficient queries** with Prisma select/include
+- ⏳ **Query optimization** monitoring (planned)
 
 ---
 
 ## 9. Scalability Considerations
 
-### Horizontal Scaling
-- **Stateless API design** allows multiple instances
-- **Redis for shared state** (sessions, cache)
-- **Load balancer** for traffic distribution
-- **Database read replicas** for query scaling
+### Current Limitations
+- **File storage:** Local filesystem (not horizontally scalable)
+- **Worker process:** Single instance (can't distribute load)
+- **No caching layer** for AI responses
 
-### Vertical Scaling
-- **Database optimization** with proper indexes
-- **Query performance monitoring**
-- **Resource limits** per request
-- **Rate limiting** to prevent abuse
+### Scaling Plan
+1. **Horizontal scaling:**
+   - Move file storage to S3
+   - Deploy multiple backend instances behind load balancer
+   - Use shared Redis for sessions across instances
 
-### Async Processing
-- **Background jobs** with BullMQ
-- **Job prioritization** for time-sensitive tasks
-- **Job retry logic** with exponential backoff
-- **Dead letter queues** for failed jobs
+2. **Database scaling:**
+   - Read replicas for heavy read operations
+   - Connection pooling optimization
+   - Query performance monitoring
+
+3. **AI optimization:**
+   - Cache common AI responses (e.g., standard interview questions)
+   - Implement streaming for better perceived performance
+   - Batch similar requests
+
+4. **Worker scaling:**
+   - Multiple worker instances consuming from shared queue
+   - Priority queues for urgent vs. background tasks
 
 ---
 
 ## 10. Monitoring & Observability
 
-### Logging
-- **Winston** for structured logging
-- **Log levels**: error, warn, info, debug
-- **Production logs** to files and console
-- **Request logging** with Morgan
+### Current Logging
+- ✅ **Winston logger** with structured JSON logs
+- ✅ **Request logging** (method, path, status, duration)
+- ✅ **AI operation logging** (tokens, cost, duration)
+- ✅ **Error logging** with stack traces
 
-### Metrics (Planned)
-- **API response times**
-- **Error rates**
-- **Token usage and costs**
-- **Database query performance**
-- **Queue processing times**
+### Health Checks
+- ✅ **Basic health:** `GET /api/health`
+- ✅ **Database health:** `GET /api/health/database`
+- ✅ **Redis health:** `GET /api/health/redis`
+- ✅ **Queue health:** `GET /api/health/queue`
 
-### Error Tracking (Optional)
-- **Sentry integration** for error monitoring
-- **Stack traces** for debugging
-- **Error grouping** by type
+### Planned Monitoring
+- ⏳ **Sentry** for error tracking
+- ⏳ **Application metrics** (response times, throughput)
+- ⏳ **AI cost tracking dashboard**
+- ⏳ **User analytics** (PostHog or Vercel Analytics)
 
 ---
 
 ## 11. Deployment Architecture
 
-### Development
-```
-Local Machine
-├── Frontend (Vite Dev Server) - Port 5173
-├── Backend (ts-node-dev) - Port 3000
-├── PostgreSQL (Docker) - Port 5432
-└── Redis (Docker) - Port 6379
-```
+### Production Environment (Railway)
 
-### Production (Recommended)
 ```
 ┌─────────────────────────────────────────────┐
-│           Load Balancer / CDN               │
-└────────────────┬────────────────────────────┘
-                 │
-     ┌───────────┴───────────┐
-     │                       │
-┌────▼────┐            ┌─────▼─────┐
-│ Frontend│            │  Backend  │
-│ (Vercel)│            │ (Railway) │
-└─────────┘            └─────┬─────┘
-                             │
-              ┌──────────────┼──────────────┐
-              │              │              │
-        ┌─────▼────┐   ┌────▼─────┐  ┌────▼────┐
-        │PostgreSQL│   │  Redis   │  │  AWS S3 │
-        │ (Neon)   │   │ (Upstash)│  │         │
-        └──────────┘   └──────────┘  └─────────┘
+│              Railway Platform                │
+│                                              │
+│  ┌────────────────────────────────────────┐ │
+│  │  Backend Service                       │ │
+│  │  - Express app                         │ │
+│  │  - Auto-deploy from main branch        │ │
+│  │  - Environment variables configured    │ │
+│  │  - Build: npm install && npm run build│ │
+│  │  - Start: npm run start:prod          │ │
+│  └────────────────────────────────────────┘ │
+│                                              │
+│  ┌────────────────────────────────────────┐ │
+│  │  Worker Service                        │ │
+│  │  - Resume parsing worker               │ │
+│  │  - Same codebase, different start cmd  │ │
+│  │  - Start: npm run worker:resume        │ │
+│  └────────────────────────────────────────┘ │
+│                                              │
+│  ┌────────────────────────────────────────┐ │
+│  │  PostgreSQL Database                   │ │
+│  │  - Managed PostgreSQL 15               │ │
+│  │  - Automatic backups                   │ │
+│  └────────────────────────────────────────┘ │
+│                                              │
+│  ┌────────────────────────────────────────┐ │
+│  │  Redis Instance                        │ │
+│  │  - Managed Redis 7                     │ │
+│  │  - Used for sessions + queue           │ │
+│  └────────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
 ```
+
+### Local Development
+
+```
+┌──────────────────────────────────────────────┐
+│  Docker Compose (Infrastructure)             │
+│  - PostgreSQL 15 (port 5432)                 │
+│  - Redis 7 (port 6379)                       │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│  Backend (npm run dev)                       │
+│  - Express on port 3000                      │
+│  - Hot reload with ts-node-dev               │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│  Worker (npm run worker:resume)              │
+│  - BullMQ worker process                     │
+│  - Processes resume parsing jobs             │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│  Frontend (npm run dev)                      │
+│  - Vite dev server on port 5173              │
+│  - Hot module replacement                    │
+└──────────────────────────────────────────────┘
+```
+
+### Deployment Process
+1. **Code pushed to main branch**
+2. **Railway detects change**
+3. **Automatic build:**
+   - Install dependencies
+   - Run TypeScript compilation
+   - Run database migrations
+4. **Deploy:**
+   - Backend service restarts
+   - Worker service restarts
+   - Zero-downtime deployment
+5. **Health checks:**
+   - Railway monitors health endpoints
+   - Auto-restart on failure
 
 ---
 
 ## 12. Future Enhancements
 
-### Planned Features
-- **Email notifications** for interviews and deadlines
-- **Calendar integration** for interview scheduling
-- **Job board scraping** to auto-import job postings
-- **Salary negotiation assistant** with AI guidance
-- **LinkedIn profile optimization**
-- **Network tracking** for connections and referrals
-- **Career goal tracking** with milestones
-- **Skill assessment** tests
-- **Document templates** for resumes and cover letters
+### Phase 2 - Job Discovery & Automation
+- [ ] **LinkedIn Jobs API integration**
+- [ ] **Indeed API/scraping**
+- [ ] **Job matching AI agent** (recommendations)
+- [ ] **Daily job digest emails**
+- [ ] **Auto-application tracking**
 
-### Technical Improvements
-- **GraphQL API** as alternative to REST
-- **WebSocket support** for real-time updates
-- **Mobile app** (React Native)
-- **Offline mode** with service workers
-- **Multi-language support** (i18n)
-- **Dark mode** theme support
-- **Accessibility improvements** (WCAG AAA)
-- **Performance monitoring** dashboard
-- **A/B testing** framework
-- **CI/CD pipeline** automation
+### Phase 3 - Career Coaching
+- [ ] **Career goals management** (database models exist)
+- [ ] **Assessment tools** (database models exist)
+- [ ] **AI coaching conversations** (database models exist)
+- [ ] **Long-term career planning**
 
----
+### Infrastructure Improvements
+- [ ] **AWS S3 file storage**
+- [ ] **Sentry error monitoring**
+- [ ] **Claude API streaming** for real-time responses
+- [ ] **AI response caching**
+- [ ] **Email service integration** (SendGrid/Resend)
+- [ ] **Calendar integration** (Google Calendar)
+- [ ] **PDF export** for interview results
+- [ ] **Bulk operations** for resumes/jobs
 
-## 13. Development Workflow
-
-### Local Development
-1. Start infrastructure: `docker-compose up -d`
-2. Install dependencies: `npm install` (in both frontend and backend)
-3. Run migrations: `cd backend && npm run prisma:migrate`
-4. Start backend: `cd backend && npm run dev`
-5. Start frontend: `cd frontend && npm run dev`
-
-### Code Quality
-- **Linting**: ESLint for code quality
-- **Formatting**: Prettier for consistent style
-- **Type Checking**: TypeScript strict mode
-- **Pre-commit Hooks**: Lint and format on commit
-
-### Testing (To be implemented)
-- **Unit tests**: Jest + React Testing Library
-- **Integration tests**: Supertest for API
-- **E2E tests**: Playwright or Cypress
-- **Coverage**: 80%+ target
+### AI Agents (Pending Implementation)
+- [ ] **Resume Analyzer Agent** - ATS scoring, quality assessment
+- [ ] **Interview Prep Agent** - Company research, role-specific questions
+- [ ] **Job Matcher Agent** - Intelligent job recommendations (Phase 2)
+- [ ] **Job Analyzer Agent** - Analyze job requirements, culture fit
+- [ ] **Company Research Agent** - Scrape company info, culture, news
+- [ ] **Interviewer Research Agent** - LinkedIn research, background
 
 ---
 
-## 14. Key Technical Decisions
+## 13. Key Technical Decisions
+
+### Why Claude Sonnet 4.5?
+- **Balanced performance:** Fast enough for real-time use, accurate enough for complex tasks
+- **Cost-effective:** $3/1M input tokens, $15/1M output tokens
+- **Good context window:** 200K tokens (sufficient for resume + job description)
+- **Strong reasoning:** Better at structured extraction than GPT-3.5/4
 
 ### Why Monorepo?
-- **Shared types** between frontend and backend
-- **Easier dependency management**
-- **Atomic commits** across full stack
-- **Simplified CI/CD**
-
-### Why Prisma?
-- **Type safety** with generated TypeScript types
-- **Migration management** with version control
-- **Excellent developer experience**
-- **Auto-generated documentation**
-
-### Why Zustand over Redux?
-- **Simpler API** with less boilerplate
-- **Better TypeScript support**
-- **Smaller bundle size**
-- **Built-in persistence**
-
-### Why Claude over OpenAI?
-- **Superior reasoning** for complex tasks
-- **Longer context window** (200K tokens)
-- **Better at structured output**
-- **Constitutional AI** for safer responses
+- **Shared types:** TypeScript types shared between frontend/backend
+- **Simplified deployment:** Single repository to manage
+- **Easier development:** Switch between frontend/backend quickly
+- **Consistent tooling:** Same Node.js version, linting, formatting
 
 ### Why BullMQ?
-- **Robust job processing** with Redis
-- **Job prioritization** and scheduling
-- **Retry logic** and error handling
-- **Built-in monitoring** dashboard
+- **Robust:** Battle-tested job queue
+- **Redis-backed:** We already use Redis
+- **Retry logic:** Built-in retry with exponential backoff
+- **Monitoring:** Easy to monitor job status
+- **Scalable:** Multiple workers can consume same queue
+
+### Why Prisma?
+- **Type safety:** Auto-generated TypeScript types
+- **Migration management:** Version-controlled schema changes
+- **Developer experience:** Intuitive API, great autocomplete
+- **Performance:** Efficient query generation
+
+### Why Zustand over Redux?
+- **Simpler API:** Less boilerplate
+- **Better TypeScript support**
+- **Smaller bundle size**
+- **No provider wrapping needed**
+- **Middleware support** (persist, devtools)
 
 ---
 
-## 15. Version History
+## 14. Testing Strategy
 
-- **v1.0.0** (Current) - Initial MVP release
-  - Core authentication and user management
-  - Resume upload and parsing
-  - Job tracking with Kanban board
-  - Mock interview feature
-  - Profile management
+### Current State
+- ⏳ Unit tests: Partially implemented
+- ⏳ Integration tests: Partially implemented
+- ✅ Manual testing: Comprehensive
+- ❌ E2E tests: Not implemented
+
+### Testing Plan
+- [ ] **Unit tests** for services and agents (Jest)
+- [ ] **Integration tests** for API endpoints (Supertest)
+- [ ] **E2E tests** for critical user flows (Playwright)
+- [ ] **AI agent tests** with mocked Claude responses
+- [ ] **Load testing** for API performance
+- [ ] **Security testing** (OWASP Top 10)
 
 ---
 
-**Last Updated**: 2025-10-13
-**Document Owner**: Engineering Team
+## Related Documentation
+
+### System Documentation
+- [Database Schema](./database_schema.md) - Complete database design
+- [AI Agent Architecture](./ai_agent_architecture.md) - AI integration details
+
+### Project Documentation
+- [PROJECT_STATUS.md](/PROJECT_STATUS.md) - Current project status
+- [DOCUMENTATION_INDEX.md](/DOCUMENTATION_INDEX.md) - All documentation
+- [PRODUCTION_DEPLOYMENT_GUIDE.md](/PRODUCTION_DEPLOYMENT_GUIDE.md) - Deployment guide
+- [Backend README](/backend/README.md) - Backend setup
+- [Frontend README](/frontend/README.md) - Frontend setup
+
+---
+
+**Last Updated:** October 21, 2025
+**Document Version:** 2.0
+**Status:** Production (90% MVP Complete)
+**Next Review:** Monthly or after major changes

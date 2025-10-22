@@ -1,3 +1,12 @@
+# ⚠️ DEPRECATED - See New Status File
+
+**This file is outdated. Please use:**
+👉 **[/PROJECT_STATUS.md](../PROJECT_STATUS.md)** 👈
+
+**Last updated here:** October 14, 2025 (superseded October 21, 2025)
+
+---
+
 # AI Career Coach - Current Implementation Status
 
 **Date**: 2025-10-14
