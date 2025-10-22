@@ -40,10 +40,31 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor with improved error handling
+// Flag to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value: any) => void;
+  reject: (reason: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
+// Response interceptor with automatic token refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiError>) => {
+    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+
     // Handle network errors
     if (!error.response) {
       toast({
@@ -54,16 +75,72 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Handle 401 Unauthorized
-    if (error.response.status === 401) {
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
-      return Promise.reject(error);
+    // Handle 401 Unauthorized - Try to refresh token
+    if (error.response.status === 401 && !originalRequest._retry) {
+      const authStore = useAuthStore.getState();
+      const refreshToken = authStore.refreshToken;
+
+      // If no refresh token, logout immediately
+      if (!refreshToken) {
+        authStore.logout();
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      // If already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
+            return apiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Attempt to refresh the access token
+        const response = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          { refreshToken },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+        // Update tokens in store
+        authStore.setTokens(accessToken, newRefreshToken);
+
+        // Update the authorization header
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        }
+
+        // Process queued requests with new token
+        processQueue(null, accessToken);
+
+        // Retry the original request
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed - logout user
+        processQueue(refreshError, null);
+        authStore.logout();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
     // Handle other errors
     const errorMessage = error.response.data?.message || 'An error occurred';
-    
+
     toast({
       title: 'Error',
       description: errorMessage,

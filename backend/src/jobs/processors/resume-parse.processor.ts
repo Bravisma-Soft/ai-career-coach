@@ -5,6 +5,7 @@ import { storageService } from '@/services/storage.service';
 import { resumeParserAgent } from '@/ai/agents/resume-parser.agent';
 import { DocumentParser } from '@/utils/document-parser';
 import { ParsedResumeData } from '@/ai/prompts/resume-parser.prompt';
+import { emailService } from '@/services/email.service';
 
 /**
  * Resume Parse Job Processor
@@ -43,6 +44,9 @@ export class ResumeParseProcessor {
       // 1. Fetch resume from database
       const resume = await prisma.resume.findUnique({
         where: { id: resumeId },
+        include: {
+          user: true,
+        },
       });
 
       if (!resume) {
@@ -146,12 +150,13 @@ export class ResumeParseProcessor {
 
       await job.updateProgress(100);
 
-      // TODO: Send notification to user
-      // await notificationService.send({
-      //   userId,
-      //   type: 'resume_parsed',
-      //   data: { resumeId, fileName: resume.fileName },
-      // });
+      // Send notification email to user (async, don't block job completion)
+      emailService.sendResumeParseCompleteEmail(
+        resume.user.email,
+        resume.fileName
+      ).catch((error) => {
+        logger.error('Failed to send resume parse notification email:', error);
+      });
     } catch (error) {
       logger.error('Resume parse job failed', {
         jobId: job.id,

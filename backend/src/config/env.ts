@@ -44,6 +44,14 @@ const envSchema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
 
+  // SendGrid
+  SENDGRID_API_KEY: z.string().optional(),
+  SENDGRID_FROM_EMAIL: z.string().optional(),
+  SENDGRID_FROM_NAME: z.string().default('AI Career Coach'),
+
+  // Frontend URL (for email links)
+  FRONTEND_URL: z.string().default('http://localhost:5173'),
+
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.string().default('900000').transform(Number),
   RATE_LIMIT_MAX_REQUESTS: z.string().default('100').transform(Number),

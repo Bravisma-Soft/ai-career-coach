@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { prisma } from '@/database/client';
 import { env } from '@/config/env';
 import { logger } from '@/config/logger';
+import { emailService } from './email.service';
 import {
   RegisterDto,
   LoginDto,
@@ -214,6 +215,14 @@ export class AuthService {
     });
 
     logger.info(`User registered successfully: ${result.user.email}`);
+
+    // Send welcome email (async, don't wait for it)
+    emailService.sendWelcomeEmail(
+      result.user.email,
+      result.user.firstName || 'there'
+    ).catch((error) => {
+      logger.error('Failed to send welcome email:', error);
+    });
 
     return {
       user: result.user,
@@ -432,11 +441,9 @@ export class AuthService {
 
     logger.info(`Password reset token generated for user: ${email}`);
 
-    // TODO: Send email with resetToken (not hashedToken)
-    // For now, just log it (remove in production!)
-    if (env.NODE_ENV === 'development') {
-      logger.debug(`Password reset token: ${resetToken}`);
-    }
+    // Send password reset email
+    const userName = user.firstName || undefined;
+    await emailService.sendPasswordResetEmail(email, resetToken, userName);
   }
 
   /**
