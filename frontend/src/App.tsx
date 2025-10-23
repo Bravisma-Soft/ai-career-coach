@@ -15,6 +15,8 @@ import { Loader2 } from "lucide-react";
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Resumes = lazy(() => import("./pages/Resumes"));
 const Jobs = lazy(() => import("./pages/Jobs"));
@@ -62,9 +64,17 @@ const App = () => {
                   path="/login" 
                   element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} 
                 />
-                <Route 
-                  path="/register" 
-                  element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />} 
+                <Route
+                  path="/register"
+                  element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
+                />
+                <Route
+                  path="/forgot-password"
+                  element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPassword />}
+                />
+                <Route
+                  path="/reset-password"
+                  element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ResetPassword />}
                 />
                 <Route
                   path="/dashboard"

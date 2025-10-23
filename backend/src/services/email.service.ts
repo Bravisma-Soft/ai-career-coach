@@ -172,7 +172,7 @@ This link will expire in 1 hour.
 
 If you didn't request a password reset, you can safely ignore this email.
 
-Best regards,
+Best Regards,
 The AI Career Coach Team
     `.trim();
   }
@@ -188,94 +188,91 @@ The AI Career Coach Team
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reset Your Password</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .container {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .header h1 {
-      color: #7c3aed;
-      margin: 0;
-      font-size: 24px;
-    }
-    .content {
-      margin-bottom: 30px;
-    }
-    .button {
-      display: inline-block;
-      background: #7c3aed;
-      color: #ffffff !important;
-      text-decoration: none;
-      padding: 12px 30px;
-      border-radius: 6px;
-      font-weight: 600;
-      text-align: center;
-      margin: 20px 0;
-    }
-    .button:hover {
-      background: #6d28d9;
-    }
-    .footer {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #e5e7eb;
-      font-size: 14px;
-      color: #6b7280;
-    }
-    .warning {
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
-      padding: 12px;
-      margin: 20px 0;
-      border-radius: 4px;
-    }
-  </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🚀 AI Career Coach</h1>
-    </div>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #faf5ff 0%, #eff6ff 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="min-height: 100vh; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(10, 14, 39, 0.1); overflow: hidden; max-width: 100%;">
+          <!-- Header with gradient -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #7c3aed 0%, #1e40af 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                🚀 AI Career Coach
+              </h1>
+            </td>
+          </tr>
 
-    <div class="content">
-      <h2>Reset Your Password</h2>
-      <p>Hi ${userName},</p>
-      <p>We received a request to reset your password for your AI Career Coach account.</p>
-      <p>Click the button below to reset your password:</p>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 20px 0; color: #0a0e27; font-size: 22px; font-weight: 600;">Reset Your Password</h2>
 
-      <div style="text-align: center;">
-        <a href="${resetUrl}" class="button">Reset Password</a>
-      </div>
+              <p style="margin: 0 0 16px 0; color: #0a0e27; font-size: 16px; line-height: 1.6;">Hi ${userName},</p>
 
-      <div class="warning">
-        <strong>⏰ This link will expire in 1 hour.</strong>
-      </div>
+              <p style="margin: 0 0 16px 0; color: #0a0e27; font-size: 16px; line-height: 1.6;">
+                We received a request to reset your password for your AI Career Coach account.
+              </p>
 
-      <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
-    </div>
+              <p style="margin: 0 0 24px 0; color: #0a0e27; font-size: 16px; line-height: 1.6;">
+                Click the button below to reset your password:
+              </p>
 
-    <div class="footer">
-      <p>Best regards,<br>The AI Career Coach Team</p>
-      <p style="font-size: 12px; color: #9ca3af;">
-        If the button doesn't work, copy and paste this link into your browser:<br>
-        <a href="${resetUrl}" style="color: #7c3aed; word-break: break-all;">${resetUrl}</a>
-      </p>
-    </div>
-  </div>
+              <!-- CTA Button with gradient -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #1e40af 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
+                      Reset Password
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+                <tr>
+                  <td style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 6px;">
+                    <p style="margin: 0; color: #78350f; font-size: 14px; font-weight: 600;">
+                      ⏰ This link will expire in 1 hour for security.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+              <p style="margin: 0 0 16px 0; color: #0a0e27; font-size: 14px; font-weight: 500;">
+                Best Regards,<br>The AI Career Coach Team
+              </p>
+              <p style="margin: 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">
+                If the button doesn't work, copy and paste this link into your browser:<br>
+                <a href="${resetUrl}" style="color: #7c3aed; word-break: break-all; text-decoration: underline;">${resetUrl}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Email footer -->
+        <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 24px; max-width: 100%;">
+          <tr>
+            <td style="text-align: center; padding: 0 20px;">
+              <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.5;">
+                AI Career Coach - Your AI-powered job search assistant
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `.trim();
@@ -299,7 +296,7 @@ Here's what you can do with AI Career Coach:
 
 Get started by uploading your resume and adding your first job application!
 
-Best regards,
+Best Regards,
 The AI Career Coach Team
     `.trim();
   }
@@ -315,73 +312,111 @@ The AI Career Coach Team
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome to AI Career Coach</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .container {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .header h1 {
-      color: #7c3aed;
-      margin: 0;
-      font-size: 28px;
-    }
-    .feature {
-      margin: 15px 0;
-      padding-left: 25px;
-    }
-    .button {
-      display: inline-block;
-      background: #7c3aed;
-      color: #ffffff !important;
-      text-decoration: none;
-      padding: 12px 30px;
-      border-radius: 6px;
-      font-weight: 600;
-      text-align: center;
-      margin: 20px 0;
-    }
-  </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🚀 Welcome to AI Career Coach!</h1>
-    </div>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #faf5ff 0%, #eff6ff 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="min-height: 100vh; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(10, 14, 39, 0.1); overflow: hidden; max-width: 100%;">
+          <!-- Header with gradient -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #7c3aed 0%, #1e40af 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                🚀 Welcome to AI Career Coach!
+              </h1>
+            </td>
+          </tr>
 
-    <div class="content">
-      <p>Hi ${userName},</p>
-      <p>We're excited to have you on board! AI Career Coach is here to help you land your dream job.</p>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 16px 0; color: #0a0e27; font-size: 16px; line-height: 1.6;">Hi ${userName},</p>
 
-      <h3>Here's what you can do:</h3>
-      <div class="feature">✅ Upload and manage your resumes</div>
-      <div class="feature">📊 Track job applications with our Kanban board</div>
-      <div class="feature">🎯 Get AI-powered resume tailoring for specific jobs</div>
-      <div class="feature">✍️ Generate personalized cover letters</div>
-      <div class="feature">🎤 Practice with mock interviews</div>
+              <p style="margin: 0 0 24px 0; color: #0a0e27; font-size: 16px; line-height: 1.6;">
+                We're excited to have you on board! AI Career Coach is here to help you land your dream job with the power of AI.
+              </p>
 
-      <div style="text-align: center;">
-        <a href="${env.FRONTEND_URL}" class="button">Get Started</a>
-      </div>
-    </div>
+              <h3 style="margin: 24px 0 16px 0; color: #0a0e27; font-size: 18px; font-weight: 600;">Here's what you can do:</h3>
 
-    <div class="footer">
-      <p>Best regards,<br>The AI Career Coach Team</p>
-    </div>
-  </div>
+              <!-- Features list -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <p style="margin: 0; color: #0a0e27; font-size: 15px; line-height: 1.5;">
+                      <span style="display: inline-block; width: 24px;">✅</span> Upload and manage your resumes
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <p style="margin: 0; color: #0a0e27; font-size: 15px; line-height: 1.5;">
+                      <span style="display: inline-block; width: 24px;">📊</span> Track job applications with our Kanban board
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <p style="margin: 0; color: #0a0e27; font-size: 15px; line-height: 1.5;">
+                      <span style="display: inline-block; width: 24px;">🎯</span> Get AI-powered resume tailoring for specific jobs
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <p style="margin: 0; color: #0a0e27; font-size: 15px; line-height: 1.5;">
+                      <span style="display: inline-block; width: 24px;">✍️</span> Generate personalized cover letters
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <p style="margin: 0; color: #0a0e27; font-size: 15px; line-height: 1.5;">
+                      <span style="display: inline-block; width: 24px;">🎤</span> Practice with mock interviews
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button with gradient -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${env.FRONTEND_URL}/dashboard" style="display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #1e40af 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
+                      Get Started
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+                Ready to accelerate your job search? Start by uploading your first resume!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+              <p style="margin: 0; color: #0a0e27; font-size: 14px; font-weight: 500;">
+                Best Regards,<br>The AI Career Coach Team
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Email footer -->
+        <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 24px; max-width: 100%;">
+          <tr>
+            <td style="text-align: center; padding: 0 20px;">
+              <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.5;">
+                AI Career Coach - Your AI-powered job search assistant
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `.trim();
@@ -403,7 +438,7 @@ You can now:
 
 Log in to your account to get started!
 
-Best regards,
+Best Regards,
 The AI Career Coach Team
     `.trim();
   }
@@ -419,66 +454,117 @@ The AI Career Coach Team
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resume Processed Successfully</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .container {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .success {
-      background: #d1fae5;
-      border-left: 4px solid #10b981;
-      padding: 15px;
-      margin: 20px 0;
-      border-radius: 4px;
-    }
-    .button {
-      display: inline-block;
-      background: #7c3aed;
-      color: #ffffff !important;
-      text-decoration: none;
-      padding: 12px 30px;
-      border-radius: 6px;
-      font-weight: 600;
-      text-align: center;
-      margin: 20px 0;
-    }
-  </style>
 </head>
-<body>
-  <div class="container">
-    <div class="success">
-      <strong>✅ Resume Processed Successfully!</strong>
-    </div>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #faf5ff 0%, #eff6ff 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="min-height: 100vh; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(10, 14, 39, 0.1); overflow: hidden; max-width: 100%;">
+          <!-- Header with gradient -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #7c3aed 0%, #1e40af 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                🚀 AI Career Coach
+              </h1>
+            </td>
+          </tr>
 
-    <p>Your resume <strong>"${resumeName}"</strong> has been successfully processed!</p>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <!-- Success banner -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0;">
+                <tr>
+                  <td style="background: #d1fae5; border-left: 4px solid #10b981; padding: 16px; border-radius: 6px;">
+                    <p style="margin: 0; color: #065f46; font-size: 16px; font-weight: 600;">
+                      ✅ Resume Processed Successfully!
+                    </p>
+                  </td>
+                </tr>
+              </table>
 
-    <p>We've extracted all the key information from your resume, including your work experience, education, and skills.</p>
+              <p style="margin: 0 0 16px 0; color: #0a0e27; font-size: 16px; line-height: 1.6;">
+                Great news! Your resume <strong>"${resumeName}"</strong> has been successfully processed and analyzed.
+              </p>
 
-    <h3>What's next?</h3>
-    <ul>
-      <li>View your parsed resume data</li>
-      <li>Use it to tailor resumes for specific jobs</li>
-      <li>Generate customized cover letters</li>
-    </ul>
+              <p style="margin: 0 0 24px 0; color: #0a0e27; font-size: 16px; line-height: 1.6;">
+                We've extracted all the key information from your resume, including your work experience, education, skills, and more.
+              </p>
 
-    <div style="text-align: center;">
-      <a href="${env.FRONTEND_URL}/resumes" class="button">View Your Resume</a>
-    </div>
+              <h3 style="margin: 24px 0 16px 0; color: #0a0e27; font-size: 18px; font-weight: 600;">What's next?</h3>
 
-    <div class="footer">
-      <p>Best regards,<br>The AI Career Coach Team</p>
-    </div>
-  </div>
+              <!-- Next steps list -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <p style="margin: 0; color: #0a0e27; font-size: 15px; line-height: 1.5;">
+                      <span style="display: inline-block; width: 24px;">📄</span> View your parsed resume data
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <p style="margin: 0; color: #0a0e27; font-size: 15px; line-height: 1.5;">
+                      <span style="display: inline-block; width: 24px;">🎯</span> Tailor your resume for specific job postings
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <p style="margin: 0; color: #0a0e27; font-size: 15px; line-height: 1.5;">
+                      <span style="display: inline-block; width: 24px;">✍️</span> Generate customized cover letters
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <p style="margin: 0; color: #0a0e27; font-size: 15px; line-height: 1.5;">
+                      <span style="display: inline-block; width: 24px;">📊</span> Track your job applications
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button with gradient -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${env.FRONTEND_URL}/resumes" style="display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #1e40af 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
+                      View Your Resume
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+                Your resume is ready to help you land your dream job!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+              <p style="margin: 0; color: #0a0e27; font-size: 14px; font-weight: 500;">
+                Best Regards,<br>The AI Career Coach Team
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Email footer -->
+        <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 24px; max-width: 100%;">
+          <tr>
+            <td style="text-align: center; padding: 0 20px;">
+              <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.5;">
+                AI Career Coach - Your AI-powered job search assistant
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `.trim();
