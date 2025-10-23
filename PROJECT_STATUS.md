@@ -22,22 +22,28 @@
 
 ## ✅ Fully Implemented Features
 
-### 1. **Authentication & User Management**
+### 1. **Authentication & User Management** ⭐ ENHANCED
 - ✅ Email/password registration and login
-- ✅ JWT token-based authentication (24h expiration)
+- ✅ JWT token-based authentication (24h expiration + auto-refresh)
 - ✅ User profile with career preferences
 - ✅ Session management
-- ✅ Password reset functionality
+- ✅ **Password reset flow** (forgot password → email → reset)
+  - Frontend routes: `/forgot-password`, `/reset-password`
+  - Secure token-based (1-hour expiration)
+  - Professional gradient email templates
+- ✅ **Welcome email on registration** (SendGrid integration)
 - **Routes:** `/api/auth/*`, `/api/profile/*`
 
-### 2. **Resume Management**
+### 2. **Resume Management** ⭐ ENHANCED
 - ✅ Resume upload (PDF, DOCX)
 - ✅ AI-powered resume parsing (background job queue with BullMQ)
+- ✅ **Resume parsing completion email** (professional template)
 - ✅ Master resume selection
 - ✅ Resume download and preview
 - ✅ Multiple resume storage
 - **Agent:** `ResumeParserAgent` (Claude Sonnet 4.5)
 - **Routes:** `/api/resumes/*`
+- **Email:** Sends notification when parsing completes
 
 ### 3. **Job Tracking Dashboard**
 - ✅ Full Kanban-style job tracking board
@@ -151,17 +157,18 @@ These routes exist but return **static mock data** instead of real AI:
 - **Database:** PostgreSQL with Prisma ORM
 - **Cache/Queue:** Redis + BullMQ
 - **AI:** Claude Sonnet 4.5 (Anthropic API)
-- **File Storage:** Local filesystem (AWS S3 planned)
-- **Authentication:** JWT tokens
-- **Deployment:** Railway
+- **File Storage:** AWS S3 (production)
+- **Email:** SendGrid (transactional emails)
+- **Authentication:** JWT tokens (24h + refresh)
+- **Deployment:** Railway (Node.js 20+)
 
 ### Frontend
 - **Framework:** React 18 + TypeScript
 - **Build Tool:** Vite
 - **UI Library:** shadcn/ui + Tailwind CSS
 - **State Management:** Zustand
-- **Routing:** React Router v6
-- **HTTP Client:** Axios
+- **Routing:** React Router v6 (SPA routing)
+- **HTTP Client:** Axios (with auto token refresh)
 - **Deployment:** Vercel
 
 ### AI Agents (Claude Sonnet 4.5)
@@ -207,12 +214,12 @@ ai-career-coach/
 
 ## 🗺️ API Routes Summary
 
-### Authentication
-- `POST /api/auth/register` - Register new user
+### Authentication ⭐ Enhanced
+- `POST /api/auth/register` - Register new user *(sends welcome email)*
 - `POST /api/auth/login` - Login user
 - `POST /api/auth/refresh` - Refresh JWT token
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password
+- `POST /api/auth/forgot-password` - Request password reset *(sends reset email)*
+- `POST /api/auth/reset-password` - Reset password with token
 
 ### User Profile
 - `GET /api/profile` - Get user profile

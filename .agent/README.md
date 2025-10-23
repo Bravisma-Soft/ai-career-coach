@@ -2,7 +2,7 @@
 
 Welcome to the AI Career Coach documentation hub. This directory contains comprehensive technical documentation to help engineers understand and contribute to the project.
 
-**Last Updated:** October 21, 2025
+**Last Updated:** October 22, 2025
 **Project Version:** 1.0 MVP
 **Project Status:** 90% Complete (Production Deployed on Railway)
 
@@ -16,7 +16,8 @@ Welcome to the AI Career Coach documentation hub. This directory contains compre
 ├── System/                # System architecture & design (CURRENT & MAINTAINED)
 │   ├── project_architecture.md  ✅ UPDATED Oct 21, 2025
 │   ├── database_schema.md       ✅ Current
-│   └── ai_agent_architecture.md ✅ Current
+│   ├── ai_agent_architecture.md ✅ Current
+│   └── email_integration.md     ✅ NEW Oct 22, 2025
 ├── Tasks/                 # Feature PRDs & implementation plans (HISTORICAL)
 │   └── implementation_plan.md   (Oct 2025 - historical reference)
 ├── SOP/                   # Standard operating procedures
@@ -35,6 +36,7 @@ Welcome to the AI Career Coach documentation hub. This directory contains compre
 2. **[project_architecture.md](./System/project_architecture.md)** - Complete system architecture
 3. **[database_schema.md](./System/database_schema.md)** - Database design and relationships
 4. **[ai_agent_architecture.md](./System/ai_agent_architecture.md)** - AI integration details
+5. **[email_integration.md](./System/email_integration.md)** - Email service architecture
 
 ### For Quick Setup
 1. **[Backend QUICKSTART](/backend/QUICKSTART.md)** - Backend setup in 5 minutes
@@ -119,6 +121,40 @@ These documents are actively maintained and reflect the current state of the sys
 - Query optimization
 - Understanding data relationships
 - API development requiring data access
+
+---
+
+### [Email Integration](./System/email_integration.md) ✅
+**Last Updated:** October 22, 2025
+
+**Email service architecture and implementation covering:**
+- SendGrid integration with professional HTML templates
+- Password reset flow (forgot password → email → reset → success)
+- Welcome email on registration
+- Resume parsing completion notifications
+- Email template design system (gradient purple-blue branding)
+- Frontend routes: /forgot-password, /reset-password
+- Environment configuration and deployment
+- Security best practices (token expiration, HTTPS, rate limiting)
+- Error handling and graceful degradation
+- Production deployment fixes (Railway + Vercel configuration)
+- Troubleshooting common issues
+- Cost optimization strategies
+
+**Key Features:**
+- 3 email types (password reset, welcome, resume notification)
+- Mobile-responsive table-based layouts
+- Brand-matched gradient design (#7c3aed → #1e40af)
+- Non-blocking error handling
+- Plain text fallbacks
+- HTTPS-only links in production
+
+**When to read:**
+- Setting up email service
+- Implementing new email types
+- Troubleshooting email delivery
+- Understanding password reset flow
+- Deploying to production
 
 ---
 
@@ -246,8 +282,10 @@ These files capture the state of the project at specific points in time:
 | **Frontend setup** | [/frontend/README.md](/frontend/README.md) |
 | **Deployment guide** | [/PRODUCTION_DEPLOYMENT_GUIDE.md](/PRODUCTION_DEPLOYMENT_GUIDE.md) |
 | **AWS S3 permissions** | [Production Deployment § AWS S3](/PRODUCTION_DEPLOYMENT_GUIDE.md#aws-s3) |
+| **Email architecture** | [Email Integration](./System/email_integration.md) |
 | **Email setup (SendGrid)** | [/backend/docs/EMAIL_SETUP_GUIDE.md](/backend/docs/EMAIL_SETUP_GUIDE.md) |
 | **JWT token issues** | [/backend/docs/JWT_TOKEN_TROUBLESHOOTING.md](/backend/docs/JWT_TOKEN_TROUBLESHOOTING.md) |
+| **Password reset flow** | [Email Integration § 6](./System/email_integration.md#6-password-reset-flow) |
 | **API reference** | [/backend/docs/API_ENDPOINTS_SUMMARY.md](/backend/docs/API_ENDPOINTS_SUMMARY.md) |
 | **Product requirements** | [/backend/career_coach_prd.md](/backend/career_coach_prd.md) |
 
@@ -385,6 +423,7 @@ We welcome documentation improvements!
 | [Project Architecture](./System/project_architecture.md) | ✅ Current | 2025-10-21 | 100% | Critical |
 | [Database Schema](./System/database_schema.md) | ✅ Current | 2025-10-13 | 100% | Critical |
 | [AI Agent Architecture](./System/ai_agent_architecture.md) | ✅ Current | 2025-10-13 | 100% | Critical |
+| [Email Integration](./System/email_integration.md) | ✅ Current | 2025-10-22 | 100% | High |
 | **Tasks & Planning** |||||
 | [Implementation Plan](./Tasks/implementation_plan.md) | 📜 Historical | 2025-10-13 | N/A | Reference |
 | **SOPs** |||||
@@ -445,6 +484,13 @@ If you can't find what you're looking for:
 
 ## 🔄 Version History
 
+- **v2.1.0** (2025-10-22) - Email integration and deployment fixes
+  - Added comprehensive Email Integration documentation
+  - Documented password reset flow (/forgot-password, /reset-password)
+  - Added production deployment troubleshooting (Railway + Vercel)
+  - Updated quick reference with email architecture
+  - Documented recent bug fixes and configurations
+
 - **v2.0.0** (2025-10-21) - Major update for production deployment
   - Updated project architecture with production deployment details
   - Marked historical context files clearly
@@ -475,8 +521,8 @@ If you can't find what you're looking for:
 ---
 
 **Maintained by:** Engineering Team
-**Last Updated:** October 21, 2025
-**Documentation Version:** 2.0.0
+**Last Updated:** October 22, 2025
+**Documentation Version:** 2.1.0
 **Project Version:** 1.0 MVP
 
 ---
