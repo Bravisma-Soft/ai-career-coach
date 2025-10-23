@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { authService } from '@/services/auth.service';
+import { authService } from '@/services/authService';
 import { toast } from 'sonner';
 import { Loader2, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
 
