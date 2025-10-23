@@ -19,7 +19,8 @@ export const Header = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    // Use hard redirect to ensure clean state reset and avoid race conditions
+    window.location.href = '/login';
   };
 
   return (

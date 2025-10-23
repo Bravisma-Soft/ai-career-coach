@@ -15,7 +15,8 @@ export function MobileMenu() {
   const handleLogout = () => {
     logout();
     setOpen(false);
-    navigate('/login');
+    // Use hard redirect to ensure clean state reset and avoid race conditions
+    window.location.href = '/login';
   };
 
   const navItems = [
