@@ -38,7 +38,8 @@
     "db:restore": "bash scripts/db-restore.sh",
     "db:migrate-helper": "bash scripts/migrate.sh",
     "clean": "rm -rf dist",
-    "prebuild": "npm run clean",
+    "prebuild": "npm run clean && prisma generate",
+    "postinstall": "prisma generate",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

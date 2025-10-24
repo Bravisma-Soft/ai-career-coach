@@ -309,10 +309,11 @@ router.get(
   '/google',
   (req: Request, res: Response, next) => {
     if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
-      return res.status(501).json({
+      res.status(501).json({
         success: false,
         message: 'Google OAuth is not configured on this server',
       });
+      return;
     }
     passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
   }
