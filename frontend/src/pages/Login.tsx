@@ -67,11 +67,6 @@ export const Login = () => {
           <CardDescription>Sign in to your AI Career Coach account</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-sm font-medium mb-1">Test Account:</p>
-            <p className="text-xs text-muted-foreground">Email: <span className="font-mono">test@example.com</span></p>
-            <p className="text-xs text-muted-foreground">Password: <span className="font-mono">Password123!</span></p>
-          </div>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
