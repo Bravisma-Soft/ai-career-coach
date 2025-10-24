@@ -25,6 +25,13 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+  LINKEDIN
+}
+
 enum JobType {
   FULL_TIME
   PART_TIME
@@ -111,21 +118,27 @@ enum SkillLevel {
 // =================================
 
 model User {
-  id                     String      @id @default(cuid())
-  email                  String      @unique
-  password               String
+  id                     String        @id @default(cuid())
+  email                  String        @unique
+  password               String?
   firstName              String?
   lastName               String?
-  role                   UserRole    @default(USER)
-  status                 UserStatus  @default(ACTIVE)
-  emailVerified          Boolean     @default(false)
+  role                   UserRole      @default(USER)
+  status                 UserStatus    @default(ACTIVE)
+  emailVerified          Boolean       @default(false)
   emailVerifiedAt        DateTime?
   lastLoginAt            DateTime?
-  passwordResetToken     String?     @unique
+  passwordResetToken     String?       @unique
   passwordResetExpires   DateTime?
 
-  createdAt              DateTime    @default(now())
-  updatedAt              DateTime    @updatedAt
+  // OAuth Fields
+  provider               AuthProvider  @default(LOCAL)
+  providerId             String?
+  providerData           Json?
+  profilePicture         String?
+
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
 
   // Relations
   profile                UserProfile?
@@ -141,6 +154,7 @@ model User {
 
   @@index([email])
   @@index([status])
+  @@index([provider, providerId])
   @@map("users")
 }
 

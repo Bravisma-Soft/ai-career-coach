@@ -14,6 +14,9 @@ import { authenticate } from '@/api/middleware/auth.middleware';
 import { authLimiter } from '@/api/middleware/rateLimiter';
 import { logger } from '@/config/logger';
 import { AuthResponse } from '@/types/auth.types';
+import passport from '@/config/passport';
+import { env } from '@/config/env';
+import { User } from '@prisma/client';
 
 const router = Router();
 
@@ -296,5 +299,76 @@ router.delete(
 
 // Import prisma for sessions endpoints
 import { prisma } from '@/database/client';
+
+/**
+ * @route   GET /api/v1/auth/google
+ * @desc    Initiate Google OAuth flow
+ * @access  Public
+ */
+router.get(
+  '/google',
+  (req: Request, res: Response, next) => {
+    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+      return res.status(501).json({
+        success: false,
+        message: 'Google OAuth is not configured on this server',
+      });
+    }
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+  }
+);
+
+/**
+ * @route   GET /api/v1/auth/google/callback
+ * @desc    Handle Google OAuth callback
+ * @access  Public
+ */
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth_failed' }),
+  asyncHandler(async (req: Request, res: Response) => {
+    // User is authenticated via Passport and attached to req.user
+    const user = req.user as User;
+
+    if (!user) {
+      logger.error('OAuth callback: No user found after authentication');
+      return res.redirect(`${env.FRONTEND_URL}/login?error=authentication_failed`);
+    }
+
+    // Get client info
+    const userAgent = req.headers['user-agent'];
+    const ipAddress = req.ip;
+
+    try {
+      // Generate tokens for the authenticated user
+      const tokens = await authService.generateTokensForOAuthUser(
+        user.id,
+        user.email,
+        user.role,
+        userAgent,
+        ipAddress
+      );
+
+      // Create user response
+      const userResponse = authService.toUserResponse(user);
+
+      logger.info(`Google OAuth successful for user: ${user.email}`);
+
+      // Redirect to frontend with tokens in URL params
+      // Frontend will extract and store these tokens
+      const redirectUrl = `${env.FRONTEND_URL}/auth/callback?` +
+        `accessToken=${encodeURIComponent(tokens.accessToken)}&` +
+        `refreshToken=${encodeURIComponent(tokens.refreshToken)}&` +
+        `expiresIn=${tokens.expiresIn}&` +
+        `userId=${user.id}&` +
+        `email=${encodeURIComponent(user.email)}`;
+
+      res.redirect(redirectUrl);
+    } catch (error) {
+      logger.error('Error generating tokens after OAuth:', error);
+      res.redirect(`${env.FRONTEND_URL}/login?error=token_generation_failed`);
+    }
+  })
+);
 
 export default router;

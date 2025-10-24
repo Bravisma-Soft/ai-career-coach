@@ -17,6 +17,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Resumes = lazy(() => import("./pages/Resumes"));
 const Jobs = lazy(() => import("./pages/Jobs"));
@@ -75,6 +76,10 @@ const App = () => {
                 <Route
                   path="/reset-password"
                   element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ResetPassword />}
+                />
+                <Route
+                  path="/auth/callback"
+                  element={<OAuthCallback />}
                 />
                 <Route
                   path="/dashboard"

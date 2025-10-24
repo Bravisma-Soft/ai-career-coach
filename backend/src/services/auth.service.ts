@@ -502,6 +502,48 @@ export class AuthService {
   }
 
   /**
+   * Generate tokens for OAuth authenticated user
+   * Used after successful OAuth callback to create session and tokens
+   */
+  async generateTokensForOAuthUser(
+    userId: string,
+    email: string,
+    role: string,
+    userAgent?: string,
+    ipAddress?: string
+  ): Promise<TokenPair> {
+    // Calculate session expiry
+    const expiresAt = new Date();
+    expiresAt.setDate(
+      expiresAt.getDate() + this.parseExpiryToSeconds(env.JWT_REFRESH_EXPIRES_IN) / 86400
+    );
+
+    // Create session
+    const session = await prisma.session.create({
+      data: {
+        userId,
+        refreshToken: '', // Will be updated after token generation
+        userAgent,
+        ipAddress,
+        expiresAt,
+      },
+    });
+
+    // Generate tokens
+    const tokens = await this.generateTokens(userId, email, role, session.id);
+
+    // Update session with refresh token
+    await prisma.session.update({
+      where: { id: session.id },
+      data: { refreshToken: tokens.refreshToken },
+    });
+
+    logger.info(`OAuth tokens generated for user: ${email}`);
+
+    return tokens;
+  }
+
+  /**
    * Convert User to safe UserResponse (remove sensitive fields)
    */
   toUserResponse(user: User): UserResponse {

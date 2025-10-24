@@ -76,6 +76,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(compression());
 
 // =================================
+// PASSPORT INITIALIZATION (OAuth)
+// =================================
+import passport from '@/config/passport';
+import { configurePassport } from '@/config/passport';
+
+// Initialize Passport.js strategies
+configurePassport();
+app.use(passport.initialize());
+
+// =================================
 // LOGGING MIDDLEWARE
 // =================================
 if (env.NODE_ENV === 'development') {
