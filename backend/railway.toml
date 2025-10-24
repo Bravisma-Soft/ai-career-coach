@@ -7,7 +7,7 @@
 # Prevent Railway from detecting/building the frontend directory
 # Frontend should be deployed separately on Vercel
 builder = "NIXPACKS"
-buildCommand = "npm install && npm run prisma:generate && npm run build"
+buildCommand = "npm install && rm -rf node_modules/.prisma && npx prisma generate && npm run build"
 
 [deploy]
 restartPolicyType = "ON_FAILURE"
