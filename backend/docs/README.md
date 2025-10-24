@@ -2,13 +2,34 @@
 
 **Last Updated:** October 24, 2025
 
-## 📚 Quick Links
+## 📚 Available Documentation (15 files)
 
-- **[API.md](./API.md)** - Complete API reference
-- **[DATABASE.md](./DATABASE.md)** - Database schema and Prisma
-- **[AUTHENTICATION.md](./AUTHENTICATION.md)** - Auth system and OAuth
-- **[AI_AGENTS.md](./AI_AGENTS.md)** - AI integration and agents
-- **[EMAIL.md](./EMAIL.md)** - Email service (SendGrid)
+### 🔐 Authentication & Security
+- **[AUTH_SYSTEM.md](./AUTH_SYSTEM.md)** - Complete auth system overview
+- **[AUTH_QUICK_START.md](./AUTH_QUICK_START.md)** - Quick auth setup
+- **[GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md)** - Google OAuth setup guide
+- **[JWT_TOKEN_TROUBLESHOOTING.md](./JWT_TOKEN_TROUBLESHOOTING.md)** - JWT debugging
+
+### 🤖 AI Agents
+- **[AI_AGENTS_FOUNDATION.md](./AI_AGENTS_FOUNDATION.md)** - AI architecture and design
+- **[AI_AGENTS_SETUP_SUMMARY.md](./AI_AGENTS_SETUP_SUMMARY.md)** - AI setup summary
+- **[AI_AGENTS_QUICK_START.md](./AI_AGENTS_QUICK_START.md)** - Quick AI start
+
+### 🗄️ Database & API
+- **[API_ENDPOINTS_SUMMARY.md](./API_ENDPOINTS_SUMMARY.md)** - Complete API reference
+- **[../prisma/SCHEMA_DIAGRAM.md](../prisma/SCHEMA_DIAGRAM.md)** - Database schema
+
+### 📧 Email Service
+- **[EMAIL_SETUP_GUIDE.md](./EMAIL_SETUP_GUIDE.md)** - SendGrid setup
+- **[EMAIL_IMPLEMENTATION_SUMMARY.md](./EMAIL_IMPLEMENTATION_SUMMARY.md)** - Email architecture
+
+### 📝 Resume & Jobs
+- **[RESUME_PARSER.md](./RESUME_PARSER.md)** - Resume parsing with AI
+- **[USER_PROFILE_RESUME.md](./USER_PROFILE_RESUME.md)** - User profile & resume
+- **[JOB_TRACKING_APPLICATION_MANAGEMENT.md](./JOB_TRACKING_APPLICATION_MANAGEMENT.md)** - Job tracking
+- **[JOB_TRACKING_SETUP_SUMMARY.md](./JOB_TRACKING_SETUP_SUMMARY.md)** - Job setup summary
+
+---
 
 ## 🚀 Quick Start
 
@@ -29,20 +50,7 @@ npm run dev
 
 Server runs on: http://localhost:3000
 
-## 📖 Detailed Documentation
-
-### Core Systems
-- **[AUTHENTICATION.md](./AUTHENTICATION.md)** - JWT auth, OAuth, sessions
-- **[DATABASE.md](./DATABASE.md)** - Schema, migrations, queries
-- **[API.md](./API.md)** - All endpoints and examples
-
-### Features
-- **[AI_AGENTS.md](./AI_AGENTS.md)** - Claude integration, agents, prompts
-- **[EMAIL.md](./EMAIL.md)** - SendGrid setup, templates, flows
-
-### Guides
-- **[GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md)** - OAuth setup guide
-- **[JWT_TOKEN_TROUBLESHOOTING.md](./JWT_TOKEN_TROUBLESHOOTING.md)** - JWT debugging
+---
 
 ## 🔧 Development
 
@@ -71,9 +79,11 @@ src/
 └── utils/             # Utilities
 ```
 
+---
+
 ## 🗄️ Database
 
-See **[DATABASE.md](./DATABASE.md)** for complete schema documentation.
+See **[../prisma/SCHEMA_DIAGRAM.md](../prisma/SCHEMA_DIAGRAM.md)** for complete schema.
 
 **Quick Commands:**
 ```bash
@@ -81,6 +91,8 @@ npx prisma migrate dev     # Create and apply migration
 npx prisma studio          # Open database GUI
 npx prisma generate        # Regenerate Prisma Client
 ```
+
+---
 
 ## 🔐 Environment Variables
 
@@ -96,9 +108,11 @@ See `.env.example` for all required variables.
 - `SENDGRID_API_KEY` - Email
 - `AWS_*` - S3 file storage
 
+---
+
 ## 🚀 Deployment
 
-Deployed on Railway. See root [DEPLOYMENT.md](../../docs/DEPLOYMENT.md) for details.
+Deployed on Railway. See [../QUICKSTART.md](../QUICKSTART.md) for setup.
 
 **Build Command:**
 ```bash
@@ -112,4 +126,28 @@ npm run start:migrate
 
 ---
 
+## 📖 Quick Links by Topic
+
+### Authentication
+- [AUTH_SYSTEM.md](./AUTH_SYSTEM.md) - System overview
+- [GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md) - OAuth setup
+- [JWT_TOKEN_TROUBLESHOOTING.md](./JWT_TOKEN_TROUBLESHOOTING.md) - JWT issues
+
+### AI & Agents
+- [AI_AGENTS_FOUNDATION.md](./AI_AGENTS_FOUNDATION.md) - Architecture
+- [RESUME_PARSER.md](./RESUME_PARSER.md) - Resume parsing
+
+### API & Database
+- [API_ENDPOINTS_SUMMARY.md](./API_ENDPOINTS_SUMMARY.md) - API reference
+- [../prisma/SCHEMA_DIAGRAM.md](../prisma/SCHEMA_DIAGRAM.md) - Database schema
+
+### Email
+- [EMAIL_SETUP_GUIDE.md](./EMAIL_SETUP_GUIDE.md) - Setup guide
+
+### Job Tracking
+- [JOB_TRACKING_APPLICATION_MANAGEMENT.md](./JOB_TRACKING_APPLICATION_MANAGEMENT.md) - Overview
+
+---
+
 **Maintained by:** Backend Team
+**Total Files:** 15 documentation files

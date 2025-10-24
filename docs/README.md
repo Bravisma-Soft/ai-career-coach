@@ -4,78 +4,56 @@
 **Project Version:** 1.0 MVP
 **Status:** Production (Railway + Vercel)
 
-## 📚 Quick Navigation
+## 📚 Current Documentation
 
-### 🚀 Getting Started
-- **[OVERVIEW.md](./OVERVIEW.md)** - Project goals, features, and tech stack
-- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Local development setup
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Production deployment guide
+### 🏠 Root Documentation
+- **[../README.md](../README.md)** - Project overview
+- **[../PROJECT_STATUS.md](../PROJECT_STATUS.md)** - Current status and roadmap
+- **[OVERVIEW.md](./OVERVIEW.md)** - Project goals, features, tech stack
+- **[DOCS_STRUCTURE.md](./DOCS_STRUCTURE.md)** - Documentation navigation guide
 
-### 🏗️ Architecture
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Complete system architecture
-- **[../backend/docs/DATABASE.md](../backend/docs/DATABASE.md)** - Database schema and design
-- **[../backend/docs/AI_AGENTS.md](../backend/docs/AI_AGENTS.md)** - AI integration architecture
+### 💻 Backend Documentation
+- **[../backend/docs/](../backend/docs/)** - Backend documentation (15 files)
+  - API endpoints, database, authentication, AI agents, email service
+  - See [backend/docs/README.md](../backend/docs/README.md) for complete list
 
-### 💻 Development
-- **Backend:** [backend/docs/README.md](../backend/docs/README.md)
-- **Frontend:** [frontend/docs/README.md](../frontend/docs/README.md)
-
-### 🧪 Testing
-- **[TESTING.md](./TESTING.md)** - Complete testing guide
-
----
-
-## 📁 Documentation Structure
-
-```
-docs/
-├── README.md              # This file - main documentation index
-├── OVERVIEW.md            # Project overview, goals, features
-├── ARCHITECTURE.md        # System architecture and design
-├── DEVELOPMENT.md         # Development setup and workflows
-├── DEPLOYMENT.md          # Production deployment guide
-└── TESTING.md             # Testing strategy and guides
-
-backend/docs/
-├── README.md              # Backend documentation index
-├── API.md                 # API endpoints reference
-├── DATABASE.md            # Database schema and Prisma
-├── AUTHENTICATION.md      # Auth system and OAuth
-├── AI_AGENTS.md           # AI agents and integration
-└── EMAIL.md               # Email service
-
-frontend/docs/
-├── README.md              # Frontend documentation index
-├── SETUP.md               # Frontend setup guide
-└── DEPLOYMENT.md          # Frontend deployment
-```
+### 🎨 Frontend Documentation
+- **[../frontend/docs/](../frontend/docs/)** - Frontend documentation (3 files)
+  - Deployment, contributing guidelines, checklist
+  - See [frontend/docs/README.md](../frontend/docs/README.md)
 
 ---
 
-## 🎯 Documentation by Role
+## 📁 Current Files in docs/
+
+This directory currently has **3 files**:
+
+1. **README.md** (this file) - Documentation index
+2. **OVERVIEW.md** - Project overview, status, roadmap, tech stack
+3. **DOCS_STRUCTURE.md** - Visual guide to all documentation
+
+---
+
+## 🚀 Quick Start
 
 ### For New Engineers
-1. Read [OVERVIEW.md](./OVERVIEW.md) (5 min)
-2. Follow [DEVELOPMENT.md](./DEVELOPMENT.md) (15 min setup)
-3. Review [ARCHITECTURE.md](./ARCHITECTURE.md) (20 min)
-4. Check [backend/docs/DATABASE.md](../backend/docs/DATABASE.md) (10 min)
-
-**Total onboarding: ~50 minutes**
+1. Read [OVERVIEW.md](./OVERVIEW.md) (5 min) - Understand the project
+2. Read [../backend/QUICKSTART.md](../backend/QUICKSTART.md) (10 min) - Set up backend
+3. Read [../frontend/README.md](../frontend/README.md) (5 min) - Set up frontend
 
 ### For Backend Developers
-- [Backend Documentation](../backend/docs/README.md)
-- [API Reference](../backend/docs/API.md)
-- [Database Schema](../backend/docs/DATABASE.md)
-- [AI Agents](../backend/docs/AI_AGENTS.md)
+Go to [backend/docs/README.md](../backend/docs/README.md) for:
+- API endpoints
+- Database schema
+- Authentication & OAuth
+- AI agents
+- Email service
 
 ### For Frontend Developers
-- [Frontend Documentation](../frontend/docs/README.md)
-- [Setup Guide](../frontend/docs/SETUP.md)
-
-### For DevOps/Deployment
-- [Deployment Guide](./DEPLOYMENT.md)
-- [Backend Deployment](../backend/docs/README.md#deployment)
-- [Frontend Deployment](../frontend/docs/DEPLOYMENT.md)
+Go to [frontend/docs/README.md](../frontend/docs/README.md) for:
+- Setup guide
+- Deployment
+- Contributing guidelines
 
 ---
 
@@ -83,44 +61,30 @@ frontend/docs/
 
 | What You Need | Where to Look |
 |---------------|---------------|
-| **Project status & roadmap** | [OVERVIEW.md](./OVERVIEW.md) |
-| **Setup development environment** | [DEVELOPMENT.md](./DEVELOPMENT.md) |
-| **System architecture** | [ARCHITECTURE.md](./ARCHITECTURE.md) |
-| **API endpoints** | [backend/docs/API.md](../backend/docs/API.md) |
-| **Database tables** | [backend/docs/DATABASE.md](../backend/docs/DATABASE.md) |
-| **Authentication & OAuth** | [backend/docs/AUTHENTICATION.md](../backend/docs/AUTHENTICATION.md) |
-| **AI agents** | [backend/docs/AI_AGENTS.md](../backend/docs/AI_AGENTS.md) |
-| **Email service** | [backend/docs/EMAIL.md](../backend/docs/EMAIL.md) |
-| **Deploy to production** | [DEPLOYMENT.md](./DEPLOYMENT.md) |
-| **Run tests** | [TESTING.md](./TESTING.md) |
+| **Project overview & status** | [OVERVIEW.md](./OVERVIEW.md) |
+| **Documentation structure** | [DOCS_STRUCTURE.md](./DOCS_STRUCTURE.md) |
+| **Backend setup** | [../backend/QUICKSTART.md](../backend/QUICKSTART.md) |
+| **API endpoints** | [../backend/docs/API_ENDPOINTS_SUMMARY.md](../backend/docs/API_ENDPOINTS_SUMMARY.md) |
+| **Database schema** | [../backend/prisma/SCHEMA_DIAGRAM.md](../backend/prisma/SCHEMA_DIAGRAM.md) |
+| **Authentication** | [../backend/docs/AUTH_SYSTEM.md](../backend/docs/AUTH_SYSTEM.md) |
+| **Google OAuth setup** | [../backend/docs/GOOGLE_OAUTH_SETUP.md](../backend/docs/GOOGLE_OAUTH_SETUP.md) |
+| **AI agents** | [../backend/docs/AI_AGENTS_FOUNDATION.md](../backend/docs/AI_AGENTS_FOUNDATION.md) |
+| **Email service** | [../backend/docs/EMAIL_SETUP_GUIDE.md](../backend/docs/EMAIL_SETUP_GUIDE.md) |
+| **Frontend deployment** | [../frontend/docs/DEPLOYMENT.md](../frontend/docs/DEPLOYMENT.md) |
 
 ---
 
-## 📝 Documentation Standards
+## 📝 Future Documentation (TODO)
 
-### When to Update
-- ✅ **Always** - Database schema changes, new API endpoints
-- ✅ **Recommended** - New features, architecture changes
-- ⚪ **Optional** - Bug fixes, UI tweaks
+The following consolidated docs could be created in the future:
+- [ ] `ARCHITECTURE.md` - Consolidated system architecture
+- [ ] `DEVELOPMENT.md` - Consolidated development setup
+- [ ] `DEPLOYMENT.md` - Consolidated deployment guide
+- [ ] `TESTING.md` - Consolidated testing guide
 
-### How to Update
-1. Edit the relevant markdown file
-2. Update "Last Updated" date
-3. Keep explanations clear and concise
-4. Include code examples where helpful
-5. Commit with descriptive message
-
----
-
-## 🔗 External Resources
-
-- [React Documentation](https://react.dev/)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [Prisma Documentation](https://www.prisma.io/docs)
-- [Anthropic Claude API](https://docs.anthropic.com/)
-- [Express.js Guide](https://expressjs.com/)
+These would consolidate information from existing scattered docs in backend/docs/.
 
 ---
 
 **Maintained by:** Engineering Team
-**Questions?** Check the docs first, then ask the team!
+**Questions?** Start with [OVERVIEW.md](./OVERVIEW.md) or [../README.md](../README.md)
