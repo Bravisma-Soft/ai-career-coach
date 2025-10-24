@@ -1,6 +1,6 @@
 # AI Career Coach - Project Status
 
-**Last Updated:** October 22, 2025
+**Last Updated:** October 24, 2025
 **Version:** 1.0 MVP
 **Status:** 🟢 Production Deployed on Railway
 
@@ -15,6 +15,7 @@
 | **Database** | ✅ PostgreSQL on Railway |
 | **Redis/Cache** | ✅ Redis on Railway |
 | **AI Integration** | ✅ Claude Sonnet 4.5 |
+| **OAuth Authentication** | ✅ Google OAuth Deployed |
 | **MVP Phase 1** | 🟡 90% Complete (6 agents pending) |
 | **Phase 2** | ⏳ Not Started |
 
@@ -22,9 +23,14 @@
 
 ## ✅ Fully Implemented Features
 
-### 1. **Authentication & User Management** ⭐ ENHANCED
+### 1. **Authentication & User Management** ⭐ ENHANCED + OAuth
 - ✅ Email/password registration and login
 - ✅ JWT token-based authentication (24h expiration + auto-refresh)
+- ✅ **Google OAuth 2.0 authentication** (deployed to production)
+  - Passport.js integration with Google Strategy
+  - Account linking (OAuth to existing email accounts)
+  - OAuth routes: `/api/auth/google`, `/api/auth/google/callback`
+  - Frontend OAuth callback page: `/auth/callback`
 - ✅ User profile with career preferences
 - ✅ Session management
 - ✅ **Password reset flow** (forgot password → email → reset)
@@ -214,12 +220,14 @@ ai-career-coach/
 
 ## 🗺️ API Routes Summary
 
-### Authentication ⭐ Enhanced
+### Authentication ⭐ Enhanced + OAuth
 - `POST /api/auth/register` - Register new user *(sends welcome email)*
 - `POST /api/auth/login` - Login user
 - `POST /api/auth/refresh` - Refresh JWT token
 - `POST /api/auth/forgot-password` - Request password reset *(sends reset email)*
 - `POST /api/auth/reset-password` - Reset password with token
+- `GET /api/auth/google` - Initiate Google OAuth flow
+- `GET /api/auth/google/callback` - Google OAuth callback handler
 
 ### User Profile
 - `GET /api/profile` - Get user profile
