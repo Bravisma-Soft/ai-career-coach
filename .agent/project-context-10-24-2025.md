@@ -1,8 +1,8 @@
 # Project Context Checkpoint - October 24, 2025
 
-**Last Updated:** October 24, 2025
-**Session Focus:** Google OAuth Implementation + Documentation Reorganization
-**Status:** ✅ Complete - Production Ready
+**Last Updated:** October 24, 2025 (End of Session)
+**Session Focus:** OAuth Production Deployment + Bug Fixes + MVP Planning
+**Status:** ✅ OAuth Live, Ready for Resume Analyzer & Interview Prep Agents
 
 ---
 
@@ -15,90 +15,137 @@ Build AI Career Coach - an intelligent platform for job seekers with AI-powered 
 
 ---
 
-## 🚀 Major Accomplishments Today
+## 🚀 Major Accomplishments This Session
 
-### 1. Google OAuth Authentication (COMPLETE ✅)
+### 1. OAuth Production Deployment (COMPLETE ✅)
 
-**Full OAuth 2.0 implementation:**
-- ✅ Passport.js Google OAuth strategy
-- ✅ Database schema extended (AuthProvider enum, OAuth fields)
-- ✅ Backend routes: `/api/auth/google`, `/api/auth/google/callback`
-- ✅ Frontend OAuth callback page: `/auth/callback`
-- ✅ Account linking (connects OAuth to existing email accounts)
-- ✅ JWT token generation for OAuth users
-- ✅ Production deployment configured and tested locally
+**Fixed Critical Issues:**
+- ✅ Resolved TypeScript build errors (Passport User interface conflict)
+- ✅ Applied OAuth database migration to Railway production
+- ✅ All API endpoints working (jobs, resumes, interviews)
 
-**Key Files:**
-```
-backend/src/config/passport.ts              # OAuth strategy
-backend/src/api/routes/auth.routes.ts       # OAuth routes (L303-372)
-backend/src/services/auth.service.ts        # generateTokensForOAuthUser()
-frontend/src/pages/Login.tsx                # Google login button
-frontend/src/pages/Register.tsx             # Google signup button
-frontend/src/pages/OAuthCallback.tsx        # Token extraction
-backend/prisma/schema.prisma                # User model with OAuth
-Migration: 20251024170826_add_oauth_support
-```
+**Technical Fix:**
+```typescript
+// backend/src/types/express.d.ts
+import { User as PrismaUser } from '@prisma/client';
 
-**Documentation:** `backend/docs/GOOGLE_OAUTH_SETUP.md`
-
-### 2. Documentation Reorganization (COMPLETE ✅)
-
-**Consolidated 64+ scattered .md files → ~25 organized files**
-
-**New Structure:**
-```
-docs/                          # Main hub (3 files)
-├── README.md                  # Master index
-├── OVERVIEW.md                # Project overview
-└── DOCS_STRUCTURE.md          # Navigation guide
-
-backend/docs/                  # 15 files organized by topic
-├── README.md
-├── AUTH_SYSTEM.md, GOOGLE_OAUTH_SETUP.md
-├── AI_AGENTS_FOUNDATION.md
-└── API_ENDPOINTS_SUMMARY.md
-
-frontend/docs/                 # 3 files
-├── README.md
-├── DEPLOYMENT.md
-└── CONTRIBUTING.md
-
-archive/                       # 11 old docs archived
-```
-
----
-
-## 🔑 Technical Implementation
-
-### OAuth Flow
-```
-User → Google OAuth → Backend Callback → Generate JWT →
-Frontend /auth/callback → Store tokens → Dashboard
-```
-
-### Database Changes
-```prisma
-enum AuthProvider { LOCAL, GOOGLE, GITHUB, LINKEDIN }
-
-model User {
-  password        String?        // Now optional
-  provider        AuthProvider  @default(LOCAL)
-  providerId      String?        // OAuth user ID
-  providerData    Json?          // Raw profile
-  profilePicture  String?        // Profile pic URL
+declare global {
+  namespace Express {
+    interface User extends PrismaUser {} // Fixed: Extend Passport's empty interface
+    interface Request {
+      userId?: string;
+    }
+  }
 }
 ```
 
-### Account Linking Logic
-- New user → Create with provider=GOOGLE
-- Existing local → Link OAuth (keep password)
-- Existing OAuth → Update lastLogin
-- Email conflict → Error
+**Database Migration Applied:**
+- Migration: `20251024170826_add_oauth_support`
+- Added columns: `provider`, `providerId`, `providerData`, `profilePicture`
+- Made `password` optional for OAuth-only users
+
+**OAuth Routes:**
+- `GET /api/auth/google` - Initiate OAuth flow
+- `GET /api/auth/google/callback` - OAuth callback handler
+
+### 2. Documentation Updates
+
+- Updated `PROJECT_STATUS.md` to reflect OAuth production status
+- Updated `.agent/project-context-10-24-2025.md` with OAuth completion
+- Added OAuth to Quick Overview table and API routes documentation
 
 ---
 
-## 🛠️ Tech Stack
+## 📋 MVP Completion Planning (Next Steps)
+
+### Remaining 10% - Two Agents to Implement
+
+#### **Agent 1: Resume Analyzer Agent** (23 tasks planned)
+
+**Purpose:** Analyze resume quality, provide ATS scoring, identify strengths/weaknesses
+
+**Key Features:**
+- Overall resume scoring (0-100)
+- Section-by-section analysis (summary, experience, education, skills)
+- ATS compatibility scoring
+- Keyword analysis (matched, missing, overused)
+- Readability scoring
+- Actionable improvement suggestions
+
+**Files to Create:**
+- `src/ai/prompts/resume-analyzer.prompt.ts`
+- `src/ai/agents/resume-analyzer.agent.ts`
+
+**Files to Modify:**
+- `src/api/routes/ai.routes.ts` (line 156 - replace placeholder)
+
+**Implementation Phases:**
+1. Setup & Structure (3 tasks)
+2. Core Analysis Logic (4 tasks)
+3. Scoring & Analysis Features (5 tasks)
+4. Recommendations Engine (3 tasks)
+5. Integration & Testing (5 tasks)
+6. Optimization & Polish (3 tasks)
+
+**Key Decisions:**
+- Scoring weights for different sections
+- ATS rules to check
+- Industry keyword determination method
+- Target role impact on analysis
+
+---
+
+#### **Agent 2: Interview Prep Agent** (29 tasks planned)
+
+**Purpose:** Generate role-specific interview questions, research company, create STAR examples
+
+**Key Features:**
+- Company website scraping and research (about, culture, values, news)
+- 8-12 role-specific interview questions (behavioral, technical, situational, cultural)
+- Question answer guidance and tips
+- STAR examples generated from resume experiences
+- Technical topics identification
+- Questions to ask employer (5-8 thoughtful questions)
+
+**Files to Create:**
+- `src/ai/prompts/interview-prep.prompt.ts`
+- `src/ai/agents/interview-prep.agent.ts`
+
+**Files to Modify:**
+- `src/api/routes/ai.routes.ts` (line 320 - replace placeholder)
+
+**Implementation Phases:**
+1. Setup & Structure (3 tasks)
+2. Company Research Module (4 tasks) - Web scraping
+3. Question Generation Module (4 tasks)
+4. STAR Examples Generation Module (3 tasks)
+5. Integration & Orchestration (4 tasks)
+6. API Route Integration (3 tasks)
+7. Advanced Features (3 tasks)
+8. Testing & Optimization (5 tasks)
+
+**Reusable Code:**
+- From `JobParserAgent`: `fetchWithAxios()`, `fetchWithPuppeteer()`, `extractTextFromHTML()`
+- From `ResumeParserAgent`: Resume data structure parsing
+- From `BaseAgent`: `callClaude()`, `executeWithRetry()`, error handling
+
+**Key Decisions:**
+- Company research depth (homepage vs multiple pages)
+- Question count per category
+- STAR example count (all vs top 3-5)
+- Fallback when company website unavailable
+- Multi-call vs single Claude call strategy
+- Caching strategy for company research
+
+**Estimated Complexity:**
+- Lines of Code: ~600-800
+- Claude Calls: 2-4 per request
+- Token Usage: 8,000-15,000 tokens per request
+- Execution Time: 15-30 seconds
+
+---
+
+## 🏗️ Tech Stack
 
 **Backend:** Node.js + Express + TypeScript + Prisma + PostgreSQL + Redis
 **Frontend:** React 18 + TypeScript + Vite + TailwindCSS + Zustand
@@ -107,129 +154,100 @@ model User {
 **Deployment:** Railway + Vercel
 **Email:** SendGrid
 **Storage:** AWS S3
-
-**Stats:** 33,677 lines of code (16k backend, 17k frontend)
-
----
-
-## 🐛 Issues Resolved
-
-### Railway Build Failures
-**Problem:** Prisma Client not regenerated
-**Solution:**
-```json
-"prebuild": "npm run clean && prisma generate",
-"postinstall": "prisma generate"
-```
-```toml
-buildCommand = "npm install && rm -rf node_modules/.prisma && npx prisma generate && npm run build"
-```
-
-### Frontend Port Mismatch
-**Problem:** OAuth redirect to wrong port
-**Solution:** Set `FRONTEND_URL=http://localhost:8080` (not 5173)
-
-### Double /api Path
-**Problem:** URL became `/api/api/auth/google`
-**Solution:** Frontend uses `/auth/google` (VITE_API_URL already has `/api`)
-
-### Documentation Confusion
-**Problem:** READMEs listed non-existent files
-**Solution:** Updated to reflect actual files, marked future docs as TODO
+**Web Scraping:** Cheerio + Puppeteer (for company research)
 
 ---
 
-## 📝 Environment Setup
+## 📁 Key Architecture
 
-### Backend (.env)
-```bash
-GOOGLE_CLIENT_ID=805408990501-...
-GOOGLE_CLIENT_SECRET=GOCSPX-...
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
-FRONTEND_URL=http://localhost:8080
-
-# Production
-# GOOGLE_CALLBACK_URL=https://backend.railway.app/api/auth/google/callback
-# FRONTEND_URL=https://frontend.vercel.app
+**AI Agent Base Pattern:**
+```
+BaseAgent<TInput, TOutput>
+  ↓
+  ├─ ResumeParserAgent ✅
+  ├─ ResumeTailorAgent ✅
+  ├─ CoverLetterAgent ✅
+  ├─ JobParserAgent ✅
+  ├─ MockInterviewAgent ✅
+  ├─ ResumeAnalyzerAgent ❌ TODO
+  └─ InterviewPrepAgent ❌ TODO
 ```
 
-### Frontend (.env)
-```bash
-VITE_API_URL=http://localhost:3000/api
-```
+**Agent Structure:**
+- `src/ai/agents/*.agent.ts` - Agent implementations
+- `src/ai/prompts/*.prompt.ts` - System prompts and templates
+- `src/ai/utils/` - Shared utilities (ResponseParser, PromptBuilder)
 
-### Google Cloud Console
-- Redirect URI: `http://localhost:3000/api/auth/google/callback`
-- Production: `https://backend.railway.app/api/auth/google/callback`
+**API Routes:**
+- Real AI: `/api/ai/resumes/tailor`, `/api/ai/cover-letters/generate`
+- Placeholders: `/api/ai/resumes/analyze` (TODO), `/api/ai/interviews/prepare` (TODO)
 
 ---
 
-## ✅ Outstanding TODOs
+## 🔑 Recent Commits
 
-### Immediate (Production OAuth) - COMPLETE ✅
-- [x] Add production redirect URI to Google Console
-- [x] Set Railway env vars (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, etc.)
-- [x] Set Vercel env vars
-- [x] Test OAuth flow in production
-- [x] Fix Railway build failure (Passport User interface conflict)
+1. **fix: resolve TypeScript build errors with Passport User interface**
+   - Fixed Express.User interface to extend PrismaUser
+   - Resolved all compilation errors in auth.middleware.ts and auth.routes.ts
 
-### MVP Completion (10% remaining)
-- [ ] Resume Analyzer Agent
-- [ ] Interview Prep Agent
-- [ ] Error tracking (Sentry)
-
-### Documentation (Optional)
-- [ ] Create `docs/ARCHITECTURE.md`
-- [ ] Create `docs/DEVELOPMENT.md`
-- [ ] Create `docs/DEPLOYMENT.md`
-- [ ] Create `docs/TESTING.md`
+2. **docs: update status to reflect OAuth production deployment**
+   - Updated PROJECT_STATUS.md with OAuth production status
+   - Added OAuth routes to API documentation
+   - Updated project context checkpoint
 
 ---
 
-## 📂 Key Documentation
+## 📊 Project Stats
+
+- **Total Code:** 33,677 lines (16k backend, 17k frontend)
+- **AI Agents Implemented:** 5/7 (71%)
+- **MVP Completion:** 90%
+- **Database Models:** 15+
+- **API Endpoints:** 40+
+
+---
+
+## 🐛 Issues Resolved Today
+
+1. **Railway Build Failure** - Passport User interface conflict with Prisma User type
+2. **500 Errors on All Endpoints** - OAuth migration not applied to production database
+3. **Documentation Out of Sync** - Updated to reflect OAuth production deployment
+
+---
+
+## 📝 Next Session Priorities
+
+### Option 1: Implement Resume Analyzer Agent
+1. Create `resume-analyzer.prompt.ts` with scoring criteria
+2. Implement `ResumeAnalyzerAgent` class
+3. Update API route at `ai.routes.ts:156`
+4. Test with various resume types
+5. Fine-tune scoring algorithm
+
+### Option 2: Implement Interview Prep Agent
+1. Create `interview-prep.prompt.ts` with question templates
+2. Implement `InterviewPrepAgent` class with web scraping
+3. Update API route at `ai.routes.ts:320`
+4. Test company research scraping
+5. Optimize multi-module orchestration
+
+### Option 3: Both Agents (Complete MVP)
+- Implement both agents to reach 100% MVP completion
+- Add error tracking (Sentry)
+- Performance optimization (AI response streaming, caching)
+
+---
+
+## 📚 Key Documentation
 
 - **Setup:** [backend/docs/GOOGLE_OAUTH_SETUP.md](../backend/docs/GOOGLE_OAUTH_SETUP.md)
 - **Overview:** [docs/OVERVIEW.md](../docs/OVERVIEW.md)
-- **Structure:** [docs/DOCS_STRUCTURE.md](../docs/DOCS_STRUCTURE.md)
+- **Status:** [PROJECT_STATUS.md](../PROJECT_STATUS.md)
 - **Backend:** [backend/docs/README.md](../backend/docs/README.md)
 - **Database:** [backend/prisma/SCHEMA_DIAGRAM.md](../backend/prisma/SCHEMA_DIAGRAM.md)
 
 ---
 
-## 🚀 Next Steps
+**Ready to complete the final 10% of MVP!** 🚀
 
-1. **Deploy OAuth to Production**
-   - Update Google Console with production URIs
-   - Configure Railway/Vercel environment variables
-   - Test end-to-end OAuth flow
-
-2. **Complete MVP (90% → 100%)**
-   - Implement Resume Analyzer Agent
-   - Implement Interview Prep Agent
-   - Set up Sentry error tracking
-
-3. **Performance & Polish**
-   - AI response streaming
-   - Response caching
-   - Performance monitoring
-
----
-
-## 📊 Session Stats
-
-- **Commits:** 7 (OAuth + docs + fixes)
-- **Files Changed:** 30+
-- **Lines Added:** 2,000+
-- **Duration:** ~4 hours
-- **Status:** OAuth working locally ✅, docs organized ✅
-
----
-
-**Ready for production OAuth deployment!** 🚀
-
----
-
-**Related Context:**
-- Previous: [project-context-10-22-2025.md](./project-context-10-22-2025.md)
-- Documentation: [../docs/README.md](../docs/README.md)
-- Project Status: [../PROJECT_STATUS.md](../PROJECT_STATUS.md)
+Choose an agent to implement and we'll get started.

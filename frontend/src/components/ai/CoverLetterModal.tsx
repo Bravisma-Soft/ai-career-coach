@@ -13,6 +13,7 @@ import { aiService } from '@/services/aiService';
 import { documentService } from '@/services/documentService';
 import { AIProcessingIndicator } from './AIProcessingIndicator';
 import { toast } from '@/hooks/use-toast';
+import { encodeBase64Unicode } from '@/utils/encoding';
 
 interface CoverLetterModalProps {
   job: Job;
@@ -99,7 +100,7 @@ export function CoverLetterModal({ job, open, onOpenChange, onSaveComplete }: Co
         documentType: 'COVER_LETTER',
         title: `Cover Letter - ${job.company} ${job.title}`,
         fileName: `cover-letter-${job.company}-${Date.now()}.txt`,
-        fileUrl: 'data:text/plain;base64,' + btoa(editedContent),
+        fileUrl: 'data:text/plain;base64,' + encodeBase64Unicode(editedContent),
         fileSize: editedContent.length,
         mimeType: 'text/plain',
         description: `AI-generated cover letter for ${job.company} - ${job.title}. Tone: ${coverLetter.tone}`,

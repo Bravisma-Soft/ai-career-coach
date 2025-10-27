@@ -18,6 +18,7 @@ import { AIProcessingIndicator } from './AIProcessingIndicator';
 import { ResumeComparison } from './ResumeComparison';
 import { toast } from '@/hooks/use-toast';
 import { generateResumePDF } from '@/utils/pdfGenerator';
+import { encodeBase64Unicode } from '@/utils/encoding';
 
 interface TailorResumeModalProps {
   job: Job;
@@ -105,7 +106,7 @@ export function TailorResumeModal({ job, open, onOpenChange, onSaveComplete, exi
         documentType: 'RESUME',
         title: `Tailored Resume - ${job.company} ${job.title}`,
         fileName: `tailored-${selectedResume.name}-${Date.now()}.json`,
-        fileUrl: 'data:application/json;base64,' + btoa(JSON.stringify(tailoredResume.tailoredContent)),
+        fileUrl: 'data:application/json;base64,' + encodeBase64Unicode(JSON.stringify(tailoredResume.tailoredContent)),
         fileSize: JSON.stringify(tailoredResume.tailoredContent).length,
         mimeType: 'application/json',
         description: `AI-tailored resume for ${job.company} - ${job.title}. Match score: ${tailoredResume.matchScore}%`,
