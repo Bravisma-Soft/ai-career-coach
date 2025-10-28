@@ -191,11 +191,13 @@ export const aiService = {
   },
 
   /**
-   * Get resume analysis by resume ID
+   * Get resume analysis by resume ID (fetches cached or triggers new analysis)
    */
   getResumeAnalysis: async (resumeId: string): Promise<ResumeAnalysis | null> => {
     try {
-      const response = await apiClient.get(`/ai/resumes/${resumeId}/analyze`);
+      const response = await apiClient.post('/ai/resumes/analyze', {
+        resumeId,
+      });
 
       if (!response.data.success) {
         // Analysis doesn't exist yet
@@ -204,8 +206,14 @@ export const aiService = {
 
       return response.data.data;
     } catch (error: any) {
-      // 404 means analysis doesn't exist yet
+      // 404 means resume not found
       if (error.response?.status === 404) {
+        return null;
+      }
+
+      // 400 might mean resume not parsed yet
+      if (error.response?.status === 400) {
+        console.log('Resume not parsed yet');
         return null;
       }
 
@@ -223,7 +231,8 @@ export const aiService = {
     targetIndustry?: string
   ): Promise<ResumeAnalysis> => {
     try {
-      const response = await apiClient.post(`/ai/resumes/${resumeId}/analyze`, {
+      const response = await apiClient.post('/ai/resumes/analyze', {
+        resumeId,
         targetRole: targetRole || null,
         targetIndustry: targetIndustry || null,
       });
