@@ -63,6 +63,7 @@ export function ResumeAnalysisModal({ resume, open, onOpenChange, onAnalysisComp
       setSelectedJobId('none');
       setTargetRole('');
       setTargetIndustry('');
+      setIsLoading(false);
     }
   }, [open, resume?.id]);
 
@@ -72,9 +73,17 @@ export function ResumeAnalysisModal({ resume, open, onOpenChange, onAnalysisComp
       // Clear previous analysis first
       setAnalysis(null);
 
+      // If resume has analysis, set loading state immediately to avoid flash
+      if (resume.hasAnalysis) {
+        setIsLoading(true);
+      }
+
       const loadData = async () => {
         await loadJobs();
-        await loadAnalysis();
+        // Only load analysis if it exists
+        if (resume.hasAnalysis) {
+          await loadAnalysis();
+        }
       };
       loadData();
     }
