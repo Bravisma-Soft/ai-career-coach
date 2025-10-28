@@ -22,6 +22,7 @@ import { ResumeUpload } from '@/components/resumes/ResumeUpload';
 import { ResumeCard } from '@/components/resumes/ResumeCard';
 import { ResumePreview } from '@/components/resumes/ResumePreview';
 import { ResumeEditor } from '@/components/resumes/ResumeEditor';
+import { ResumeAnalysisModal } from '@/components/ai/ResumeAnalysisModal';
 import { useResumes } from '@/hooks/useResumes';
 import { useResumesStore } from '@/store/resumesStore';
 import { resumeService } from '@/services/resumeService';
@@ -36,6 +37,7 @@ export default function Resumes() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [editorModalOpen, setEditorModalOpen] = useState(false);
+  const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [sortType, setSortType] = useState<SortType>('date');
 
@@ -213,6 +215,11 @@ export default function Resumes() {
     updateResume({ id, data });
   };
 
+  const handleViewAnalysis = (resume: Resume) => {
+    setSelectedResume(resume);
+    setAnalysisModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4 md:p-8 mb-20 md:mb-0">
       <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
@@ -351,6 +358,7 @@ export default function Resumes() {
                   onDelete={handleDelete}
                   onSetMaster={handleSetMaster}
                   onParse={handleParse}
+                  onViewAnalysis={handleViewAnalysis}
                 />
               ))}
             </div>
@@ -386,6 +394,13 @@ export default function Resumes() {
         open={editorModalOpen}
         onOpenChange={setEditorModalOpen}
         onSave={handleSaveEdit}
+      />
+
+      {/* Analysis Modal */}
+      <ResumeAnalysisModal
+        resume={selectedResume}
+        open={analysisModalOpen}
+        onOpenChange={setAnalysisModalOpen}
       />
     </div>
   );

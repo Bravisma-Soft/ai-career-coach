@@ -61,6 +61,65 @@ export interface CoverLetter {
   createdAt: string;
 }
 
+export interface ResumeAnalysis {
+  id: string;
+  resumeId: string;
+  overallScore: number;
+  atsScore: number;
+  readabilityScore: number;
+  summaryScore: number | null;
+  experienceScore: number | null;
+  educationScore: number | null;
+  skillsScore: number | null;
+  strengths: string[];
+  weaknesses: string[];
+  sections: {
+    summary: {
+      score: number | null;
+      feedback: string;
+      issues: string[];
+    };
+    experience: {
+      score: number | null;
+      feedback: string;
+      issues: string[];
+    };
+    education: {
+      score: number | null;
+      feedback: string;
+      issues: string[];
+    };
+    skills: {
+      score: number | null;
+      feedback: string;
+      issues: string[];
+    };
+  };
+  keywordAnalysis: {
+    targetRole: string;
+    targetIndustry: string;
+    matchedKeywords: string[];
+    missingKeywords: string[];
+    overusedWords: string[];
+  };
+  atsIssues: string[];
+  suggestions: Array<{
+    section: string;
+    priority: 'high' | 'medium' | 'low';
+    issue: string;
+    suggestion: string;
+    example: {
+      before: string;
+      after: string;
+    };
+    impact: string;
+  }>;
+  targetRole?: string;
+  targetIndustry?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type AITask = 'tailoring' | 'cover-letter' | null;
 
 export interface AIProgress {

@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api';
-import { TailoredResume, CoverLetter } from '@/types/ai';
+import { TailoredResume, CoverLetter, ResumeAnalysis } from '@/types/ai';
 import { Resume } from '@/types/resume';
 import { Job } from '@/types/job';
 
@@ -186,6 +186,64 @@ export const aiService = {
         throw new Error('You do not have permission to access this resource.');
       } else {
         throw new Error(`Cover letter generation failed: ${errorMessage}`);
+      }
+    }
+  },
+
+  /**
+   * Get resume analysis by resume ID
+   */
+  getResumeAnalysis: async (resumeId: string): Promise<ResumeAnalysis | null> => {
+    try {
+      const response = await apiClient.get(`/ai/resumes/${resumeId}/analyze`);
+
+      if (!response.data.success) {
+        // Analysis doesn't exist yet
+        return null;
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      // 404 means analysis doesn't exist yet
+      if (error.response?.status === 404) {
+        return null;
+      }
+
+      console.error('Failed to fetch resume analysis:', error);
+      throw new Error(error.response?.data?.message || 'Failed to fetch resume analysis');
+    }
+  },
+
+  /**
+   * Trigger or re-analyze resume with optional target role/industry
+   */
+  analyzeResume: async (
+    resumeId: string,
+    targetRole?: string,
+    targetIndustry?: string
+  ): Promise<ResumeAnalysis> => {
+    try {
+      const response = await apiClient.post(`/ai/resumes/${resumeId}/analyze`, {
+        targetRole: targetRole || null,
+        targetIndustry: targetIndustry || null,
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to analyze resume');
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
+
+      if (error.response?.status === 404) {
+        throw new Error('Resume not found. Please try again.');
+      } else if (error.response?.status === 400) {
+        throw new Error(errorMessage);
+      } else if (error.response?.status === 403) {
+        throw new Error('You do not have permission to access this resource.');
+      } else {
+        throw new Error(`Resume analysis failed: ${errorMessage}`);
       }
     }
   }

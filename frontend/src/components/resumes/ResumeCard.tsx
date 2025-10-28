@@ -1,4 +1,4 @@
-import { FileText, Download, Eye, Trash2, Star, MoreVertical, Edit, Loader2 } from 'lucide-react';
+import { FileText, Download, Eye, Trash2, Star, MoreVertical, Edit, Loader2, BarChart3 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +26,7 @@ interface ResumeCardProps {
   onDelete: (resume: Resume) => void;
   onSetMaster: (resume: Resume) => void;
   onParse?: (resume: Resume) => void; // Keep for backward compatibility but won't be used
+  onViewAnalysis?: (resume: Resume) => void;
 }
 
 export const ResumeCard = ({
@@ -36,6 +37,7 @@ export const ResumeCard = ({
   onDelete,
   onSetMaster,
   onParse,
+  onViewAnalysis,
 }: ResumeCardProps) => {
   const isParsed = resume.personalInfo && resume.experience && resume.education && resume.skills;
   const formatDate = (dateString: string) => {
@@ -99,6 +101,12 @@ export const ResumeCard = ({
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </DropdownMenuItem>
+              {onViewAnalysis && (
+                <DropdownMenuItem onClick={() => onViewAnalysis(resume)}>
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  View Analysis
+                </DropdownMenuItem>
+              )}
               {!resume.isMaster && (
                 <>
                   <DropdownMenuSeparator />
@@ -150,10 +158,12 @@ export const ResumeCard = ({
                 <Eye className="h-4 w-4 mr-2" />
                 Preview
               </Button>
-              <Button variant="outline" size="sm" onClick={() => onEdit(resume)} className="flex-1">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
+              {onViewAnalysis && (
+                <Button variant="outline" size="sm" onClick={() => onViewAnalysis(resume)} className="flex-1">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analysis
+                </Button>
+              )}
             </>
           )}
         </div>
