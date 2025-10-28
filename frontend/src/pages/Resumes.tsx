@@ -26,6 +26,7 @@ import { ResumeAnalysisModal } from '@/components/ai/ResumeAnalysisModal';
 import { useResumes } from '@/hooks/useResumes';
 import { useResumesStore } from '@/store/resumesStore';
 import { resumeService } from '@/services/resumeService';
+import { aiService } from '@/services/aiService';
 import { Resume } from '@/types/resume';
 import { toast } from '@/hooks/use-toast';
 import { generateResumePDF } from '@/utils/pdfGenerator';
@@ -44,9 +45,41 @@ export default function Resumes() {
   const location = useLocation();
   const { resumes, isLoading, uploadResume, isUploading, updateResume, deleteResume, setMasterResume, parseResume } = useResumes();
   const { selectedResume, setSelectedResume } = useResumesStore();
+  const [resumesWithAnalysis, setResumesWithAnalysis] = useState<Resume[]>([]);
 
   // Compute master resume directly from resumes data to avoid store persistence issues
-  const masterResume = resumes.find(r => r.isMaster) || null;
+  const masterResume = resumesWithAnalysis.find(r => r.isMaster) || null;
+
+  // Fetch analysis status for all resumes
+  useEffect(() => {
+    const fetchAnalysisStatus = async () => {
+      if (resumes.length === 0) {
+        setResumesWithAnalysis([]);
+        return;
+      }
+
+      const resumesWithStatus = await Promise.all(
+        resumes.map(async (resume) => {
+          try {
+            const analysis = await aiService.getResumeAnalysis(resume.id);
+            return {
+              ...resume,
+              hasAnalysis: !!analysis,
+            };
+          } catch (error) {
+            // If there's an error, assume no analysis
+            return {
+              ...resume,
+              hasAnalysis: false,
+            };
+          }
+        })
+      );
+      setResumesWithAnalysis(resumesWithStatus);
+    };
+
+    fetchAnalysisStatus();
+  }, [resumes]);
 
   // Auto-open editor if navigated from TailorResumeModal
   useEffect(() => {
@@ -74,7 +107,7 @@ export default function Resumes() {
   }, [location.state, resumes, isLoading, setSelectedResume]);
 
   const filteredAndSortedResumes = useMemo(() => {
-    let filtered = [...resumes];
+    let filtered = [...resumesWithAnalysis];
 
     // Apply filters
     switch (filterType) {
@@ -105,7 +138,7 @@ export default function Resumes() {
     }
 
     return filtered;
-  }, [resumes, filterType, sortType]);
+  }, [resumesWithAnalysis, filterType, sortType]);
 
   const handleUpload = (file: File, name: string) => {
     uploadResume({ name, type: 'version', file });
@@ -218,6 +251,30 @@ export default function Resumes() {
   const handleViewAnalysis = (resume: Resume) => {
     setSelectedResume(resume);
     setAnalysisModalOpen(true);
+  };
+
+  const handleAnalysisComplete = () => {
+    // Refresh analysis status for all resumes
+    const fetchAnalysisStatus = async () => {
+      const resumesWithStatus = await Promise.all(
+        resumes.map(async (resume) => {
+          try {
+            const analysis = await aiService.getResumeAnalysis(resume.id);
+            return {
+              ...resume,
+              hasAnalysis: !!analysis,
+            };
+          } catch (error) {
+            return {
+              ...resume,
+              hasAnalysis: false,
+            };
+          }
+        })
+      );
+      setResumesWithAnalysis(resumesWithStatus);
+    };
+    fetchAnalysisStatus();
   };
 
   return (
@@ -401,6 +458,7 @@ export default function Resumes() {
         resume={selectedResume}
         open={analysisModalOpen}
         onOpenChange={setAnalysisModalOpen}
+        onAnalysisComplete={handleAnalysisComplete}
       />
     </div>
   );

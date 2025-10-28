@@ -159,9 +159,14 @@ export const ResumeCard = ({
                 Preview
               </Button>
               {onViewAnalysis && (
-                <Button variant="outline" size="sm" onClick={() => onViewAnalysis(resume)} className="flex-1">
+                <Button
+                  variant={resume.hasAnalysis ? "outline" : "default"}
+                  size="sm"
+                  onClick={() => onViewAnalysis(resume)}
+                  className="flex-1"
+                >
                   <BarChart3 className="h-4 w-4 mr-2" />
-                  Analysis
+                  {resume.hasAnalysis ? 'Analysis' : 'Analyze'}
                 </Button>
               )}
             </>

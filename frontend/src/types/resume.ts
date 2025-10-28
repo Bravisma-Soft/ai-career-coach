@@ -50,6 +50,7 @@ export interface Resume {
   experience?: ResumeExperience[];  // Optional until parsed
   education?: ResumeEducation[];  // Optional until parsed
   skills?: string[];  // Optional until parsed
+  hasAnalysis?: boolean;  // Whether AI analysis exists for this resume
   createdAt: string;
   updatedAt: string;
 }

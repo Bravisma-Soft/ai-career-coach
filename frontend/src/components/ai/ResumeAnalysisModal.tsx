@@ -33,9 +33,10 @@ interface ResumeAnalysisModalProps {
   resume: Resume | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onAnalysisComplete?: () => void;
 }
 
-export function ResumeAnalysisModal({ resume, open, onOpenChange }: ResumeAnalysisModalProps) {
+export function ResumeAnalysisModal({ resume, open, onOpenChange, onAnalysisComplete }: ResumeAnalysisModalProps) {
   const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -87,6 +88,11 @@ export function ResumeAnalysisModal({ resume, open, onOpenChange }: ResumeAnalys
         title: 'Analysis complete',
         description: 'Your resume has been re-analyzed successfully',
       });
+
+      // Notify parent to refresh analysis status
+      if (onAnalysisComplete) {
+        onAnalysisComplete();
+      }
     } catch (error: any) {
       console.error('Failed to analyze resume:', error);
       toast({
