@@ -340,11 +340,53 @@ model Resume {
 
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications      Application[]
+  analysis          ResumeAnalysis?
 
   @@index([userId])
   @@index([isPrimary])
   @@index([isActive])
   @@map("resumes")
+}
+
+model ResumeAnalysis {
+  id                String       @id @default(cuid())
+  resumeId          String       @unique
+
+  // Overall Scores
+  overallScore      Float        // 0-100
+  atsScore          Float        // 0-100
+  readabilityScore  Float        // 0-100
+
+  // Section Scores
+  summaryScore      Float?
+  experienceScore   Float?
+  educationScore    Float?
+  skillsScore       Float?
+
+  // Analysis Results
+  strengths         String[]
+  weaknesses        String[]
+
+  // Detailed Analysis
+  sections          Json         // Detailed section-by-section feedback
+  keywordAnalysis   Json         // Industry keywords, missing, overused
+  suggestions       Json         // Array of improvement suggestions with priority
+  atsIssues         String[]     // ATS compatibility issues
+
+  // Context
+  targetRole        String?      // Optional target role used for analysis
+  targetIndustry    String?      // Optional target industry
+
+  // AI Metadata
+  analysisMetadata  Json?        // Token usage, model used, etc.
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  resume            Resume       @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId])
+  @@map("resume_analyses")
 }
 
 // =================================

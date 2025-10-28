@@ -29,7 +29,7 @@ export interface AgentResponse<T = any> {
 export interface AgentError {
   code: string;
   message: string;
-  type: 'api_error' | 'validation_error' | 'network_error' | 'rate_limit_error' | 'parsing_error';
+  type: 'api_error' | 'validation_error' | 'network_error' | 'rate_limit_error' | 'parsing_error' | 'ai_error';
   retryable: boolean;
   details?: any;
 }

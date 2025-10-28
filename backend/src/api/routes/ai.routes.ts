@@ -30,6 +30,7 @@ import {
 import { logger } from '@/config/logger';
 import { NotFoundError, BadRequestError } from '@/utils/ApiError';
 import { coverLetterAgent } from '@/ai/agents/cover-letter.agent';
+import { ResumeAnalyzerAgent } from '@/ai/agents/resume-analyzer.agent';
 
 const router = Router();
 
@@ -153,48 +154,122 @@ router.post(
 
     logger.info(`AI: Analyzing resume ${resumeId} - User: ${userId}`);
 
-    // TODO: Implement ResumeAnalyzerAgent
-    // const agent = new ResumeAnalyzerAgent();
-    // const result = await agent.execute({ resumeId, targetRole, targetIndustry, userId });
+    // Fetch resume from database
+    const resume = await prisma.resume.findFirst({
+      where: {
+        id: resumeId,
+        userId: userId,
+        isActive: true,
+      },
+    });
 
-    // Temporary placeholder response
-    const response: AnalyzeResumeResponse = {
-      overallScore: 78,
-      strengths: [
-        'Clear and concise summary',
-        'Strong technical skills section',
-        'Quantified achievements',
-      ],
-      weaknesses: [
-        'Missing keywords for ATS optimization',
-        'Limited detail in recent roles',
-      ],
-      suggestions: [
-        {
-          section: 'Experience',
-          priority: 'high',
-          suggestion: 'Add specific metrics to quantify your impact',
-          impact: 'Increases credibility and demonstrates results',
+    if (!resume) {
+      throw new NotFoundError('Resume not found');
+    }
+
+    if (!resume.parsedData) {
+      throw new BadRequestError('Resume has not been parsed yet. Please wait for parsing to complete.');
+    }
+
+    // Check if analysis already exists
+    const existingAnalysis = await prisma.resumeAnalysis.findUnique({
+      where: { resumeId: resume.id },
+    });
+
+    // If analysis exists and no new target role/industry, return cached result
+    if (existingAnalysis && !targetRole && !targetIndustry) {
+      logger.info(`AI: Returning cached analysis for resume ${resumeId}`);
+
+      const response: AnalyzeResumeResponse = {
+        overallScore: existingAnalysis.overallScore,
+        atsScore: existingAnalysis.atsScore,
+        readabilityScore: existingAnalysis.readabilityScore,
+        strengths: existingAnalysis.strengths,
+        weaknesses: existingAnalysis.weaknesses,
+        sections: existingAnalysis.sections as any,
+        keywordAnalysis: existingAnalysis.keywordAnalysis as any,
+        suggestions: existingAnalysis.suggestions as any,
+      };
+
+      return sendSuccess(res, response, 'Resume analysis retrieved successfully (cached)');
+    }
+
+    // Execute AI analysis
+    const agent = new ResumeAnalyzerAgent();
+    const result = await agent.execute({
+      resumeData: resume.parsedData as any,
+      targetRole,
+      targetIndustry,
+    });
+
+    if (!result.success || !result.data) {
+      throw new BadRequestError(result.error?.message || 'Failed to analyze resume');
+    }
+
+    const analysisData = result.data;
+
+    // Save or update analysis in database
+    const savedAnalysis = await prisma.resumeAnalysis.upsert({
+      where: { resumeId: resume.id },
+      create: {
+        resumeId: resume.id,
+        overallScore: analysisData.overallScore,
+        atsScore: analysisData.atsScore,
+        readabilityScore: analysisData.readabilityScore,
+        summaryScore: analysisData.sections.summary?.score,
+        experienceScore: analysisData.sections.experience?.score,
+        educationScore: analysisData.sections.education?.score,
+        skillsScore: analysisData.sections.skills?.score,
+        strengths: analysisData.strengths,
+        weaknesses: analysisData.weaknesses,
+        sections: analysisData.sections as any,
+        keywordAnalysis: analysisData.keywordAnalysis as any,
+        suggestions: analysisData.suggestions as any,
+        atsIssues: analysisData.atsIssues,
+        targetRole,
+        targetIndustry,
+        analysisMetadata: {
+          tokenUsage: result.usage,
+          model: result.model,
         },
-      ],
-      sections: {
-        summary: { score: 85, feedback: 'Strong opening that highlights key skills' },
-        experience: { score: 72, feedback: 'Good structure, needs more quantification' },
-        education: { score: 90, feedback: 'Well presented and relevant' },
-        skills: { score: 75, feedback: 'Comprehensive but could be better organized' },
       },
-      keywordAnalysis: {
-        industryKeywords: ['JavaScript', 'React', 'Node.js'],
-        missingKeywords: ['TypeScript', 'GraphQL', 'Docker'],
-        overusedWords: ['responsible for', 'worked on'],
+      update: {
+        overallScore: analysisData.overallScore,
+        atsScore: analysisData.atsScore,
+        readabilityScore: analysisData.readabilityScore,
+        summaryScore: analysisData.sections.summary?.score,
+        experienceScore: analysisData.sections.experience?.score,
+        educationScore: analysisData.sections.education?.score,
+        skillsScore: analysisData.sections.skills?.score,
+        strengths: analysisData.strengths,
+        weaknesses: analysisData.weaknesses,
+        sections: analysisData.sections as any,
+        keywordAnalysis: analysisData.keywordAnalysis as any,
+        suggestions: analysisData.suggestions as any,
+        atsIssues: analysisData.atsIssues,
+        targetRole,
+        targetIndustry,
+        analysisMetadata: {
+          tokenUsage: result.usage,
+          model: result.model,
+        },
       },
-      atsScore: 82,
-      readabilityScore: 88,
+    });
+
+    const response: AnalyzeResumeResponse = {
+      overallScore: savedAnalysis.overallScore,
+      atsScore: savedAnalysis.atsScore,
+      readabilityScore: savedAnalysis.readabilityScore,
+      strengths: savedAnalysis.strengths,
+      weaknesses: savedAnalysis.weaknesses,
+      sections: savedAnalysis.sections as any,
+      keywordAnalysis: savedAnalysis.keywordAnalysis as any,
+      suggestions: savedAnalysis.suggestions as any,
     };
 
     logger.info(`AI: Resume analysis completed - Overall Score: ${response.overallScore}`);
 
-    sendSuccess(res, response, 'Resume analyzed successfully');
+    return sendSuccess(res, response, 'Resume analyzed successfully');
   })
 );
 
