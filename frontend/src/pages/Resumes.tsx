@@ -52,24 +52,17 @@ export default function Resumes() {
     // Set resumes immediately so they show up
     setResumesWithAnalysis(resumes.map(r => ({ ...r, hasAnalysis: false })));
 
-    // Then fetch analysis status in the background
+    // Then fetch analysis status in the background (non-blocking, no errors shown)
     if (resumes.length > 0) {
       const fetchAnalysisStatus = async () => {
         const resumesWithStatus = await Promise.all(
           resumes.map(async (resume) => {
-            try {
-              const analysis = await aiService.getResumeAnalysis(resume.id);
-              return {
-                ...resume,
-                hasAnalysis: !!analysis,
-              };
-            } catch (error) {
-              // If there's an error, assume no analysis
-              return {
-                ...resume,
-                hasAnalysis: false,
-              };
-            }
+            // Use checkResumeAnalysis which silently returns false on errors
+            const hasAnalysis = await aiService.checkResumeAnalysis(resume.id);
+            return {
+              ...resume,
+              hasAnalysis,
+            };
           })
         );
         setResumesWithAnalysis(resumesWithStatus);
@@ -258,18 +251,11 @@ export default function Resumes() {
     const fetchAnalysisStatus = async () => {
       const resumesWithStatus = await Promise.all(
         resumes.map(async (resume) => {
-          try {
-            const analysis = await aiService.getResumeAnalysis(resume.id);
-            return {
-              ...resume,
-              hasAnalysis: !!analysis,
-            };
-          } catch (error) {
-            return {
-              ...resume,
-              hasAnalysis: false,
-            };
-          }
+          const hasAnalysis = await aiService.checkResumeAnalysis(resume.id);
+          return {
+            ...resume,
+            hasAnalysis,
+          };
         })
       );
       setResumesWithAnalysis(resumesWithStatus);

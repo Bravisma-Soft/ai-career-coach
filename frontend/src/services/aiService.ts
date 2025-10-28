@@ -191,6 +191,25 @@ export const aiService = {
   },
 
   /**
+   * Check if resume analysis exists (lightweight check without triggering analysis)
+   */
+  checkResumeAnalysis: async (resumeId: string): Promise<boolean> => {
+    try {
+      // This will return cached analysis if it exists, or throw error if it doesn't
+      const response = await apiClient.post('/ai/resumes/analyze', {
+        resumeId,
+      });
+
+      // If we get a successful response, analysis exists
+      return response.data.success && !!response.data.data;
+    } catch (error: any) {
+      // Any error means analysis doesn't exist or resume not ready
+      // Don't throw - just return false
+      return false;
+    }
+  },
+
+  /**
    * Get resume analysis by resume ID (fetches cached or triggers new analysis)
    */
   getResumeAnalysis: async (resumeId: string): Promise<ResumeAnalysis | null> => {
@@ -214,6 +233,12 @@ export const aiService = {
       // 400 might mean resume not parsed yet
       if (error.response?.status === 400) {
         console.log('Resume not parsed yet');
+        return null;
+      }
+
+      // 429 means rate limited - don't log as error
+      if (error.response?.status === 429) {
+        console.log('Rate limited, analysis check skipped');
         return null;
       }
 
