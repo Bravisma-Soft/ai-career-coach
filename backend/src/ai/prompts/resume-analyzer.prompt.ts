@@ -241,15 +241,11 @@ export const resumeAnalyzerPrompt: PromptTemplate = {
 # RESUME DATA
 {{resumeData}}
 
-{{#if targetRole}}
-# TARGET ROLE
+# TARGET ROLE (if provided)
 {{targetRole}}
-{{/if}}
 
-{{#if targetIndustry}}
-# TARGET INDUSTRY
+# TARGET INDUSTRY (if provided)
 {{targetIndustry}}
-{{/if}}
 
 Provide your analysis in the JSON format specified in your system prompt.`,
 };

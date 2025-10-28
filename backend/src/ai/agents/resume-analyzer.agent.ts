@@ -62,8 +62,8 @@ export class ResumeAnalyzerAgent extends BaseAgent<ResumeAnalyzerInput, ResumeAn
       resumeAnalyzerPrompt.userPromptTemplate,
       {
         resumeData: resumeDataJson,
-        targetRole,
-        targetIndustry,
+        targetRole: targetRole || 'Not specified - infer from resume',
+        targetIndustry: targetIndustry || 'Not specified - infer from resume',
       }
     );
 
@@ -95,15 +95,16 @@ export class ResumeAnalyzerAgent extends BaseAgent<ResumeAnalyzerInput, ResumeAn
     }
 
     // Parse JSON response
-    const parsedResult = ResponseParser.parseJSON<ResumeAnalysisResult>(response.data!) as unknown as ResumeAnalysisResult | null;
+    const parseResult = ResponseParser.parseJSON<ResumeAnalysisResult>(response.data!);
 
-    if (!parsedResult) {
+    if (!parseResult.success || !parseResult.data) {
       logger.error('Failed to parse resume analysis response', {
-        rawResponse: response.data?.substring(0, 500),
+        rawResponse: response.data?.substring(0, 1000),
+        parseError: parseResult.error,
       });
       return {
         success: false,
-        error: {
+        error: parseResult.error || {
           code: 'PARSE_ERROR',
           message: 'Failed to parse AI response as valid JSON',
           type: 'ai_error',
@@ -112,11 +113,14 @@ export class ResumeAnalyzerAgent extends BaseAgent<ResumeAnalyzerInput, ResumeAn
       } as AgentResponse<ResumeAnalysisResult>;
     }
 
+    const analysisData = parseResult.data;
+
     // Validate the analysis result structure
-    const validationError = this.validateAnalysisResult(parsedResult);
+    const validationError = this.validateAnalysisResult(analysisData);
     if (validationError) {
       logger.error('Resume analysis validation failed', {
         error: validationError,
+        analysisData: JSON.stringify(analysisData).substring(0, 500),
       });
       return {
         success: false,
@@ -130,16 +134,16 @@ export class ResumeAnalyzerAgent extends BaseAgent<ResumeAnalyzerInput, ResumeAn
     }
 
     logger.info('Resume analysis completed successfully', {
-      overallScore: parsedResult.overallScore,
-      atsScore: parsedResult.atsScore,
-      readabilityScore: parsedResult.readabilityScore,
-      strengthsCount: parsedResult.strengths?.length || 0,
-      suggestionsCount: parsedResult.suggestions?.length || 0,
+      overallScore: analysisData.overallScore,
+      atsScore: analysisData.atsScore,
+      readabilityScore: analysisData.readabilityScore,
+      strengthsCount: analysisData.strengths?.length || 0,
+      suggestionsCount: analysisData.suggestions?.length || 0,
     });
 
     return {
       success: true,
-      data: parsedResult,
+      data: analysisData,
       usage: response.usage,
       model: response.model,
       stopReason: response.stopReason,
