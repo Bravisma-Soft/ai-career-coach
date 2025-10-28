@@ -156,7 +156,7 @@ export class ResumeParseProcessor {
 
           const analysisDataToSave = {
             resumeId: resumeId,
-            jobId: null,
+            jobId: null as string | null,
             overallScore: analysisData.overallScore,
             atsScore: analysisData.atsScore,
             readabilityScore: analysisData.readabilityScore,
