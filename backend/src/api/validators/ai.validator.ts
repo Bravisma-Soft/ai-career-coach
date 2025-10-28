@@ -21,8 +21,9 @@ export type TailorResumeInput = z.infer<typeof tailorResumeSchema>['body'];
 export const analyzeResumeSchema = z.object({
   body: z.object({
     resumeId: z.string().cuid('Invalid resume ID format'),
-    targetRole: z.string().max(200).optional(),
-    targetIndustry: z.string().max(200).optional(),
+    jobId: z.string().cuid('Invalid job ID format').optional().nullable(),
+    targetRole: z.string().max(200).optional().nullable(),
+    targetIndustry: z.string().max(200).optional().nullable(),
   }),
 });
 

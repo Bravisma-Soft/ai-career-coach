@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Upload, Star, FileText, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,18 +44,13 @@ export default function Resumes() {
   const [sortType, setSortType] = useState<SortType>('date');
 
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { resumes, isLoading, uploadResume, isUploading, updateResume, deleteResume, setMasterResume, parseResume } = useResumes();
   const { selectedResume, setSelectedResume } = useResumesStore();
-  const [resumesWithAnalysis, setResumesWithAnalysis] = useState<Resume[]>([]);
-
-  // Simply show all resumes with hasAnalysis=false - don't check on page load
-  // This avoids rate limit errors from checking multiple resumes at once
-  useEffect(() => {
-    setResumesWithAnalysis(resumes.map(r => ({ ...r, hasAnalysis: false })));
-  }, [resumes]);
 
   // Compute master resume directly from resumes data to avoid store persistence issues
-  const masterResume = resumesWithAnalysis.find(r => r.isMaster) || null;
+  // hasAnalysis is now included in the initial resume fetch from backend
+  const masterResume = resumes.find(r => r.isMaster) || null;
 
   // Auto-open editor if navigated from TailorResumeModal
   useEffect(() => {
@@ -82,7 +78,7 @@ export default function Resumes() {
   }, [location.state, resumes, isLoading, setSelectedResume]);
 
   const filteredAndSortedResumes = useMemo(() => {
-    let filtered = [...resumesWithAnalysis];
+    let filtered = [...resumes];
 
     // Apply filters
     switch (filterType) {
@@ -113,7 +109,7 @@ export default function Resumes() {
     }
 
     return filtered;
-  }, [resumesWithAnalysis, filterType, sortType]);
+  }, [resumes, filterType, sortType]);
 
   const handleUpload = (file: File, name: string) => {
     uploadResume({ name, type: 'version', file });
@@ -229,14 +225,8 @@ export default function Resumes() {
   };
 
   const handleAnalysisComplete = () => {
-    // After analysis completes, mark this specific resume as having analysis
-    if (selectedResume) {
-      setResumesWithAnalysis(prev =>
-        prev.map(r =>
-          r.id === selectedResume.id ? { ...r, hasAnalysis: true } : r
-        )
-      );
-    }
+    // Refetch resumes to get updated hasAnalysis flags from backend
+    queryClient.invalidateQueries({ queryKey: ['resumes'] });
   };
 
   return (

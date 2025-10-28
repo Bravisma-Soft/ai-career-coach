@@ -340,7 +340,7 @@ model Resume {
 
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications      Application[]
-  analysis          ResumeAnalysis?
+  analyses          ResumeAnalysis[]
 
   @@index([userId])
   @@index([isPrimary])
@@ -350,7 +350,8 @@ model Resume {
 
 model ResumeAnalysis {
   id                String       @id @default(cuid())
-  resumeId          String       @unique
+  resumeId          String
+  jobId             String?      // Optional: Link to specific job application
 
   // Overall Scores
   overallScore      Float        // 0-100
@@ -384,8 +385,11 @@ model ResumeAnalysis {
   updatedAt         DateTime     @updatedAt
 
   resume            Resume       @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  job               Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
+  @@unique([resumeId, jobId])    // Each resume can have one analysis per job
   @@index([resumeId])
+  @@index([jobId])
   @@map("resume_analyses")
 }
 
@@ -439,6 +443,7 @@ model Job {
   interviews        Interview[]
   documents         Document[]
   statusChanges     StatusChange[]
+  resumeAnalyses    ResumeAnalysis[]
 
   @@index([userId])
   @@index([status])

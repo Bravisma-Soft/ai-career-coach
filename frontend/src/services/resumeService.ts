@@ -81,6 +81,7 @@ const mapBackendResumeToFrontend = (backendResume: any): Resume => {
       experience: experiences,
       education: educations,
       skills: skills,
+      hasAnalysis: backendResume.hasAnalysis, // Whether resume has any analysis
       createdAt: backendResume.createdAt,
       updatedAt: backendResume.updatedAt,
     };

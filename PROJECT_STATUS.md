@@ -1,6 +1,6 @@
 # AI Career Coach - Project Status
 
-**Last Updated:** October 24, 2025
+**Last Updated:** October 28, 2025
 **Version:** 1.0 MVP
 **Status:** 🟢 Production Deployed on Railway
 
@@ -16,7 +16,7 @@
 | **Redis/Cache** | ✅ Redis on Railway |
 | **AI Integration** | ✅ Claude Sonnet 4.5 |
 | **OAuth Authentication** | ✅ Google OAuth Deployed |
-| **MVP Phase 1** | 🟡 90% Complete (6 agents pending) |
+| **MVP Phase 1** | 🟡 92% Complete (5 agents pending) |
 | **Phase 2** | ⏳ Not Started |
 
 ---
@@ -97,14 +97,26 @@
   - Answer evaluation
   - Session analysis
 
-### 7. **Interview Management**
+### 7. **AI Resume Analysis** ⭐ NEW
+- ✅ Comprehensive resume quality scoring (Overall, ATS, Readability)
+- ✅ Section-by-section feedback (Summary, Experience, Education, Skills)
+- ✅ Keyword analysis (matched, missing, overused)
+- ✅ ATS compatibility issues detection
+- ✅ Prioritized improvement suggestions with before/after examples
+- ✅ Target role/industry customization
+- ✅ Auto-analysis after resume parsing
+- **Agent:** `ResumeAnalyzerAgent` (Claude Sonnet 4.5)
+- **Routes:** `/api/ai/resumes/analyze`
+- **Database:** `ResumeAnalysis` model with caching
+
+### 8. **Interview Management**
 - ✅ Interview scheduling and tracking
 - ✅ Interviewer information storage
 - ✅ Link interviews to jobs
 - ✅ Interview preparation materials
 - **Routes:** `/api/interviews/*`
 
-### 8. **Document Management**
+### 9. **Document Management**
 - ✅ Store tailored resumes with metadata
 - ✅ Document versioning
 - ✅ Match scores tracked in metadata
@@ -118,37 +130,31 @@
 
 These routes exist but return **static mock data** instead of real AI:
 
-### 1. **Resume Analysis Agent**
-- **Route:** `POST /api/ai/resumes/analyze`
-- **Status:** ❌ Placeholder data only
-- **TODO:** Implement ATS scoring, quality assessment, improvement suggestions
-- **Location:** `backend/src/api/routes/ai.routes.ts:156`
-
-### 2. **Interview Prep Agent**
+### 1. **Interview Prep Agent**
 - **Route:** `POST /api/ai/interviews/prepare`
 - **Status:** ❌ Placeholder data only
 - **TODO:** Implement company research, role-specific questions
 - **Location:** `backend/src/api/routes/ai.routes.ts:320`
 
-### 3. **Job Matching Agent**
+### 2. **Job Matching Agent**
 - **Route:** `POST /api/ai/jobs/match`
 - **Status:** ❌ Placeholder data only (Phase 2 feature)
 - **TODO:** Intelligent job recommendations based on resume
 - **Location:** `backend/src/api/routes/ai.routes.ts:394`
 
-### 4. **Job Analysis Agent**
+### 3. **Job Analysis Agent**
 - **Route:** `POST /api/ai/jobs/analyze`
 - **Status:** ❌ Placeholder data only
 - **TODO:** Analyze job requirements, culture fit, salary insights
 - **Location:** `backend/src/api/routes/ai.routes.ts:451`
 
-### 5. **Company Research Agent**
+### 4. **Company Research Agent**
 - **Route:** `POST /api/ai/research/company`
 - **Status:** ❌ Placeholder data only
 - **TODO:** Scrape company info, culture, recent news
 - **Location:** `backend/src/api/routes/ai.routes.ts:524`
 
-### 6. **Interviewer Research Agent**
+### 5. **Interviewer Research Agent**
 - **Route:** `POST /api/ai/research/interviewer`
 - **Status:** ❌ Placeholder data only
 - **TODO:** LinkedIn research, background info
@@ -183,7 +189,7 @@ These routes exist but return **static mock data** instead of real AI:
 3. ✅ **CoverLetterAgent** - Generate personalized cover letters
 4. ✅ **JobParserAgent** - Scrape and parse job postings
 5. ✅ **MockInterviewAgent** - Generate questions, evaluate answers, analyze sessions
-6. ❌ **ResumeAnalyzerAgent** - TODO: Quality scoring
+6. ✅ **ResumeAnalyzerAgent** - Quality scoring, ATS analysis, suggestions (temp: 0.5)
 7. ❌ **InterviewPrepAgent** - TODO: Company research
 8. ❌ **JobMatchAgent** - TODO: Job recommendations (Phase 2)
 9. ❌ **JobAnalyzerAgent** - TODO: Job requirement analysis
@@ -273,10 +279,10 @@ ai-career-coach/
 
 ### AI Operations (Real AI) ✅
 - `POST /api/ai/resumes/tailor` - Tailor resume for job
+- `POST /api/ai/resumes/analyze` - Analyze resume quality, ATS scoring
 - `POST /api/ai/cover-letters/generate` - Generate cover letter
 
 ### AI Operations (Placeholders) ❌
-- `POST /api/ai/resumes/analyze` - Analyze resume quality (TODO)
 - `POST /api/ai/interviews/prepare` - Interview prep (TODO)
 - `POST /api/ai/jobs/match` - Match jobs (TODO - Phase 2)
 - `POST /api/ai/jobs/analyze` - Analyze job (TODO)
@@ -318,15 +324,15 @@ ai-career-coach/
 ## 📋 Next Steps (Priority Order)
 
 ### Immediate (1-2 weeks) - Complete MVP
-1. **Implement Resume Analysis Agent** (2-3 days)
-   - ATS compatibility scoring
-   - Resume quality assessment
-   - Actionable improvement suggestions
-
-2. **Implement Interview Prep Agent** (2-3 days)
+1. **Implement Interview Prep Agent** (2-3 days)
    - Company website scraping
    - Role-specific question generation
    - Interviewer background research
+
+2. **Implement Job Analysis Agent** (2-3 days)
+   - Analyze job requirements and fit
+   - Salary insights and market data
+   - Culture fit assessment
 
 3. **Implement Company Research Agent** (1-2 days)
    - Scrape company website
@@ -438,14 +444,14 @@ See `DOCUMENTATION_INDEX.md` for full documentation structure and locations.
 
 ## 🎯 Success Criteria (from PRD)
 
-### MVP Goals (Phase 1) - 90% Complete
+### MVP Goals (Phase 1) - 92% Complete
 - [x] User authentication and profile management
 - [x] Resume upload and AI parsing
 - [x] Job tracking with Kanban board
 - [x] AI resume tailoring
 - [x] AI cover letter generation
 - [x] Mock interview with AI evaluation
-- [ ] Resume quality analysis (TODO)
+- [x] Resume quality analysis ✅ NEW
 - [ ] Interview preparation with research (TODO)
 
 ### Phase 2 Goals - Not Started

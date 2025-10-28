@@ -9,6 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   CheckCircle2,
   XCircle,
   AlertCircle,
@@ -22,10 +29,13 @@ import {
   FileText,
   Lightbulb,
   ArrowRight,
+  Briefcase,
 } from 'lucide-react';
 import { Resume } from '@/types/resume';
 import { ResumeAnalysis } from '@/types/ai';
+import { Job } from '@/types/job';
 import { aiService } from '@/services/aiService';
+import { jobService } from '@/services/jobService';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -40,15 +50,52 @@ export function ResumeAnalysisModal({ resume, open, onOpenChange, onAnalysisComp
   const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string>('none');
   const [targetRole, setTargetRole] = useState('');
   const [targetIndustry, setTargetIndustry] = useState('');
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
 
-  // Fetch analysis when modal opens
+  // Clear analysis state when resume changes or modal closes
+  useEffect(() => {
+    if (!open || !resume) {
+      setAnalysis(null);
+      setSelectedJobId('none');
+      setTargetRole('');
+      setTargetIndustry('');
+    }
+  }, [open, resume?.id]);
+
+  // Fetch jobs and analysis when modal opens
   useEffect(() => {
     if (open && resume) {
-      loadAnalysis();
+      // Clear previous analysis first
+      setAnalysis(null);
+
+      const loadData = async () => {
+        await loadJobs();
+        await loadAnalysis();
+      };
+      loadData();
     }
   }, [open, resume]);
+
+  const loadJobs = async () => {
+    setIsLoadingJobs(true);
+    try {
+      const data = await jobService.fetchJobs();
+      setJobs(data);
+    } catch (error: any) {
+      console.error('Failed to load jobs:', error);
+      toast({
+        title: 'Failed to load jobs',
+        description: 'Could not fetch your job applications',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingJobs(false);
+    }
+  };
 
   const loadAnalysis = async () => {
     if (!resume) return;
@@ -58,12 +105,24 @@ export function ResumeAnalysisModal({ resume, open, onOpenChange, onAnalysisComp
       const data = await aiService.getResumeAnalysis(resume.id);
       setAnalysis(data);
       if (data) {
+        // Verify that the analysis is for the correct resume
+        if (data.resumeId !== resume.id) {
+          console.error(`[ResumeAnalysisModal] ERROR: Analysis mismatch! Requested: ${resume.id}, Received: ${data.resumeId}`);
+          setAnalysis(null);
+          return;
+        }
+
+        setSelectedJobId(data.jobId || 'none');
         setTargetRole(data.targetRole || '');
         setTargetIndustry(data.targetIndustry || '');
+
+        // Notify parent that this resume has an existing analysis
+        if (onAnalysisComplete) {
+          onAnalysisComplete();
+        }
       }
     } catch (error: any) {
       // Silently handle - if analysis doesn't exist, show the "No Analysis Available" state
-      console.log('No analysis available yet');
       setAnalysis(null);
     } finally {
       setIsLoading(false);
@@ -77,13 +136,16 @@ export function ResumeAnalysisModal({ resume, open, onOpenChange, onAnalysisComp
     try {
       const data = await aiService.analyzeResume(
         resume.id,
+        selectedJobId === 'none' ? undefined : selectedJobId,
         targetRole || undefined,
         targetIndustry || undefined
       );
       setAnalysis(data);
       toast({
         title: 'Analysis complete',
-        description: 'Your resume has been re-analyzed successfully',
+        description: selectedJobId && selectedJobId !== 'none'
+          ? 'Your resume has been analyzed for the selected job'
+          : 'Your resume has been analyzed successfully',
       });
 
       // Notify parent to refresh analysis status
@@ -160,19 +222,42 @@ export function ResumeAnalysisModal({ resume, open, onOpenChange, onAnalysisComp
             <FileText className="h-16 w-16 text-muted-foreground" />
             <h3 className="text-lg font-semibold">No Analysis Available</h3>
             <p className="text-sm text-muted-foreground text-center max-w-md">
-              This resume hasn't been analyzed yet. Analysis runs automatically after parsing, but you can also trigger it manually.
+              This resume hasn't been analyzed yet. Select a job application or enter a target role to analyze this resume.
             </p>
             <div className="w-full max-w-md space-y-3">
-              <Input
-                placeholder="Target role (optional)"
-                value={targetRole}
-                onChange={(e) => setTargetRole(e.target.value)}
-              />
-              <Input
-                placeholder="Target industry (optional)"
-                value={targetIndustry}
-                onChange={(e) => setTargetIndustry(e.target.value)}
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Analyze for Job Application</label>
+                <Select value={selectedJobId} onValueChange={setSelectedJobId} disabled={isLoadingJobs}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={isLoadingJobs ? "Loading jobs..." : "Select a job (optional)"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">General Analysis (No specific job)</SelectItem>
+                    {jobs.map((job) => (
+                      <SelectItem key={job.id} value={job.id}>
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="h-4 w-4" />
+                          <span>{job.title} at {job.company}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedJobId === 'none' && (
+                <>
+                  <Input
+                    placeholder="Target role (optional)"
+                    value={targetRole}
+                    onChange={(e) => setTargetRole(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Target industry (optional)"
+                    value={targetIndustry}
+                    onChange={(e) => setTargetIndustry(e.target.value)}
+                  />
+                </>
+              )}
               <Button onClick={handleReanalyze} disabled={isAnalyzing} className="w-full">
                 {isAnalyzing ? (
                   <>
@@ -189,29 +274,58 @@ export function ResumeAnalysisModal({ resume, open, onOpenChange, onAnalysisComp
             </div>
           </div>
         ) : (
-          <ScrollArea className="flex-1 pr-4">
+          <ScrollArea className="flex-1 overflow-y-auto pr-4">
             <div className="space-y-6">
               {/* Re-analyze Section */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Re-analyze for Specific Role</CardTitle>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    {analysis.jobId && (
+                      <Badge variant="outline" className="gap-1">
+                        <Briefcase className="h-3 w-3" />
+                        Analyzed for: {jobs.find(j => j.id === analysis.jobId)?.title || 'Job'}
+                      </Badge>
+                    )}
+                    Re-analyze for Different Role
+                  </CardTitle>
                   <CardDescription>
-                    Optionally specify a target role and industry for more tailored feedback
+                    Select a job application or specify a target role for tailored feedback
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      placeholder="Target role"
-                      value={targetRole}
-                      onChange={(e) => setTargetRole(e.target.value)}
-                    />
-                    <Input
-                      placeholder="Target industry"
-                      value={targetIndustry}
-                      onChange={(e) => setTargetIndustry(e.target.value)}
-                    />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Job Application</label>
+                    <Select value={selectedJobId} onValueChange={setSelectedJobId} disabled={isLoadingJobs}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isLoadingJobs ? "Loading jobs..." : "Select a job (optional)"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">General Analysis (No specific job)</SelectItem>
+                        {jobs.map((job) => (
+                          <SelectItem key={job.id} value={job.id}>
+                            <div className="flex items-center gap-2">
+                              <Briefcase className="h-4 w-4" />
+                              <span>{job.title} at {job.company}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                  {selectedJobId === 'none' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        placeholder="Target role"
+                        value={targetRole}
+                        onChange={(e) => setTargetRole(e.target.value)}
+                      />
+                      <Input
+                        placeholder="Target industry"
+                        value={targetIndustry}
+                        onChange={(e) => setTargetIndustry(e.target.value)}
+                      />
+                    </div>
+                  )}
                   <Button onClick={handleReanalyze} disabled={isAnalyzing} className="w-full">
                     {isAnalyzing ? (
                       <>

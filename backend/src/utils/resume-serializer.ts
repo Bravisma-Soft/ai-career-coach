@@ -51,6 +51,7 @@ export interface SerializedResume {
     gpa?: string;
   }>;
   skills?: string[];
+  hasAnalysis?: boolean; // Whether resume has any analysis
 
   createdAt: string;
   updatedAt: string;
@@ -59,7 +60,7 @@ export interface SerializedResume {
 /**
  * Serialize a Resume model to the API response format
  */
-export function serializeResume(resume: Resume): SerializedResume {
+export function serializeResume(resume: Resume & { hasAnalysis?: boolean }): SerializedResume {
   const parsedData = resume.parsedData as unknown as ParsedResumeData | null;
 
   // Transform parsed experience data
@@ -123,6 +124,7 @@ export function serializeResume(resume: Resume): SerializedResume {
     experience,
     education,
     skills: skills.length > 0 ? skills : undefined,
+    hasAnalysis: resume.hasAnalysis,
 
     createdAt: resume.createdAt.toISOString(),
     updatedAt: resume.updatedAt.toISOString(),
@@ -132,6 +134,6 @@ export function serializeResume(resume: Resume): SerializedResume {
 /**
  * Serialize multiple resumes
  */
-export function serializeResumes(resumes: Resume[]): SerializedResume[] {
+export function serializeResumes(resumes: (Resume & { hasAnalysis?: boolean })[]): SerializedResume[] {
   return resumes.map(serializeResume);
 }

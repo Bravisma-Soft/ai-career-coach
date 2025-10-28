@@ -75,12 +75,26 @@ export class ResumeService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: [{ isPrimary: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          analyses: {
+            select: {
+              id: true,
+            },
+            take: 1, // Just need to know if at least one exists
+          },
+        },
       }),
       prisma.resume.count({ where }),
     ]);
 
+    // Add hasAnalysis flag to each resume
+    const resumesWithAnalysis = resumes.map(resume => ({
+      ...resume,
+      hasAnalysis: resume.analyses && resume.analyses.length > 0,
+    }));
+
     return {
-      resumes: serializeResumes(resumes),
+      resumes: serializeResumes(resumesWithAnalysis as any),
       pagination: {
         page,
         limit,

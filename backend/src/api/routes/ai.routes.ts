@@ -53,8 +53,14 @@ const aiLimiter = rateLimit({
   skipFailedRequests: true,
 });
 
-// Apply AI rate limiter to all routes
-router.use(aiLimiter);
+// Apply AI rate limiter to all routes EXCEPT check endpoints
+router.use((req, res, next) => {
+  // Skip rate limiting for lightweight check operations (GET requests)
+  if (req.method === 'GET' && req.path.startsWith('/resumes/analysis/check/')) {
+    return next();
+  }
+  return aiLimiter(req, res, next);
+});
 
 // =================================
 // RESUME AI ROUTES
@@ -141,6 +147,27 @@ router.post(
 );
 
 /**
+ * @route   GET /api/ai/resumes/analysis/check/:resumeId
+ * @desc    Lightweight check if resume analysis exists (no rate limit)
+ * @access  Private
+ */
+router.get(
+  '/resumes/analysis/check/:resumeId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.userId!;
+    const { resumeId } = req.params;
+
+    // Quick check if any analysis exists for this resume
+    const analysisExists = await prisma.resumeAnalysis.findFirst({
+      where: { resumeId, resume: { userId } },
+      select: { id: true },
+    });
+
+    sendSuccess(res, { hasAnalysis: !!analysisExists }, 'Analysis check completed');
+  })
+);
+
+/**
  * @route   POST /api/ai/resumes/analyze
  * @desc    Analyze resume quality and provide suggestions
  * @access  Private
@@ -150,9 +177,9 @@ router.post(
   validate(analyzeResumeSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId!;
-    const { resumeId, targetRole, targetIndustry } = req.body;
+    const { resumeId, jobId, targetRole, targetIndustry } = req.body;
 
-    logger.info(`AI: Analyzing resume ${resumeId} - User: ${userId}`);
+    logger.info(`AI: Analyzing resume ${resumeId}${jobId ? ` for job ${jobId}` : ''} - User: ${userId}`);
 
     // Fetch resume from database
     const resume = await prisma.resume.findFirst({
@@ -171,24 +198,70 @@ router.post(
       throw new BadRequestError('Resume has not been parsed yet. Please wait for parsing to complete.');
     }
 
-    // Check if analysis already exists
-    const existingAnalysis = await prisma.resumeAnalysis.findUnique({
-      where: { resumeId: resume.id },
+    // If jobId provided, fetch job details
+    let job = null;
+    if (jobId) {
+      job = await prisma.job.findFirst({
+        where: {
+          id: jobId,
+          userId: userId,
+        },
+      });
+
+      if (!job) {
+        throw new NotFoundError('Job not found');
+      }
+    }
+
+    // Check if analysis already exists for this resume+job combination
+    // If no jobId specified, get the most recent analysis for this resume
+    logger.info(`AI: Looking for analysis - resumeId: ${resume.id}, jobId: ${jobId || 'none'}, userId: ${userId}`);
+
+    const whereClause = jobId !== undefined ? {
+      resumeId: resume.id,
+      jobId: jobId || null,
+    } : {
+      resumeId: resume.id,
+    };
+
+    const existingAnalysis = await prisma.resumeAnalysis.findFirst({
+      where: whereClause,
+      orderBy: {
+        updatedAt: 'desc',
+      },
     });
+
+    if (existingAnalysis) {
+      logger.info(`AI: Found analysis ${existingAnalysis.id} for resumeId: ${existingAnalysis.resumeId}, jobId: ${existingAnalysis.jobId || 'none'}`);
+    } else {
+      logger.info(`AI: No existing analysis found for resumeId: ${resume.id}`);
+    }
 
     // If analysis exists and no new target role/industry, return cached result
     if (existingAnalysis && !targetRole && !targetIndustry) {
-      logger.info(`AI: Returning cached analysis for resume ${resumeId}`);
+      logger.info(`AI: Returning cached analysis for resume ${resumeId}${jobId ? ` and job ${jobId}` : ''}`);
 
       const response: AnalyzeResumeResponse = {
+        id: existingAnalysis.id,
+        resumeId: existingAnalysis.resumeId,
+        jobId: existingAnalysis.jobId,
         overallScore: existingAnalysis.overallScore,
         atsScore: existingAnalysis.atsScore,
         readabilityScore: existingAnalysis.readabilityScore,
+        summaryScore: existingAnalysis.summaryScore,
+        experienceScore: existingAnalysis.experienceScore,
+        educationScore: existingAnalysis.educationScore,
+        skillsScore: existingAnalysis.skillsScore,
         strengths: existingAnalysis.strengths,
         weaknesses: existingAnalysis.weaknesses,
         sections: existingAnalysis.sections as any,
         keywordAnalysis: existingAnalysis.keywordAnalysis as any,
+        atsIssues: existingAnalysis.atsIssues,
         suggestions: existingAnalysis.suggestions as any,
+        targetRole: existingAnalysis.targetRole,
+        targetIndustry: existingAnalysis.targetIndustry,
+        createdAt: existingAnalysis.createdAt.toISOString(),
+        updatedAt: existingAnalysis.updatedAt.toISOString(),
       };
 
       return sendSuccess(res, response, 'Resume analysis retrieved successfully (cached)');
@@ -198,8 +271,8 @@ router.post(
     const agent = new ResumeAnalyzerAgent();
     const result = await agent.execute({
       resumeData: resume.parsedData as any,
-      targetRole,
-      targetIndustry,
+      targetRole: targetRole || (job ? `${job.title} at ${job.company}` : undefined),
+      targetIndustry: targetIndustry,
     });
 
     if (!result.success || !result.data) {
@@ -209,62 +282,96 @@ router.post(
     const analysisData = result.data;
 
     // Save or update analysis in database
-    const savedAnalysis = await prisma.resumeAnalysis.upsert({
-      where: { resumeId: resume.id },
-      create: {
-        resumeId: resume.id,
-        overallScore: analysisData.overallScore,
-        atsScore: analysisData.atsScore,
-        readabilityScore: analysisData.readabilityScore,
-        summaryScore: analysisData.sections.summary?.score,
-        experienceScore: analysisData.sections.experience?.score,
-        educationScore: analysisData.sections.education?.score,
-        skillsScore: analysisData.sections.skills?.score,
-        strengths: analysisData.strengths,
-        weaknesses: analysisData.weaknesses,
-        sections: analysisData.sections as any,
-        keywordAnalysis: analysisData.keywordAnalysis as any,
-        suggestions: analysisData.suggestions as any,
-        atsIssues: analysisData.atsIssues,
-        targetRole,
-        targetIndustry,
-        analysisMetadata: {
-          tokenUsage: result.usage,
-          model: result.model,
-        },
+    logger.info(`AI: Saving analysis for resumeId: ${resume.id}, jobId: ${jobId || 'null'}`);
+
+    const analysisDataToSave = {
+      resumeId: resume.id,
+      jobId: jobId || null,
+      overallScore: analysisData.overallScore,
+      atsScore: analysisData.atsScore,
+      readabilityScore: analysisData.readabilityScore,
+      summaryScore: analysisData.sections.summary?.score,
+      experienceScore: analysisData.sections.experience?.score,
+      educationScore: analysisData.sections.education?.score,
+      skillsScore: analysisData.sections.skills?.score,
+      strengths: analysisData.strengths,
+      weaknesses: analysisData.weaknesses,
+      sections: analysisData.sections as any,
+      keywordAnalysis: analysisData.keywordAnalysis as any,
+      suggestions: analysisData.suggestions as any,
+      atsIssues: analysisData.atsIssues,
+      targetRole: targetRole || (job ? `${job.title} at ${job.company}` : null),
+      targetIndustry,
+      analysisMetadata: {
+        tokenUsage: result.usage,
+        model: result.model,
       },
-      update: {
-        overallScore: analysisData.overallScore,
-        atsScore: analysisData.atsScore,
-        readabilityScore: analysisData.readabilityScore,
-        summaryScore: analysisData.sections.summary?.score,
-        experienceScore: analysisData.sections.experience?.score,
-        educationScore: analysisData.sections.education?.score,
-        skillsScore: analysisData.sections.skills?.score,
-        strengths: analysisData.strengths,
-        weaknesses: analysisData.weaknesses,
-        sections: analysisData.sections as any,
-        keywordAnalysis: analysisData.keywordAnalysis as any,
-        suggestions: analysisData.suggestions as any,
-        atsIssues: analysisData.atsIssues,
-        targetRole,
-        targetIndustry,
-        analysisMetadata: {
-          tokenUsage: result.usage,
-          model: result.model,
+    };
+
+    // Prisma doesn't allow null in composite unique key where clauses
+    // So we need to handle jobId presence differently
+    let savedAnalysis;
+
+    if (jobId) {
+      // When jobId is provided, use composite key upsert
+      savedAnalysis = await prisma.resumeAnalysis.upsert({
+        where: {
+          resumeId_jobId: {
+            resumeId: resume.id,
+            jobId: jobId,
+          },
         },
-      },
-    });
+        create: analysisDataToSave,
+        update: {
+          ...analysisDataToSave,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      // When jobId is null, use findFirst + create/update
+      const existing = await prisma.resumeAnalysis.findFirst({
+        where: {
+          resumeId: resume.id,
+          jobId: null,
+        },
+      });
+
+      if (existing) {
+        savedAnalysis = await prisma.resumeAnalysis.update({
+          where: { id: existing.id },
+          data: {
+            ...analysisDataToSave,
+            updatedAt: new Date(),
+          },
+        });
+      } else {
+        savedAnalysis = await prisma.resumeAnalysis.create({
+          data: analysisDataToSave,
+        });
+      }
+    }
 
     const response: AnalyzeResumeResponse = {
+      id: savedAnalysis.id,
+      resumeId: savedAnalysis.resumeId,
+      jobId: savedAnalysis.jobId,
       overallScore: savedAnalysis.overallScore,
       atsScore: savedAnalysis.atsScore,
       readabilityScore: savedAnalysis.readabilityScore,
+      summaryScore: savedAnalysis.summaryScore,
+      experienceScore: savedAnalysis.experienceScore,
+      educationScore: savedAnalysis.educationScore,
+      skillsScore: savedAnalysis.skillsScore,
       strengths: savedAnalysis.strengths,
       weaknesses: savedAnalysis.weaknesses,
       sections: savedAnalysis.sections as any,
       keywordAnalysis: savedAnalysis.keywordAnalysis as any,
+      atsIssues: savedAnalysis.atsIssues,
       suggestions: savedAnalysis.suggestions as any,
+      targetRole: savedAnalysis.targetRole,
+      targetIndustry: savedAnalysis.targetIndustry,
+      createdAt: savedAnalysis.createdAt.toISOString(),
+      updatedAt: savedAnalysis.updatedAt.toISOString(),
     };
 
     logger.info(`AI: Resume analysis completed - Overall Score: ${response.overallScore}`);

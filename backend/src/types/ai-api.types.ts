@@ -40,33 +40,53 @@ export interface TailorResumeResponse {
 
 export interface AnalyzeResumeRequest {
   resumeId: string;
+  jobId?: string;
   targetRole?: string;
   targetIndustry?: string;
 }
 
 export interface AnalyzeResumeResponse {
+  id: string;
+  resumeId: string;
+  jobId: string | null;
   overallScore: number;
+  atsScore: number;
+  readabilityScore: number;
+  summaryScore: number | null;
+  experienceScore: number | null;
+  educationScore: number | null;
+  skillsScore: number | null;
   strengths: string[];
   weaknesses: string[];
-  suggestions: Array<{
-    section: string;
-    priority: 'high' | 'medium' | 'low';
-    suggestion: string;
-    impact: string;
-  }>;
   sections: {
-    summary: { score: number; feedback: string };
-    experience: { score: number; feedback: string };
-    education: { score: number; feedback: string };
-    skills: { score: number; feedback: string };
+    summary: { score: number | null; feedback: string; issues: string[] };
+    experience: { score: number | null; feedback: string; issues: string[] };
+    education: { score: number | null; feedback: string; issues: string[] };
+    skills: { score: number | null; feedback: string; issues: string[] };
   };
   keywordAnalysis: {
-    industryKeywords: string[];
+    targetRole: string;
+    targetIndustry: string;
+    matchedKeywords: string[];
     missingKeywords: string[];
     overusedWords: string[];
   };
-  atsScore: number;
-  readabilityScore: number;
+  atsIssues: string[];
+  suggestions: Array<{
+    section: string;
+    priority: 'high' | 'medium' | 'low';
+    issue: string;
+    suggestion: string;
+    example: {
+      before: string;
+      after: string;
+    };
+    impact: string;
+  }>;
+  targetRole: string | null;
+  targetIndustry: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // =====================================

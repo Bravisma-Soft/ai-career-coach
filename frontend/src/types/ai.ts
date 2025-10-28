@@ -64,6 +64,7 @@ export interface CoverLetter {
 export interface ResumeAnalysis {
   id: string;
   resumeId: string;
+  jobId: string | null;
   overallScore: number;
   atsScore: number;
   readabilityScore: number;
@@ -114,8 +115,8 @@ export interface ResumeAnalysis {
     };
     impact: string;
   }>;
-  targetRole?: string;
-  targetIndustry?: string;
+  targetRole: string | null;
+  targetIndustry: string | null;
   createdAt: string;
   updatedAt: string;
 }

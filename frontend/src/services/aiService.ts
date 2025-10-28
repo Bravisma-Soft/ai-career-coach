@@ -192,16 +192,12 @@ export const aiService = {
 
   /**
    * Check if resume analysis exists (lightweight check without triggering analysis)
+   * This endpoint is NOT rate-limited, safe to call on page load
    */
   checkResumeAnalysis: async (resumeId: string): Promise<boolean> => {
     try {
-      // This will return cached analysis if it exists, or throw error if it doesn't
-      const response = await apiClient.post('/ai/resumes/analyze', {
-        resumeId,
-      });
-
-      // If we get a successful response, analysis exists
-      return response.data.success && !!response.data.data;
+      const response = await apiClient.get(`/ai/resumes/analysis/check/${resumeId}`);
+      return response.data.success && response.data.data.hasAnalysis;
     } catch (error: any) {
       // Any error means analysis doesn't exist or resume not ready
       // Don't throw - just return false
@@ -223,7 +219,15 @@ export const aiService = {
         return null;
       }
 
-      return response.data.data;
+      const analysis = response.data.data;
+
+      // Verify the analysis is for the correct resume
+      if (analysis.resumeId !== resumeId) {
+        console.error(`[aiService] CRITICAL ERROR: Analysis mismatch! Requested: ${resumeId}, Received: ${analysis.resumeId}`);
+        return null;
+      }
+
+      return analysis;
     } catch (error: any) {
       // 404 means resume not found
       if (error.response?.status === 404) {
@@ -232,35 +236,35 @@ export const aiService = {
 
       // 400 might mean resume not parsed yet
       if (error.response?.status === 400) {
-        console.log('Resume not parsed yet');
         return null;
       }
 
       // 429 means rate limited - don't log as error
       if (error.response?.status === 429) {
-        console.log('Rate limited, analysis check skipped');
         return null;
       }
 
-      console.error('Failed to fetch resume analysis:', error);
+      console.error(`[aiService] Failed to fetch resume analysis for ${resumeId}:`, error);
       throw new Error(error.response?.data?.message || 'Failed to fetch resume analysis');
     }
   },
 
   /**
-   * Trigger or re-analyze resume with optional target role/industry
+   * Trigger or re-analyze resume with optional job, target role, or industry
    */
   analyzeResume: async (
     resumeId: string,
+    jobId?: string,
     targetRole?: string,
     targetIndustry?: string
   ): Promise<ResumeAnalysis> => {
     try {
-      const response = await apiClient.post('/ai/resumes/analyze', {
-        resumeId,
-        targetRole: targetRole || null,
-        targetIndustry: targetIndustry || null,
-      });
+      const payload: any = { resumeId };
+      if (jobId) payload.jobId = jobId;
+      if (targetRole) payload.targetRole = targetRole;
+      if (targetIndustry) payload.targetIndustry = targetIndustry;
+
+      const response = await apiClient.post('/ai/resumes/analyze', payload);
 
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to analyze resume');
