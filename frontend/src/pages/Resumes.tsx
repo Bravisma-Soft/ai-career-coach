@@ -47,28 +47,10 @@ export default function Resumes() {
   const { selectedResume, setSelectedResume } = useResumesStore();
   const [resumesWithAnalysis, setResumesWithAnalysis] = useState<Resume[]>([]);
 
-  // Immediately show resumes, then fetch analysis status
+  // Simply show all resumes with hasAnalysis=false - don't check on page load
+  // This avoids rate limit errors from checking multiple resumes at once
   useEffect(() => {
-    // Set resumes immediately so they show up
     setResumesWithAnalysis(resumes.map(r => ({ ...r, hasAnalysis: false })));
-
-    // Then fetch analysis status in the background (non-blocking, no errors shown)
-    if (resumes.length > 0) {
-      const fetchAnalysisStatus = async () => {
-        const resumesWithStatus = await Promise.all(
-          resumes.map(async (resume) => {
-            // Use checkResumeAnalysis which silently returns false on errors
-            const hasAnalysis = await aiService.checkResumeAnalysis(resume.id);
-            return {
-              ...resume,
-              hasAnalysis,
-            };
-          })
-        );
-        setResumesWithAnalysis(resumesWithStatus);
-      };
-      fetchAnalysisStatus();
-    }
   }, [resumes]);
 
   // Compute master resume directly from resumes data to avoid store persistence issues
@@ -247,20 +229,14 @@ export default function Resumes() {
   };
 
   const handleAnalysisComplete = () => {
-    // Refresh analysis status for all resumes
-    const fetchAnalysisStatus = async () => {
-      const resumesWithStatus = await Promise.all(
-        resumes.map(async (resume) => {
-          const hasAnalysis = await aiService.checkResumeAnalysis(resume.id);
-          return {
-            ...resume,
-            hasAnalysis,
-          };
-        })
+    // After analysis completes, mark this specific resume as having analysis
+    if (selectedResume) {
+      setResumesWithAnalysis(prev =>
+        prev.map(r =>
+          r.id === selectedResume.id ? { ...r, hasAnalysis: true } : r
+        )
       );
-      setResumesWithAnalysis(resumesWithStatus);
-    };
-    fetchAnalysisStatus();
+    }
   };
 
   return (

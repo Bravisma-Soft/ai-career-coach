@@ -61,13 +61,10 @@ export function ResumeAnalysisModal({ resume, open, onOpenChange, onAnalysisComp
         setTargetRole(data.targetRole || '');
         setTargetIndustry(data.targetIndustry || '');
       }
-    } catch (error) {
-      console.error('Failed to load analysis:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load resume analysis',
-        variant: 'destructive',
-      });
+    } catch (error: any) {
+      // Silently handle - if analysis doesn't exist, show the "No Analysis Available" state
+      console.log('No analysis available yet');
+      setAnalysis(null);
     } finally {
       setIsLoading(false);
     }
