@@ -47,39 +47,39 @@ export default function Resumes() {
   const { selectedResume, setSelectedResume } = useResumesStore();
   const [resumesWithAnalysis, setResumesWithAnalysis] = useState<Resume[]>([]);
 
+  // Immediately show resumes, then fetch analysis status
+  useEffect(() => {
+    // Set resumes immediately so they show up
+    setResumesWithAnalysis(resumes.map(r => ({ ...r, hasAnalysis: false })));
+
+    // Then fetch analysis status in the background
+    if (resumes.length > 0) {
+      const fetchAnalysisStatus = async () => {
+        const resumesWithStatus = await Promise.all(
+          resumes.map(async (resume) => {
+            try {
+              const analysis = await aiService.getResumeAnalysis(resume.id);
+              return {
+                ...resume,
+                hasAnalysis: !!analysis,
+              };
+            } catch (error) {
+              // If there's an error, assume no analysis
+              return {
+                ...resume,
+                hasAnalysis: false,
+              };
+            }
+          })
+        );
+        setResumesWithAnalysis(resumesWithStatus);
+      };
+      fetchAnalysisStatus();
+    }
+  }, [resumes]);
+
   // Compute master resume directly from resumes data to avoid store persistence issues
   const masterResume = resumesWithAnalysis.find(r => r.isMaster) || null;
-
-  // Fetch analysis status for all resumes
-  useEffect(() => {
-    const fetchAnalysisStatus = async () => {
-      if (resumes.length === 0) {
-        setResumesWithAnalysis([]);
-        return;
-      }
-
-      const resumesWithStatus = await Promise.all(
-        resumes.map(async (resume) => {
-          try {
-            const analysis = await aiService.getResumeAnalysis(resume.id);
-            return {
-              ...resume,
-              hasAnalysis: !!analysis,
-            };
-          } catch (error) {
-            // If there's an error, assume no analysis
-            return {
-              ...resume,
-              hasAnalysis: false,
-            };
-          }
-        })
-      );
-      setResumesWithAnalysis(resumesWithStatus);
-    };
-
-    fetchAnalysisStatus();
-  }, [resumes]);
 
   // Auto-open editor if navigated from TailorResumeModal
   useEffect(() => {
