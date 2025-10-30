@@ -198,6 +198,11 @@ router.post(
       throw new BadRequestError('Resume has not been parsed yet. Please wait for parsing to complete.');
     }
 
+    // Check if parsedData contains an error object (from failed parsing)
+    if (resume.parsedData && typeof resume.parsedData === 'object' && 'error' in resume.parsedData) {
+      throw new BadRequestError(`Resume parsing failed: ${(resume.parsedData as any).error}. Please re-parse the resume.`);
+    }
+
     // If jobId provided, fetch job details
     let job = null;
     if (jobId) {
