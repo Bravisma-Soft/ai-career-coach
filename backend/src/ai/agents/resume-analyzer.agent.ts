@@ -99,14 +99,17 @@ export class ResumeAnalyzerAgent extends BaseAgent<ResumeAnalyzerInput, ResumeAn
 
     if (!parseResult.success || !parseResult.data) {
       logger.error('Failed to parse resume analysis response', {
-        rawResponse: response.data?.substring(0, 1000),
+        rawResponse: response.data?.substring(0, 2000), // Increased from 1000 to see more context
+        fullResponseLength: response.data?.length || 0,
         parseError: parseResult.error,
+        targetRole,
+        targetIndustry,
       });
       return {
         success: false,
         error: parseResult.error || {
           code: 'PARSE_ERROR',
-          message: 'Failed to parse AI response as valid JSON',
+          message: 'Failed to parse AI response as valid JSON. The AI may have returned an invalid format.',
           type: 'ai_error',
           retryable: true,
         },

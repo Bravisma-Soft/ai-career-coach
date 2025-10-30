@@ -273,10 +273,23 @@ router.post(
     }
 
     // Execute AI analysis
+    // Build targetRole from job data, but only if job has valid title and company
+    let effectiveTargetRole = targetRole;
+    if (!effectiveTargetRole && job && job.title && job.company) {
+      effectiveTargetRole = `${job.title} at ${job.company}`;
+    }
+
+    logger.info(`AI: Analyzing with context`, {
+      resumeId: resume.id,
+      jobId: jobId || null,
+      targetRole: effectiveTargetRole || 'Not specified',
+      targetIndustry: targetIndustry || 'Not specified',
+    });
+
     const agent = new ResumeAnalyzerAgent();
     const result = await agent.execute({
       resumeData: resume.parsedData as any,
-      targetRole: targetRole || (job ? `${job.title} at ${job.company}` : undefined),
+      targetRole: effectiveTargetRole,
       targetIndustry: targetIndustry,
     });
 
