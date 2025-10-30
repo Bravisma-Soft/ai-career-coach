@@ -1,7 +1,12 @@
 # Railway Configuration
-# Start commands are set per-service in Railway UI to allow different commands
-# Backend: npm run start:migrate
-# Worker: npm run start:worker
+# Supports multiple services from the same repo using SERVICE_TYPE environment variable
+#
+# Backend Service: Set SERVICE_TYPE=backend (or leave unset, defaults to backend)
+# Worker Service: Set SERVICE_TYPE=worker
+#
+# Example Railway service configuration:
+# - Backend: No SERVICE_TYPE needed (defaults to backend/web server)
+# - Worker: Add environment variable SERVICE_TYPE=worker
 
 [build]
 # Prevent Railway from detecting/building the frontend directory
@@ -10,7 +15,10 @@ builder = "NIXPACKS"
 buildCommand = "npm install && rm -rf node_modules/.prisma && npx prisma generate && npm run build"
 
 [deploy]
-startCommand = "npm run start:migrate"
+# Conditional start command based on SERVICE_TYPE environment variable
+# Default (no SERVICE_TYPE or SERVICE_TYPE=backend): Start web server with migrations
+# SERVICE_TYPE=worker: Start background worker for resume parsing
+startCommand = "if [ \"$SERVICE_TYPE\" = \"worker\" ]; then npm run start:worker; else npm run start:migrate; fi"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
