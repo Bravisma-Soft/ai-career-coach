@@ -35,8 +35,26 @@ export class ResponseParser {
         extractedEnd: jsonMatch.substring(Math.max(0, jsonMatch.length - 200)),
       });
 
-      const parsed = JSON.parse(jsonMatch);
-      return { success: true, data: parsed };
+      // Try to parse as-is first
+      try {
+        const parsed = JSON.parse(jsonMatch);
+        return { success: true, data: parsed };
+      } catch (firstError) {
+        // If parsing fails, try to repair the JSON
+        logger.warn('Initial JSON parse failed, attempting repair', {
+          error: firstError instanceof Error ? firstError.message : String(firstError),
+        });
+
+        const repairedJson = this.attemptJsonRepair(jsonMatch);
+        if (repairedJson) {
+          const parsed = JSON.parse(repairedJson);
+          logger.info('Successfully repaired and parsed JSON');
+          return { success: true, data: parsed };
+        }
+
+        // If repair also fails, throw the original error
+        throw firstError;
+      }
     } catch (error) {
       const jsonMatch = this.extractJSONBlock(response);
       logger.error('JSON parsing failed', {
@@ -64,6 +82,42 @@ export class ResponseParser {
           details: { originalError: error },
         },
       };
+    }
+  }
+
+  /**
+   * Attempt to repair common JSON issues
+   */
+  private static attemptJsonRepair(json: string): string | null {
+    try {
+      let repaired = json;
+
+      // Fix 1: Remove trailing commas before ] or }
+      repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+
+      // Fix 2: Escape unescaped newlines within strings
+      // This is tricky - we need to find actual newlines inside quoted strings
+      // Match strings and replace unescaped newlines
+      repaired = repaired.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
+        return match.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+      });
+
+      // Fix 3: Escape unescaped quotes within strings (very difficult to do perfectly)
+      // Skip this for now as it's too risky
+
+      // Fix 4: Add missing commas between array elements or object properties
+      // This is complex and error-prone, skip for now
+
+      logger.debug('Attempted JSON repair', {
+        originalLength: json.length,
+        repairedLength: repaired.length,
+        changesMade: json !== repaired,
+      });
+
+      return repaired;
+    } catch (error) {
+      logger.warn('JSON repair attempt failed', { error });
+      return null;
     }
   }
 

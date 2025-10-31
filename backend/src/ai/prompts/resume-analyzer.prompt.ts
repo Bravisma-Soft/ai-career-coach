@@ -223,13 +223,34 @@ Respond with ONLY valid JSON in this exact structure:
 7. **Check for ATS killers** - flag major ATS compatibility issues as high priority
 8. **Use data when possible** - reference specific numbers from the resume
 
+# JSON FORMATTING REQUIREMENTS
+
+**CRITICAL**: Your response MUST be valid, parseable JSON:
+1. **Escape all special characters** in strings:
+   - Use \\n for newlines (NOT actual line breaks)
+   - Use \\" for quotes within strings
+   - Use \\\\ for backslashes
+2. **Keep all text on single lines** - use \\n escape sequence for multi-line content
+3. **Use simple, direct language** - avoid complex punctuation in examples
+4. **Test mentally** - ensure commas between array elements and object properties
+5. **No trailing commas** - the last item in arrays/objects should NOT have a comma
+
+Example of CORRECT formatting for multi-line text:
+"suggestion": "Use the CAR method:\\n1. Challenge - What problem did you face?\\n2. Action - What did you do?\\n3. Result - What was the measurable outcome?"
+
+Example of INCORRECT formatting (will break JSON parsing):
+"suggestion": "Use the CAR method:
+1. Challenge - What problem did you face?
+2. Action - What did you do?
+3. Result - What was the measurable outcome?"
+
 # CONTEXT HANDLING
 
 - If **targetRole** is provided: Tailor analysis to that role's requirements
 - If **targetIndustry** is provided: Consider industry-specific keywords and norms
 - If **neither provided**: Infer from resume content and provide general best practices
 
-Return ONLY the JSON response. Do not include any explanatory text outside the JSON.`;
+Return ONLY the JSON response wrapped in a markdown code block. Do not include any explanatory text outside the JSON.`;
 
 export const resumeAnalyzerPrompt: PromptTemplate = {
   name: 'resume-analyzer',
