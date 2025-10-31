@@ -21,14 +21,34 @@ export class ResponseParser {
 
       if (!jsonMatch) {
         // Try to parse the entire response as JSON
+        logger.debug('No JSON block found, attempting to parse entire response', {
+          responseLength: response.length,
+          responseStart: response.substring(0, 100),
+        });
         const parsed = JSON.parse(response);
         return { success: true, data: parsed };
       }
 
+      logger.debug('Extracted JSON block', {
+        extractedLength: jsonMatch.length,
+        extractedStart: jsonMatch.substring(0, 200),
+        extractedEnd: jsonMatch.substring(Math.max(0, jsonMatch.length - 200)),
+      });
+
       const parsed = JSON.parse(jsonMatch);
       return { success: true, data: parsed };
     } catch (error) {
-      logger.error('JSON parsing failed', { error, response: response.substring(0, 200) });
+      const jsonMatch = this.extractJSONBlock(response);
+      logger.error('JSON parsing failed', {
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        responseLength: response.length,
+        responseStart: response.substring(0, 500),
+        responseEnd: response.substring(Math.max(0, response.length - 500)),
+        extractedJsonLength: jsonMatch?.length,
+        extractedJsonStart: jsonMatch?.substring(0, 500),
+        extractedJsonEnd: jsonMatch?.substring(Math.max(0, (jsonMatch?.length || 0) - 500)),
+      });
 
       if (options?.defaultValue !== undefined) {
         return { success: true, data: options.defaultValue };
@@ -38,7 +58,7 @@ export class ResponseParser {
         success: false,
         error: {
           code: 'JSON_PARSE_ERROR',
-          message: 'Failed to parse JSON from response',
+          message: `Failed to parse JSON from response: ${error instanceof Error ? error.message : String(error)}`,
           type: 'parsing_error',
           retryable: false,
           details: { originalError: error },
@@ -51,23 +71,46 @@ export class ResponseParser {
    * Extract JSON block from markdown or mixed content
    */
   static extractJSONBlock(text: string): string | null {
-    // Try to find JSON in code blocks
-    const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-    if (codeBlockMatch) {
-      return codeBlockMatch[1].trim();
+    // Try to find JSON in code blocks with various formats
+    // Handles: ```json\n{...}```, ```json {...}```, ```\n{...}```, ```{...}```
+    const codeBlockPatterns = [
+      /```json\s*([\s\S]*?)```/,  // ```json {...}```
+      /```\s*([\s\S]*?)```/,      // ``` {...}```
+    ];
+
+    for (const pattern of codeBlockPatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        const extracted = match[1].trim();
+        // Verify it looks like JSON (starts with { or [)
+        if (extracted.startsWith('{') || extracted.startsWith('[')) {
+          logger.debug('Extracted JSON from code block', {
+            patternUsed: pattern.toString(),
+            extractedLength: extracted.length,
+          });
+          return extracted;
+        }
+      }
     }
 
-    // Try to find JSON object in text
+    // Try to find JSON object in text (greedy match to get complete JSON)
     const jsonObjectMatch = text.match(/\{[\s\S]*\}/);
     if (jsonObjectMatch) {
+      logger.debug('Extracted JSON object from text (no code block)');
       return jsonObjectMatch[0];
     }
 
     // Try to find JSON array in text
     const jsonArrayMatch = text.match(/\[[\s\S]*\]/);
     if (jsonArrayMatch) {
+      logger.debug('Extracted JSON array from text (no code block)');
       return jsonArrayMatch[0];
     }
+
+    logger.warn('No JSON found in response', {
+      textLength: text.length,
+      textStart: text.substring(0, 200),
+    });
 
     return null;
   }

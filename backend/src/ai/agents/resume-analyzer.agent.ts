@@ -94,6 +94,13 @@ export class ResumeAnalyzerAgent extends BaseAgent<ResumeAnalyzerInput, ResumeAn
       return response as unknown as AgentResponse<ResumeAnalysisResult>;
     }
 
+    // Log response metadata to check for truncation
+    logger.info('Claude API response received', {
+      responseLength: response.data?.length || 0,
+      stopReason: response.stopReason,
+      usage: response.usage,
+    });
+
     // Parse JSON response
     const parseResult = ResponseParser.parseJSON<ResumeAnalysisResult>(response.data!);
 
