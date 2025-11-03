@@ -27,7 +27,7 @@ export class ResumeAnalyzerAgent extends BaseAgent<ResumeAnalyzerInput, ResumeAn
     super({
       systemPrompt: RESUME_ANALYZER_SYSTEM_PROMPT,
       temperature: 0.5, // Balanced temperature for creative yet consistent analysis
-      maxTokens: 4096,
+      maxTokens: 8000, // Increased from 4096 to prevent JSON truncation
     });
 
     logger.info('ResumeAnalyzerAgent initialized');

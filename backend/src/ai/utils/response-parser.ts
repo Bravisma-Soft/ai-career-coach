@@ -1,5 +1,6 @@
 import { logger } from '@/config/logger';
 import { AgentError } from '@/types/ai.types';
+import { jsonrepair } from 'jsonrepair';
 
 /**
  * Response Parser Utility
@@ -40,20 +41,37 @@ export class ResponseParser {
         const parsed = JSON.parse(jsonMatch);
         return { success: true, data: parsed };
       } catch (firstError) {
-        // If parsing fails, try to repair the JSON
+        // If parsing fails, try to repair the JSON using jsonrepair library
         logger.warn('Initial JSON parse failed, attempting repair', {
           error: firstError instanceof Error ? firstError.message : String(firstError),
+          jsonLength: jsonMatch.length,
         });
 
-        const repairedJson = this.attemptJsonRepair(jsonMatch);
-        if (repairedJson) {
+        try {
+          const repairedJson = jsonrepair(jsonMatch);
           const parsed = JSON.parse(repairedJson);
-          logger.info('Successfully repaired and parsed JSON');
+          logger.info('Successfully repaired and parsed JSON with jsonrepair library');
           return { success: true, data: parsed };
-        }
+        } catch (repairError) {
+          logger.error('jsonrepair library failed, trying manual repair', {
+            repairError: repairError instanceof Error ? repairError.message : String(repairError),
+          });
 
-        // If repair also fails, throw the original error
-        throw firstError;
+          // Fallback to manual repair
+          const manuallyRepairedJson = this.attemptManualJsonRepair(jsonMatch);
+          if (manuallyRepairedJson) {
+            try {
+              const parsed = JSON.parse(manuallyRepairedJson);
+              logger.info('Successfully manually repaired and parsed JSON');
+              return { success: true, data: parsed };
+            } catch (manualError) {
+              logger.error('Manual repair also failed');
+            }
+          }
+
+          // If all repair attempts fail, throw the original error
+          throw firstError;
+        }
       }
     } catch (error) {
       const jsonMatch = this.extractJSONBlock(response);
@@ -86,9 +104,9 @@ export class ResponseParser {
   }
 
   /**
-   * Attempt to repair common JSON issues
+   * Attempt to manually repair common JSON issues (fallback method)
    */
-  private static attemptJsonRepair(json: string): string | null {
+  private static attemptManualJsonRepair(json: string): string | null {
     try {
       let repaired = json;
 
