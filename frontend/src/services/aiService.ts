@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api';
-import { TailoredResume, CoverLetter, ResumeAnalysis } from '@/types/ai';
+import { TailoredResume, CoverLetter, ResumeAnalysis, JobAnalysis } from '@/types/ai';
 import { Resume } from '@/types/resume';
 import { Job } from '@/types/job';
 
@@ -282,6 +282,62 @@ export const aiService = {
         throw new Error('You do not have permission to access this resource.');
       } else {
         throw new Error(`Resume analysis failed: ${errorMessage}`);
+      }
+    }
+  },
+
+  /**
+   * Get existing job analysis (without creating new one)
+   */
+  getJobAnalysis: async (jobId: string): Promise<JobAnalysis | null> => {
+    try {
+      const response = await apiClient.get(`/ai/jobs/${jobId}/analysis`);
+
+      if (!response.data.success) {
+        return null;
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      // 404 means no analysis exists yet
+      if (error.response?.status === 404) {
+        return null;
+      }
+
+      console.error(`[aiService] Failed to fetch job analysis for ${jobId}:`, error);
+      throw new Error(error.response?.data?.message || 'Failed to fetch job analysis');
+    }
+  },
+
+  /**
+   * Analyze job posting with optional resume matching
+   */
+  analyzeJob: async (
+    jobId: string,
+    resumeId?: string
+  ): Promise<JobAnalysis> => {
+    try {
+      const payload: any = { jobId };
+      if (resumeId) payload.resumeId = resumeId;
+
+      const response = await apiClient.post('/ai/jobs/analyze', payload);
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to analyze job');
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
+
+      if (error.response?.status === 404) {
+        throw new Error('Job or resume not found. Please try again.');
+      } else if (error.response?.status === 400) {
+        throw new Error(errorMessage);
+      } else if (error.response?.status === 403) {
+        throw new Error('You do not have permission to access this resource.');
+      } else {
+        throw new Error(`Job analysis failed: ${errorMessage}`);
       }
     }
   }

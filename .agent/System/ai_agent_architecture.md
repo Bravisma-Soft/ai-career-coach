@@ -19,6 +19,23 @@ The AI Career Coach platform leverages **Anthropic's Claude AI** through a modul
 - **Cost tracking** - Monitor token usage and API costs
 - **Streaming support** - Real-time responses for better UX
 
+### Implementation Status (Nov 4, 2025)
+
+**Implemented Agents** (7/11):
+- ✅ ResumeParserAgent - Extract structured data from resumes
+- ✅ ResumeTailorAgent - Optimize resumes for specific jobs
+- ✅ CoverLetterAgent - Generate personalized cover letters
+- ✅ MockInterviewAgent - Conduct AI mock interviews
+- ✅ JobParserAgent - Parse job postings from URLs
+- ✅ ResumeAnalyzerAgent - Analyze resume quality and ATS compatibility
+- ✅ JobAnalyzerAgent - Analyze job postings and match against resumes ⭐ NEW
+
+**Planned Agents** (4/11):
+- ❌ InterviewPrepAgent - Generate interview preparation materials
+- ❌ JobMatchAgent - Calculate resume-job fit scores
+- ❌ CompanyResearchAgent - Research companies
+- ❌ InterviewerResearchAgent - Research interviewers
+
 ---
 
 ## Architecture Diagram
@@ -322,9 +339,16 @@ if (result.success) {
 
 ---
 
-#### TailorResumeAgent (Planned)
+#### ResumeTailorAgent ✅ IMPLEMENTED
 
+**File**: `backend/src/ai/agents/resume-tailor.agent.ts`
+**Status**: Production-ready
 **Purpose**: Optimize resume content for specific job descriptions.
+
+**Configuration**:
+- Temperature: 0.5 (balanced creativity/accuracy)
+- Max Tokens: 8000 (large for complete resume)
+- Model: Claude Sonnet 4.5
 
 ```typescript
 class TailorResumeAgent extends BaseAgent<TailorInput, TailorOutput> {
@@ -365,9 +389,16 @@ interface TailorOutput {
 
 ---
 
-#### CoverLetterAgent (Planned)
+#### CoverLetterAgent ✅ IMPLEMENTED
 
+**File**: `backend/src/ai/agents/cover-letter.agent.ts`
+**Status**: Production-ready
 **Purpose**: Generate personalized cover letters.
+
+**Configuration**:
+- Temperature: 0.7 (more creative)
+- Max Tokens: 2048
+- Model: Claude Sonnet 4.5
 
 ```typescript
 class CoverLetterAgent extends BaseAgent<CoverLetterInput, CoverLetterOutput> {
@@ -402,9 +433,16 @@ interface CoverLetterOutput {
 
 ---
 
-#### MockInterviewAgent (Planned)
+#### MockInterviewAgent ✅ IMPLEMENTED
 
-**Purpose**: Conduct AI-powered mock interviews.
+**File**: `backend/src/ai/agents/mock-interview.agent.ts`
+**Status**: Production-ready
+**Purpose**: Conduct AI-powered mock interviews with question generation, answer evaluation, and comprehensive feedback.
+
+**Configuration**:
+- Temperature: 0.7 (questions), 0.3 (evaluation), 0.5 (analysis)
+- Max Tokens: 4096
+- Model: Claude Sonnet 4.5
 
 ```typescript
 class MockInterviewAgent extends BaseAgent<InterviewInput, InterviewOutput> {
@@ -487,6 +525,282 @@ interface JobMatchOutput {
   competitiveness: 'low' | 'medium' | 'high';
 }
 ```
+
+---
+
+#### JobParserAgent ✅ IMPLEMENTED
+
+**File**: `backend/src/ai/agents/job-parser.agent.ts`
+**Status**: Production-ready
+**Purpose**: Parse job postings from URLs using web scraping and AI extraction.
+
+**Configuration**:
+- Temperature: 0.3 (consistent extraction)
+- Max Tokens: 4096
+- Model: Claude Sonnet 4.5
+
+**Features**:
+- Two-tier fetching strategy:
+  1. Axios (fast, for static content)
+  2. Puppeteer (JavaScript-rendered pages)
+- Cheerio for HTML parsing
+- Smart content extraction with multiple selector strategies
+- Handles LinkedIn, Workday, and various job boards
+
+```typescript
+class JobParserAgent extends BaseAgent<JobParserInput, JobParserOutput> {
+  async execute(
+    input: JobParserInput,
+    options?: AgentExecutionOptions
+  ): Promise<AgentResponse<JobParserOutput>>
+}
+```
+
+**Input**:
+```typescript
+interface JobParserInput {
+  url: string;                    // Job posting URL
+  useHeadlessBrowser?: boolean;   // Force Puppeteer for JS-heavy sites
+}
+```
+
+**Output**:
+```typescript
+interface JobParserOutput {
+  company: string;
+  title: string;
+  description: string;           // Full job description
+  location?: string;
+  salary?: string;
+  jobType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP';
+  workMode?: 'REMOTE' | 'HYBRID' | 'ONSITE';
+  requiredSkills?: string[];
+  preferredSkills?: string[];
+  benefits?: string[];
+}
+```
+
+**Cost Tracking**:
+- Typical usage: 2,000-4,000 tokens per job posting
+- Estimated cost: $0.01-0.02 per job parsing
+
+---
+
+#### ResumeAnalyzerAgent ✅ IMPLEMENTED
+
+**File**: `backend/src/ai/agents/resume-analyzer.agent.ts`
+**Status**: Production-ready (Oct 28, 2025)
+**Purpose**: Analyze resume quality, ATS compatibility, and provide actionable feedback with detailed scoring.
+
+**Configuration**:
+- Temperature: 0.5 (balanced)
+- Max Tokens: 4096
+- Model: Claude Sonnet 4.5
+
+**Features**:
+- Comprehensive quality scoring (0-100 scale)
+- ATS compatibility analysis
+- Section-by-section breakdown
+- Keyword analysis (matched, missing, overused)
+- Prioritized improvement suggestions
+- 19+ validation checks
+
+```typescript
+class ResumeAnalyzerAgent extends BaseAgent<ResumeAnalyzerInput, ResumeAnalysisResult> {
+  async execute(
+    input: ResumeAnalyzerInput,
+    options?: AgentExecutionOptions
+  ): Promise<AgentResponse<ResumeAnalysisResult>>
+}
+```
+
+**Input**:
+```typescript
+interface ResumeAnalyzerInput {
+  resumeData: ParsedResumeData;
+  targetRole?: string;           // Optional: tailor analysis to specific role
+  targetIndustry?: string;       // Optional: industry-specific insights
+}
+```
+
+**Output**:
+```typescript
+interface ResumeAnalysisResult {
+  overallScore: number;          // 0-100
+  atsScore: number;              // 0-100
+  readabilityScore: number;      // 0-100
+
+  strengths: string[];           // 3-5 specific strengths
+  weaknesses: string[];          // 3-5 specific weaknesses
+
+  sections: {
+    summary: {
+      score: number | null;      // 0-100 or null if section not present
+      feedback: string;
+      issues: string[];
+    };
+    experience: {
+      score: number | null;
+      feedback: string;
+      issues: string[];
+    };
+    education: {
+      score: number | null;
+      feedback: string;
+      issues: string[];
+    };
+    skills: {
+      score: number | null;
+      feedback: string;
+      issues: string[];
+    };
+  };
+
+  keywordAnalysis: {
+    targetRole: string;
+    targetIndustry: string;
+    matchedKeywords: string[];
+    missingKeywords: string[];
+    overusedWords: string[];
+  };
+
+  atsIssues: string[];           // Specific ATS compatibility problems
+
+  suggestions: Array<{
+    section: string;
+    priority: 'high' | 'medium' | 'low';
+    issue: string;
+    suggestion: string;
+    example: {
+      before: string;
+      after: string;
+    };
+    impact: string;              // Why this improvement matters
+  }>;
+}
+```
+
+**Validation**:
+- 19+ structure validation checks
+- Score range validation (0-100)
+- Required field verification
+- Section structure validation
+- Suggestions format validation
+
+---
+
+#### JobAnalyzerAgent ✅ IMPLEMENTED
+
+**File**: `backend/src/ai/agents/job-analyzer.agent.ts`
+**Status**: Production-ready (Nov 4, 2025)
+**Purpose**: Analyze job postings, identify requirements and red flags, and match against candidate resumes with actionable insights.
+
+**Configuration**:
+- Temperature: 0.6 (balanced for analytical yet insightful analysis)
+- Max Tokens: 6000
+- Model: Claude Sonnet 4.5
+
+**Features**:
+- Role level analysis (entry/mid/senior/lead/executive)
+- Required vs preferred skills extraction
+- Red flag detection (unrealistic expectations, toxic indicators)
+- Positive indicator identification
+- Optional resume matching with gap analysis
+- Salary insights and market comparison
+- Application strategy recommendations
+- Smart caching (single analysis per job)
+
+```typescript
+class JobAnalyzerAgent extends BaseAgent<JobAnalyzerInput, JobAnalysisResult> {
+  async execute(
+    input: JobAnalyzerInput,
+    options?: AgentExecutionOptions
+  ): Promise<AgentResponse<JobAnalysisResult>>
+}
+```
+
+**Input**:
+```typescript
+interface JobAnalyzerInput {
+  jobTitle: string;
+  companyName: string;
+  jobDescription: string;
+  location?: string;
+  salaryRange?: string;
+  jobType?: string;
+  workMode?: string;
+  resumeData?: ParsedResumeData;  // Optional: for match analysis
+}
+```
+
+**Output**:
+```typescript
+interface JobAnalysisResult {
+  analysis: {
+    roleLevel: 'entry' | 'mid' | 'senior' | 'lead' | 'executive';
+    keyResponsibilities: string[];    // 3-8 core responsibilities
+    requiredSkills: string[];          // Must-have technical & non-technical
+    preferredSkills: string[];         // Nice-to-have qualifications
+    redFlags: string[];                // Warning signs in posting
+    highlights: string[];              // Positive indicators
+  };
+
+  matchAnalysis?: {                    // Only if resume provided
+    overallMatch: number;              // 0-100 match score
+    skillsMatch: number;               // 0-100 skills alignment
+    experienceMatch: number;           // 0-100 experience fit
+    matchReasons: string[];            // Why candidate is a good fit
+    gaps: string[];                    // Skills/experience gaps
+    recommendations: string[];         // Actionable improvement suggestions
+  };
+
+  salaryInsights: {
+    estimatedRange: string;            // e.g., "$120,000 - $160,000"
+    marketComparison: string;          // Above/at/below market
+    factors: string[];                 // Factors influencing salary
+  };
+
+  applicationTips: string[];           // 4-7 actionable application tips
+}
+```
+
+**Red Flag Detection**:
+The agent identifies concerning patterns including:
+- Unrealistic experience requirements (e.g., 10 years in 5-year-old tech)
+- Excessive responsibilities for level/salary
+- Vague job descriptions
+- Unprofessional language ("Rockstar", "Ninja", "Guru")
+- Problematic culture indicators ("We're a family", "Unlimited PTO")
+- On-call expectations without compensation
+- Copy-paste job descriptions with unrelated skill sets
+
+**Database Integration**:
+- Analysis cached in `JobAnalysis` table
+- Single analysis per job (latest replaces previous)
+- Composite unique key: (jobId, resumeId)
+- Auto-deletes old analyses on new analysis creation
+- Updates job.matchScore when resume provided
+
+**API Endpoints**:
+- `GET /api/ai/jobs/:jobId/analysis` - Retrieve existing analysis (no AI call)
+- `POST /api/ai/jobs/analyze` - Create new analysis (calls Claude)
+
+**Validation**:
+- Job description minimum length (50 chars)
+- Role level validation
+- Score range validation (0-100)
+- Required fields verification
+- Match analysis conditional validation
+
+**Cost Tracking**:
+- Typical usage: 5,000-8,000 tokens per analysis
+- Estimated cost: $0.02-0.04 per analysis
+
+**Database Integration**:
+- Results stored in `ResumeAnalysis` table
+- Composite unique key: (resumeId, jobId)
+- Supports job-specific analysis
+- Caching for repeat analyses
 
 ---
 
@@ -701,14 +1015,30 @@ if (!validation.valid) {
    - Request structured output
 
 3. **Caching**
-   - Cache parsed resumes
-   - Cache job descriptions
+   - Cache parsed resumes (ResumeAnalysis table)
+   - Cache job analyses (JobAnalysis table)
+   - Single analysis per job (auto-delete old on new)
    - Cache AI analyses
 
 4. **Rate Limiting**
    - Prevent abuse
    - Limit concurrent requests
    - Queue background jobs
+
+### Typical Costs Per Operation
+
+| Operation | Tokens | Cost (USD) | Model |
+|-----------|--------|------------|-------|
+| Resume parsing | 3,000-5,000 | $0.01-0.02 | Sonnet 4.5 |
+| Resume tailoring | 8,000-12,000 | $0.03-0.06 | Sonnet 4.5 |
+| Cover letter | 4,000-6,000 | $0.01-0.03 | Sonnet 4.5 |
+| Mock interview questions | 3,000-5,000 | $0.01-0.02 | Sonnet 4.5 |
+| Answer evaluation | 2,000-4,000 | $0.01 | Sonnet 4.5 |
+| Session analysis | 6,000-10,000 | $0.02-0.04 | Sonnet 4.5 |
+| Resume analysis | 5,000-8,000 | $0.02-0.04 | Sonnet 4.5 |
+| Job analysis | 5,000-8,000 | $0.02-0.04 | Sonnet 4.5 |
+
+**Note**: Costs based on Sonnet 4.5 pricing. Actual costs may vary based on content length and complexity.
 
 ---
 

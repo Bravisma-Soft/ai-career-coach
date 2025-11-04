@@ -31,6 +31,7 @@ import { logger } from '@/config/logger';
 import { NotFoundError, BadRequestError } from '@/utils/ApiError';
 import { coverLetterAgent } from '@/ai/agents/cover-letter.agent';
 import { ResumeAnalyzerAgent } from '@/ai/agents/resume-analyzer.agent';
+import { JobAnalyzerAgent } from '@/ai/agents/job-analyzer.agent';
 
 const router = Router();
 
@@ -635,6 +636,76 @@ router.post(
 );
 
 /**
+ * @route   GET /api/ai/jobs/:jobId/analysis
+ * @desc    Get existing job analysis (without creating new one)
+ * @access  Private
+ */
+router.get(
+  '/jobs/:jobId/analysis',
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.userId!;
+    const { jobId } = req.params;
+
+    logger.info(`AI: Fetching existing job analysis for ${jobId} - User: ${userId}`);
+
+    // Check if job exists and belongs to user
+    const job = await prisma.job.findFirst({
+      where: {
+        id: jobId,
+        userId: userId,
+      },
+    });
+
+    if (!job) {
+      throw new NotFoundError('Job not found');
+    }
+
+    // Get the most recent analysis for this job
+    const existingAnalysis = await prisma.jobAnalysis.findFirst({
+      where: {
+        jobId: jobId,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    if (!existingAnalysis) {
+      throw new NotFoundError('No analysis found for this job');
+    }
+
+    const response: AnalyzeJobResponse = {
+      analysis: {
+        roleLevel: existingAnalysis.roleLevel as any,
+        keyResponsibilities: existingAnalysis.keyResponsibilities as string[],
+        requiredSkills: existingAnalysis.requiredSkills,
+        preferredSkills: existingAnalysis.preferredSkills,
+        redFlags: existingAnalysis.redFlags,
+        highlights: existingAnalysis.highlights,
+      },
+      matchAnalysis: existingAnalysis.overallMatch !== null ? {
+        overallMatch: existingAnalysis.overallMatch!,
+        skillsMatch: existingAnalysis.skillsMatch!,
+        experienceMatch: existingAnalysis.experienceMatch!,
+        matchReasons: existingAnalysis.matchReasons,
+        gaps: existingAnalysis.gaps,
+        recommendations: existingAnalysis.recommendations as string[],
+      } : undefined,
+      salaryInsights: {
+        estimatedRange: existingAnalysis.estimatedSalaryMin && existingAnalysis.estimatedSalaryMax
+          ? `$${existingAnalysis.estimatedSalaryMin.toLocaleString()} - $${existingAnalysis.estimatedSalaryMax.toLocaleString()}`
+          : 'Not disclosed',
+        marketComparison: existingAnalysis.marketComparison,
+        factors: existingAnalysis.salaryFactors,
+      },
+      applicationTips: existingAnalysis.applicationTips as string[],
+    };
+
+    return sendSuccess(res, response, 'Job analysis retrieved successfully');
+  })
+);
+
+/**
  * @route   POST /api/ai/jobs/analyze
  * @desc    Analyze job description with AI
  * @access  Private
@@ -646,60 +717,199 @@ router.post(
     const userId = req.userId!;
     const { jobId, resumeId } = req.body;
 
-    logger.info(`AI: Analyzing job ${jobId} - User: ${userId}`);
+    logger.info(`AI: Analyzing job ${jobId} - User: ${userId}${resumeId ? ` with resume ${resumeId}` : ''}`);
 
-    // TODO: Implement JobAnalyzerAgent
-    // const agent = new JobAnalyzerAgent();
-    // const result = await agent.execute({ jobId, resumeId, userId });
+    // Fetch job from database
+    const job = await prisma.job.findFirst({
+      where: {
+        id: jobId,
+        userId: userId,
+      },
+    });
 
-    // Temporary placeholder response
+    if (!job) {
+      throw new NotFoundError('Job not found');
+    }
+
+    // Validate job has description
+    if (!job.jobDescription || job.jobDescription.trim().length < 50) {
+      throw new BadRequestError('Job description is too short. Please add a detailed job description (at least 50 characters).');
+    }
+
+    // Fetch resume if provided
+    let resume = null;
+    let resumeData = undefined;
+    if (resumeId) {
+      resume = await prisma.resume.findFirst({
+        where: {
+          id: resumeId,
+          userId: userId,
+          isActive: true,
+        },
+      });
+
+      if (!resume) {
+        throw new NotFoundError('Resume not found');
+      }
+
+      // Ensure resume has been parsed
+      if (!resume.parsedData) {
+        throw new BadRequestError('Resume must be parsed before job analysis. Please wait for parsing to complete.');
+      }
+
+      // Check if parsedData contains an error object (from failed parsing)
+      if (resume.parsedData && typeof resume.parsedData === 'object' && 'error' in resume.parsedData) {
+        throw new BadRequestError(`Resume parsing failed: ${(resume.parsedData as any).error}. Please re-parse the resume.`);
+      }
+
+      resumeData = resume.parsedData as any;
+    }
+
+    // Check if analysis already exists for this job (get the most recent one)
+    const existingAnalysis = await prisma.jobAnalysis.findFirst({
+      where: {
+        jobId: jobId,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    // If we have an existing analysis and it matches the requested resume (or both are null), return cached
+    const isCacheValid = existingAnalysis && (
+      (existingAnalysis.resumeId === resumeId) ||
+      (existingAnalysis.resumeId === null && resumeId === undefined) ||
+      (!resumeId && existingAnalysis.resumeId === null)
+    );
+
+    if (isCacheValid && existingAnalysis) {
+      logger.info(`AI: Found cached job analysis ${existingAnalysis.id} for job ${jobId}${resumeId ? ` and resume ${resumeId}` : ''}`);
+
+      const response: AnalyzeJobResponse = {
+        analysis: {
+          roleLevel: existingAnalysis.roleLevel as any,
+          keyResponsibilities: existingAnalysis.keyResponsibilities as string[],
+          requiredSkills: existingAnalysis.requiredSkills,
+          preferredSkills: existingAnalysis.preferredSkills,
+          redFlags: existingAnalysis.redFlags,
+          highlights: existingAnalysis.highlights,
+        },
+        matchAnalysis: existingAnalysis.overallMatch !== null ? {
+          overallMatch: existingAnalysis.overallMatch!,
+          skillsMatch: existingAnalysis.skillsMatch!,
+          experienceMatch: existingAnalysis.experienceMatch!,
+          matchReasons: existingAnalysis.matchReasons,
+          gaps: existingAnalysis.gaps,
+          recommendations: existingAnalysis.recommendations as string[],
+        } : undefined,
+        salaryInsights: {
+          estimatedRange: existingAnalysis.estimatedSalaryMin && existingAnalysis.estimatedSalaryMax
+            ? `$${existingAnalysis.estimatedSalaryMin.toLocaleString()} - $${existingAnalysis.estimatedSalaryMax.toLocaleString()}`
+            : 'Not disclosed',
+          marketComparison: existingAnalysis.marketComparison,
+          factors: existingAnalysis.salaryFactors,
+        },
+        applicationTips: existingAnalysis.applicationTips as string[],
+      };
+
+      return sendSuccess(res, response, 'Job analysis retrieved successfully (cached)');
+    }
+
+    // Execute AI analysis
+    const agent = new JobAnalyzerAgent();
+    const result = await agent.execute({
+      jobTitle: job.title,
+      companyName: job.company,
+      jobDescription: job.jobDescription,
+      location: job.location || undefined,
+      salaryRange: job.salaryMin && job.salaryMax
+        ? `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()} ${job.salaryCurrency || 'USD'}`
+        : undefined,
+      jobType: job.jobType || undefined,
+      workMode: job.workMode || undefined,
+      resumeData: resumeData,
+    });
+
+    if (!result.success || !result.data) {
+      logger.error('Job analysis failed', {
+        error: result.error,
+        jobId,
+        resumeId,
+      });
+      throw new Error(result.error?.message || 'Failed to analyze job');
+    }
+
+    const analysisData = result.data;
+
+    // Parse estimated salary range
+    let estimatedSalaryMin: number | undefined;
+    let estimatedSalaryMax: number | undefined;
+    if (analysisData.salaryInsights.estimatedRange) {
+      const salaryMatch = analysisData.salaryInsights.estimatedRange.match(/\$?([\d,]+)\s*-\s*\$?([\d,]+)/);
+      if (salaryMatch) {
+        estimatedSalaryMin = parseInt(salaryMatch[1].replace(/,/g, ''));
+        estimatedSalaryMax = parseInt(salaryMatch[2].replace(/,/g, ''));
+      }
+    }
+
+    // Delete all previous analyses for this job to keep only the latest
+    await prisma.jobAnalysis.deleteMany({
+      where: {
+        jobId: jobId,
+      },
+    });
+
+    logger.info(`AI: Deleted previous analyses for job ${jobId}, creating new analysis`);
+
+    // Save analysis to database
+    const savedAnalysis = await prisma.jobAnalysis.create({
+      data: {
+        jobId: jobId,
+        resumeId: resumeId || null,
+        roleLevel: analysisData.analysis.roleLevel,
+        keyResponsibilities: analysisData.analysis.keyResponsibilities,
+        requiredSkills: analysisData.analysis.requiredSkills,
+        preferredSkills: analysisData.analysis.preferredSkills,
+        redFlags: analysisData.analysis.redFlags,
+        highlights: analysisData.analysis.highlights,
+        overallMatch: analysisData.matchAnalysis?.overallMatch || null,
+        skillsMatch: analysisData.matchAnalysis?.skillsMatch || null,
+        experienceMatch: analysisData.matchAnalysis?.experienceMatch || null,
+        matchReasons: analysisData.matchAnalysis?.matchReasons || [],
+        gaps: analysisData.matchAnalysis?.gaps || [],
+        recommendations: analysisData.matchAnalysis?.recommendations || [],
+        estimatedSalaryMin: estimatedSalaryMin || null,
+        estimatedSalaryMax: estimatedSalaryMax || null,
+        salaryCurrency: job.salaryCurrency || 'USD',
+        marketComparison: analysisData.salaryInsights.marketComparison,
+        salaryFactors: analysisData.salaryInsights.factors,
+        applicationTips: analysisData.applicationTips,
+        analysisMetadata: {
+          model: result.model,
+          usage: result.usage,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
+
+    // Update job's matchScore if resume was provided
+    if (analysisData.matchAnalysis?.overallMatch) {
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { matchScore: analysisData.matchAnalysis.overallMatch },
+      });
+    }
+
     const response: AnalyzeJobResponse = {
-      analysis: {
-        roleLevel: 'senior',
-        keyResponsibilities: [
-          'Lead technical architecture decisions',
-          'Mentor junior developers',
-          'Drive technical initiatives',
-        ],
-        requiredSkills: ['React', 'TypeScript', 'System Design'],
-        preferredSkills: ['GraphQL', 'AWS', 'Docker'],
-        redFlags: [],
-        highlights: [
-          'Strong company culture',
-          'Competitive compensation',
-          'Growth opportunities',
-        ],
-      },
-      matchAnalysis: {
-        overallMatch: 88,
-        skillsMatch: 85,
-        experienceMatch: 92,
-        matchReasons: [
-          'Your React experience exceeds requirements',
-          'Leadership background is a strong match',
-        ],
-        gaps: ['GraphQL experience would strengthen application'],
-        recommendations: [
-          'Highlight your system design experience',
-          'Emphasize leadership and mentoring',
-          'Consider taking a GraphQL course',
-        ],
-      },
-      salaryInsights: {
-        estimatedRange: '$150,000 - $200,000',
-        marketComparison: 'Above market average for this role',
-        factors: ['Senior level', 'High-cost area', 'Strong company'],
-      },
-      applicationTips: [
-        'Apply soon - role posted 3 days ago',
-        'Tailor resume to emphasize architecture experience',
-        'Prepare for system design questions',
-      ],
+      analysis: analysisData.analysis,
+      matchAnalysis: analysisData.matchAnalysis,
+      salaryInsights: analysisData.salaryInsights,
+      applicationTips: analysisData.applicationTips,
     };
 
-    logger.info(`AI: Job analysis completed - Match: ${response.matchAnalysis?.overallMatch}%`);
+    logger.info(`AI: Job analysis completed - Match: ${analysisData.matchAnalysis?.overallMatch || 'N/A'}%`);
 
-    sendSuccess(res, response, 'Job analyzed successfully');
+    return sendSuccess(res, response, 'Job analyzed successfully');
   })
 );
 

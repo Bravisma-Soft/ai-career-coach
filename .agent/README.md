@@ -2,15 +2,16 @@
 
 Welcome to the AI Career Coach documentation hub. This directory contains comprehensive technical documentation to help engineers understand and contribute to the project.
 
-**Last Updated:** October 28, 2025
+**Last Updated:** November 4, 2025
 **Project Version:** 1.0 MVP
-**Project Status:** 92% Complete (Production Deployed on Railway)
+**Project Status:** 93% Complete (Production Deployed on Railway + Vercel)
 
-**Latest Update (Oct 28, 2025):**
-- ✅ Resume Analyzer Agent fully implemented
-- ✅ Performance optimization (eliminated 5+ sequential API calls on page load)
-- ✅ Fixed Prisma composite key handling with null values
-- ✅ 6/11 AI agents now complete (was 5/11)
+**Latest Update (Nov 4, 2025):**
+- ✅ Documentation fully updated with Job Analyzer Agent
+- ✅ Added JobAnalysis database model documentation
+- ✅ Updated AI agent architecture with 7/11 agents complete
+- ✅ Smart caching strategy (single analysis per job)
+- ✅ 7/11 AI agents complete (ResumeParser, Tailor, CoverLetter, MockInterview, JobParser, ResumeAnalyzer, JobAnalyzer)
 
 ---
 
@@ -98,16 +99,16 @@ These documents are actively maintained and reflect the current state of the sys
 ---
 
 ### [Database Schema](./System/database_schema.md) ✅
-**Last Updated:** October 13, 2025
+**Last Updated:** November 4, 2025
 
 **Complete database design and entity relationships covering:**
 - Entity Relationship Diagram
 - All database enums (11 enums)
-- Detailed table schemas (15 models)
+- Detailed table schemas (18 models) ⬆️
   - User management (User, Session, UserProfile)
   - Career data (Experience, Education, Skill, Certification)
-  - Resume management (Resume)
-  - Job tracking (Job, StatusChange, Application, Interview)
+  - Resume management (Resume, ResumeAnalysis)
+  - Job tracking (Job, JobAnalysis ⭐ NEW, StatusChange, Application, Interview)
   - AI features (MockInterview, Document)
   - Career coaching (CareerGoal, Assessment, Conversation, Message)
 - Common query patterns
@@ -118,11 +119,14 @@ These documents are actively maintained and reflect the current state of the sys
 **Database Models:**
 - User & Authentication: 2 models
 - User Profile & Career Data: 5 models
-- Resume Management: 1 model
-- Job Tracking: 2 models
+- Resume Management: 2 models (Resume, ResumeAnalysis)
+- Job Tracking: 3 models ⬆️ (Job, JobAnalysis ⭐ NEW, StatusChange)
 - Application & Interview: 3 models
 - AI & Documents: 2 models
 - Career Coaching: 4 models (database ready, not implemented)
+
+**New Model (Nov 4, 2025):**
+- **JobAnalysis** - Stores AI-generated job posting analysis with role level, skills, red flags, optional resume matching, salary insights, and application tips. Smart caching with single analysis per job.
 
 **When to read:**
 - Implementing new features that touch database
@@ -168,24 +172,25 @@ These documents are actively maintained and reflect the current state of the sys
 ---
 
 ### [AI Agent Architecture](./System/ai_agent_architecture.md) ✅
-**Last Updated:** October 28, 2025
+**Last Updated:** November 4, 2025
 
 **AI integration and agent-based design covering:**
 - Claude AI integration overview
 - ClaudeClientManager (singleton)
 - BaseAgent abstract class
-- Agent implementations:
+- **Implemented Agents** (7/11):
   - ✅ ResumeParserAgent (temp: 0.3, tokens: 4096)
   - ✅ ResumeTailorAgent (temp: 0.5, tokens: 8000)
   - ✅ CoverLetterAgent (temp: 0.7, tokens: 2048)
   - ✅ MockInterviewAgent (temp: 0.7, tokens: 4096)
   - ✅ JobParserAgent (Cheerio + Puppeteer + Claude)
-  - ✅ ResumeAnalyzerAgent (temp: 0.5, tokens: 4096) ⭐ NEW - Oct 28
-  - ❌ InterviewPrepAgent (placeholder)
-  - ❌ JobMatchAgent (Phase 2)
-  - ❌ JobAnalyzerAgent (placeholder)
-  - ❌ CompanyResearchAgent (placeholder)
-  - ❌ InterviewerResearchAgent (placeholder)
+  - ✅ ResumeAnalyzerAgent (temp: 0.5, tokens: 4096)
+  - ✅ JobAnalyzerAgent (temp: 0.6, tokens: 6000) ⭐ Nov 4
+- **Planned Agents** (4/11):
+  - ❌ InterviewPrepAgent
+  - ❌ JobMatchAgent
+  - ❌ CompanyResearchAgent
+  - ❌ InterviewerResearchAgent
 - Prompt engineering best practices
 - Background job processing (BullMQ)
 - Token usage and cost management
@@ -193,13 +198,14 @@ These documents are actively maintained and reflect the current state of the sys
 - Testing strategy
 
 **Cost Tracking:**
-- Resume parsing: ~3,000-5,000 tokens
-- Resume tailoring: ~8,000-12,000 tokens
-- Cover letter: ~4,000-6,000 tokens
-- Mock interview questions: ~3,000-5,000 tokens
-- Answer evaluation: ~2,000-4,000 tokens
-- Session analysis: ~6,000-10,000 tokens
-- Resume analysis: ~5,000-8,000 tokens ⭐ NEW
+- Resume parsing: ~3,000-5,000 tokens (~$0.01-0.02)
+- Resume tailoring: ~8,000-12,000 tokens (~$0.03-0.06)
+- Cover letter: ~4,000-6,000 tokens (~$0.01-0.03)
+- Mock interview questions: ~3,000-5,000 tokens (~$0.01-0.02)
+- Answer evaluation: ~2,000-4,000 tokens (~$0.01)
+- Session analysis: ~6,000-10,000 tokens (~$0.02-0.04)
+- Resume analysis: ~5,000-8,000 tokens (~$0.02-0.04)
+- Job analysis: ~5,000-8,000 tokens (~$0.02-0.04)
 
 **When to read:**
 - Implementing AI features
@@ -495,6 +501,25 @@ If you can't find what you're looking for:
 
 ## 🔄 Version History
 
+- **v2.4.0** (2025-11-04) - Job Analyzer Agent implementation
+  - Implemented JobAnalyzerAgent with comprehensive job posting analysis
+  - Added JobAnalysis database model with smart caching (single analysis per job)
+  - Updated ai_agent_architecture.md with 7/11 agents (64% complete)
+  - Updated database_schema.md with JobAnalysis table documentation
+  - Added red flag detection and salary insights features
+  - Documented GET endpoint for retrieving cached analyses
+  - Updated project metrics: 93% complete, 18 database models
+  - Added cost estimate for job analysis (~$0.02-0.04 per analysis)
+
+- **v2.3.0** (2025-10-30) - Documentation update with comprehensive system scan
+  - Updated ai_agent_architecture.md with all 6 implemented agents
+  - Added JobParserAgent and ResumeAnalyzerAgent documentation
+  - Updated database_schema.md with ResumeAnalysis model
+  - Updated project_architecture.md with current status (92% complete)
+  - Clarified agent implementation status (6/11 implemented, 5/11 planned)
+  - Added cost estimates for all AI operations
+  - Updated README with latest metrics and version info
+
 - **v2.2.0** (2025-10-28) - Resume Analyzer implementation and performance optimization
   - Implemented Resume Analyzer Agent with comprehensive quality scoring
   - Added database model `ResumeAnalysis` with composite unique key
@@ -528,22 +553,24 @@ If you can't find what you're looking for:
 
 ---
 
-## 📈 Project Metrics (as of Oct 28, 2025)
+## 📈 Project Metrics (as of Nov 4, 2025)
 
-- **Backend Files:** 70 TypeScript files
-- **Frontend Files:** 127 TypeScript files
-- **Database Models:** 16 models (19 tables total with join tables) ⬆️
-- **AI Agents:** 6 implemented, 5 pending ⬆️
-- **API Routes:** 11 route groups
-- **Completion:** 92% MVP Phase 1 ⬆️
-- **Deployment:** Production on Railway
-- **Next Milestone:** Complete remaining 5 AI agents
+- **Backend Files:** 72+ TypeScript files
+- **Frontend Files:** 128+ TypeScript files
+- **Database Models:** 18 models (21 tables total with join tables) ⬆️
+- **AI Agents:** 7 implemented / 11 total (64% complete)
+  - ✅ ResumeParser, ResumeTailor, CoverLetter, MockInterview, JobParser, ResumeAnalyzer, JobAnalyzer
+  - ❌ InterviewPrep, JobMatch, CompanyResearch, InterviewerResearch
+- **API Routes:** 11 route groups (~62 endpoints)
+- **Completion:** 93% MVP Phase 1
+- **Deployment:** Production (Railway + Vercel)
+- **Next Milestone:** Complete remaining 4 AI agents (Phase 1 → 100%)
 
 ---
 
 **Maintained by:** Engineering Team
-**Last Updated:** October 28, 2025
-**Documentation Version:** 2.2.0
+**Last Updated:** November 4, 2025
+**Documentation Version:** 2.4.0
 **Project Version:** 1.0 MVP
 
 ---

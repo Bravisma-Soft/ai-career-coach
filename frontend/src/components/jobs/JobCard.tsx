@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MapPin, Briefcase, Calendar, MoreVertical, Eye, Edit, Trash2 } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, MoreVertical, Eye, Edit, Trash2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -18,6 +18,7 @@ interface JobCardProps {
   onView: (job: Job) => void;
   onEdit: (job: Job) => void;
   onDelete: (id: string) => void;
+  onAnalyze?: (job: Job) => void;
 }
 
 const statusColors: Record<Job['status'], string> = {
@@ -37,7 +38,7 @@ const workModeColors: Record<Job['workMode'], string> = {
   ONSITE: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
 };
 
-export const JobCard = ({ job, onView, onEdit, onDelete }: JobCardProps) => {
+export const JobCard = ({ job, onView, onEdit, onDelete, onAnalyze }: JobCardProps) => {
   const {
     attributes,
     listeners,
@@ -81,6 +82,12 @@ export const JobCard = ({ job, onView, onEdit, onDelete }: JobCardProps) => {
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
+              {onAnalyze && (
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAnalyze(job); }}>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Analyze Job
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(job); }}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit

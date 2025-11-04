@@ -7,6 +7,7 @@ import { useJobs } from '@/hooks/useJobs';
 import { KanbanBoard } from '@/components/jobs/KanbanBoard';
 import { AddJobModal } from '@/components/jobs/AddJobModal';
 import { JobDetailDrawer } from '@/components/jobs/JobDetailDrawer';
+import { JobAnalysisModal } from '@/components/ai/JobAnalysisModal';
 import { Job, JobStatus, CreateJobData } from '@/types/job';
 import { Briefcase, MessageSquare, Clock, Award, Plus, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -18,7 +19,9 @@ export const Dashboard = () => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+  const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [analyzingJob, setAnalyzingJob] = useState<Job | null>(null);
   const [defaultStatus, setDefaultStatus] = useState<JobStatus>('INTERESTED');
 
   const stats = [
@@ -77,6 +80,11 @@ export const Dashboard = () => {
       deleteJob(id);
       setIsDetailDrawerOpen(false);
     }
+  };
+
+  const handleAnalyzeJob = (job: Job) => {
+    setAnalyzingJob(job);
+    setIsAnalysisModalOpen(true);
   };
 
   if (isLoading) {
@@ -165,6 +173,7 @@ export const Dashboard = () => {
             onEditJob={handleEditJob}
             onDeleteJob={handleDeleteJob}
             onUpdateStatus={(id, status) => updateJobStatus({ id, status })}
+            onAnalyzeJob={handleAnalyzeJob}
           />
         )}
       </div>
@@ -193,6 +202,18 @@ export const Dashboard = () => {
         }}
         onDelete={() => {
           if (selectedJob) handleDeleteJob(selectedJob.id);
+        }}
+      />
+
+      <JobAnalysisModal
+        job={analyzingJob}
+        open={isAnalysisModalOpen}
+        onOpenChange={(open) => {
+          setIsAnalysisModalOpen(open);
+          if (!open) setAnalyzingJob(null);
+        }}
+        onAnalysisComplete={() => {
+          // Optionally refresh jobs to get updated match scores
         }}
       />
     </div>

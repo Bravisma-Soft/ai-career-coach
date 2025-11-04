@@ -25,6 +25,7 @@ interface KanbanBoardProps {
   onEditJob: (job: Job) => void;
   onDeleteJob: (id: string) => void;
   onUpdateStatus: (id: string, status: JobStatus) => void;
+  onAnalyzeJob?: (job: Job) => void;
 }
 
 const columns: { id: JobStatus; title: string; color: string }[] = [
@@ -62,6 +63,7 @@ export const KanbanBoard = ({
   onEditJob,
   onDeleteJob,
   onUpdateStatus,
+  onAnalyzeJob,
 }: KanbanBoardProps) => {
   const [activeJob, setActiveJob] = useState<Job | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -165,6 +167,7 @@ export const KanbanBoard = ({
                             onView={onViewJob}
                             onEdit={onEditJob}
                             onDelete={onDeleteJob}
+                            onAnalyze={onAnalyzeJob}
                           />
                         ))
                       )}

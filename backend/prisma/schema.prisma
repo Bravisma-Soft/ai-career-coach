@@ -341,6 +341,7 @@ model Resume {
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications      Application[]
   analyses          ResumeAnalysis[]
+  jobAnalyses       JobAnalysis[]
 
   @@index([userId])
   @@index([isPrimary])
@@ -444,6 +445,7 @@ model Job {
   documents         Document[]
   statusChanges     StatusChange[]
   resumeAnalyses    ResumeAnalysis[]
+  jobAnalyses       JobAnalysis[]
 
   @@index([userId])
   @@index([status])
@@ -466,6 +468,55 @@ model StatusChange {
   @@index([jobId])
   @@index([changedAt])
   @@map("status_changes")
+}
+
+model JobAnalysis {
+  id                String       @id @default(cuid())
+  jobId             String
+  resumeId          String?      // Optional: Link to specific resume for match analysis
+
+  // Role Analysis
+  roleLevel         String       // entry, mid, senior, lead, executive
+  keyResponsibilities Json       // Array of main responsibilities
+  requiredSkills    String[]
+  preferredSkills   String[]
+  redFlags          String[]     // Warning signs in job posting
+  highlights        String[]     // Positive indicators
+
+  // Match Analysis (optional - only if resume provided)
+  overallMatch      Float?       // 0-100 match score
+  skillsMatch       Float?       // 0-100 skills alignment
+  experienceMatch   Float?       // 0-100 experience fit
+  matchReasons      String[]     // Why candidate is a good fit
+  gaps              String[]     // Skills/experience gaps
+  recommendations   Json         // Array of improvement recommendations
+
+  // Salary Insights
+  estimatedSalaryMin Float?      // Estimated minimum salary
+  estimatedSalaryMax Float?      // Estimated maximum salary
+  salaryCurrency    String?      @default("USD")
+  marketComparison  String       // Above/at/below market
+  salaryFactors     String[]     // Factors influencing salary
+
+  // Application Strategy
+  applicationTips   Json         // Array of actionable tips
+
+  // Context
+  analysisContext   Json?        // Additional context used for analysis
+
+  // AI Metadata
+  analysisMetadata  Json?        // Token usage, model used, etc.
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  job               Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resume            Resume?      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, resumeId])    // Each job can have one analysis per resume
+  @@index([jobId])
+  @@index([resumeId])
+  @@map("job_analyses")
 }
 
 // =================================

@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { TailorResumeModal } from '@/components/ai/TailorResumeModal';
 import { CoverLetterModal } from '@/components/ai/CoverLetterModal';
 import { CoverLetterViewer } from '@/components/ai/CoverLetterViewer';
+import { JobAnalysisModal } from '@/components/ai/JobAnalysisModal';
 import { documentService } from '@/services/documentService';
 import { interviewService } from '@/services/interviewService';
 import { toast } from '@/hooks/use-toast';
@@ -45,6 +46,7 @@ interface JobDetailModalProps {
   job: Job | null;
   onEdit: () => void;
   onDelete: () => void;
+  onAnalyze?: () => void;
 }
 
 const workModeColors: Record<Job['workMode'], string> = {
@@ -53,11 +55,12 @@ const workModeColors: Record<Job['workMode'], string> = {
   ONSITE: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
 };
 
-export const JobDetailModal = ({ open, onClose, job, onEdit, onDelete }: JobDetailModalProps) => {
+export const JobDetailModal = ({ open, onClose, job, onEdit, onDelete, onAnalyze }: JobDetailModalProps) => {
   const navigate = useNavigate();
   const [showTailorModal, setShowTailorModal] = useState(false);
   const [showCoverLetterModal, setShowCoverLetterModal] = useState(false);
   const [showCoverLetterViewer, setShowCoverLetterViewer] = useState(false);
+  const [showJobAnalysisModal, setShowJobAnalysisModal] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
@@ -266,6 +269,16 @@ export const JobDetailModal = ({ open, onClose, job, onEdit, onDelete }: JobDeta
                   </TabsList>
 
                   <TabsContent value="overview" className="space-y-4 mt-4">
+                    {/* AI Analysis Button */}
+                    <Button
+                      variant="hero"
+                      className="w-full"
+                      onClick={() => setShowJobAnalysisModal(true)}
+                    >
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Analyze Job with AI
+                    </Button>
+
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg">Job Description</CardTitle>
@@ -595,6 +608,12 @@ export const JobDetailModal = ({ open, onClose, job, onEdit, onDelete }: JobDeta
           title={selectedCoverLetter.title}
         />
       )}
+
+      <JobAnalysisModal
+        job={job}
+        open={showJobAnalysisModal}
+        onOpenChange={setShowJobAnalysisModal}
+      />
     </>
   );
 };

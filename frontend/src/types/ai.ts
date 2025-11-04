@@ -121,6 +121,31 @@ export interface ResumeAnalysis {
   updatedAt: string;
 }
 
+export interface JobAnalysis {
+  analysis: {
+    roleLevel: 'entry' | 'mid' | 'senior' | 'lead' | 'executive';
+    keyResponsibilities: string[];
+    requiredSkills: string[];
+    preferredSkills: string[];
+    redFlags: string[];
+    highlights: string[];
+  };
+  matchAnalysis?: {
+    overallMatch: number;
+    skillsMatch: number;
+    experienceMatch: number;
+    matchReasons: string[];
+    gaps: string[];
+    recommendations: string[];
+  };
+  salaryInsights: {
+    estimatedRange: string;
+    marketComparison: string;
+    factors: string[];
+  };
+  applicationTips: string[];
+}
+
 export type AITask = 'tailoring' | 'cover-letter' | null;
 
 export interface AIProgress {

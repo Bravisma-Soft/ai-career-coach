@@ -432,10 +432,200 @@ enum SkillLevel {
 **Relations**:
 - `user` → User (N:1, cascade delete)
 - `applications` → Application[] (1:N)
+- `analyses` → ResumeAnalysis[] (1:N)
 
 ---
 
-### 9. Job
+### 9. ResumeAnalysis ⭐ NEW (Oct 28, 2025)
+**Purpose**: AI-generated resume quality analysis and feedback
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String (CUID) | Primary key |
+| `resumeId` | String | Foreign key to Resume |
+| `jobId` | String? | Foreign key to Job (optional) |
+| **Overall Scores** | | |
+| `overallScore` | Int | Overall quality (0-100) |
+| `atsScore` | Int | ATS compatibility (0-100) |
+| `readabilityScore` | Int | Readability (0-100) |
+| **Section Scores** | | |
+| `summaryScore` | Int? | Summary section score (0-100) |
+| `experienceScore` | Int? | Experience section score (0-100) |
+| `educationScore` | Int? | Education section score (0-100) |
+| `skillsScore` | Int? | Skills section score (0-100) |
+| **Analysis Results** | | |
+| `strengths` | String[] | Key strengths (3-5 items) |
+| `weaknesses` | String[] | Areas for improvement (3-5 items) |
+| `sections` | Json | Detailed section analysis |
+| `keywordAnalysis` | Json | Keyword matching analysis |
+| `atsIssues` | String[] | ATS compatibility issues |
+| `suggestions` | Json | Prioritized improvement suggestions |
+| **Context** | | |
+| `targetRole` | String? | Target role for analysis |
+| `targetIndustry` | String? | Target industry |
+| **Metadata** | | |
+| `analysisMetadata` | Json? | Token usage, model info |
+| `createdAt` | DateTime | Created timestamp |
+| `updatedAt` | DateTime | Updated timestamp |
+
+**Indexes**:
+- `resumeId` - Filter by resume
+- `jobId` - Filter by job
+- `(resumeId, jobId)` - Unique constraint (composite key)
+
+**Relations**:
+- `resume` → Resume (N:1, cascade delete)
+- `job` → Job (N:1, set null)
+
+**Unique Constraint**:
+- `@@unique([resumeId, jobId])` - One analysis per resume-job combination
+
+**JSON Fields Structure**:
+
+`sections` (Json):
+```json
+{
+  "summary": {
+    "score": 85,
+    "feedback": "Clear and concise...",
+    "issues": ["Too generic", "Missing key skills"]
+  },
+  "experience": { /* ... */ },
+  "education": { /* ... */ },
+  "skills": { /* ... */ }
+}
+```
+
+`keywordAnalysis` (Json):
+```json
+{
+  "targetRole": "Senior Software Engineer",
+  "targetIndustry": "Technology",
+  "matchedKeywords": ["React", "TypeScript", "AWS"],
+  "missingKeywords": ["Docker", "Kubernetes"],
+  "overusedWords": ["responsible for", "worked on"]
+}
+```
+
+`suggestions` (Json):
+```json
+[
+  {
+    "section": "Experience",
+    "priority": "high",
+    "issue": "Lack of quantifiable achievements",
+    "suggestion": "Add metrics and numbers...",
+    "example": {
+      "before": "Managed team...",
+      "after": "Led team of 8 engineers..."
+    },
+    "impact": "Demonstrates leadership with measurable results"
+  }
+]
+```
+
+---
+
+### 10. JobAnalysis ⭐ NEW (Nov 4, 2025)
+**Purpose**: AI-generated job posting analysis with optional resume matching
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String (CUID) | Primary key |
+| `jobId` | String | Foreign key to Job |
+| `resumeId` | String? | Foreign key to Resume (optional) |
+| **Role Analysis** | | |
+| `roleLevel` | String | entry/mid/senior/lead/executive |
+| `keyResponsibilities` | Json | Array of main responsibilities (3-8) |
+| `requiredSkills` | String[] | Must-have skills |
+| `preferredSkills` | String[] | Nice-to-have skills |
+| `redFlags` | String[] | Warning signs in posting |
+| `highlights` | String[] | Positive indicators |
+| **Match Analysis** (optional) | | |
+| `overallMatch` | Float? | Overall match score (0-100) |
+| `skillsMatch` | Float? | Skills alignment (0-100) |
+| `experienceMatch` | Float? | Experience fit (0-100) |
+| `matchReasons` | String[] | Why candidate is a good fit |
+| `gaps` | String[] | Skills/experience gaps |
+| `recommendations` | Json | Improvement recommendations |
+| **Salary Insights** | | |
+| `estimatedSalaryMin` | Float? | Estimated minimum salary |
+| `estimatedSalaryMax` | Float? | Estimated maximum salary |
+| `salaryCurrency` | String? | Currency (default: USD) |
+| `marketComparison` | String | Above/at/below market |
+| `salaryFactors` | String[] | Factors influencing salary |
+| **Application Strategy** | | |
+| `applicationTips` | Json | Actionable application tips (4-7) |
+| **Context** | | |
+| `analysisContext` | Json? | Additional context |
+| **Metadata** | | |
+| `analysisMetadata` | Json? | Token usage, model info |
+| `createdAt` | DateTime | Created timestamp |
+| `updatedAt` | DateTime | Updated timestamp |
+
+**Indexes**:
+- `jobId` - Filter by job
+- `resumeId` - Filter by resume
+- `(jobId, resumeId)` - Unique constraint (composite key)
+
+**Relations**:
+- `job` → Job (N:1, cascade delete)
+- `resume` → Resume (N:1, cascade delete)
+
+**Unique Constraint**:
+- `@@unique([jobId, resumeId])` - One analysis per job (latest replaces previous)
+
+**Note**: System automatically deletes previous analyses for a job when creating new analysis to maintain single source of truth.
+
+**JSON Fields Structure**:
+
+`keyResponsibilities` (Json):
+```json
+[
+  "Lead technical architecture decisions",
+  "Mentor junior developers",
+  "Drive technical initiatives"
+]
+```
+
+`recommendations` (Json):
+```json
+[
+  "Highlight your system design experience",
+  "Emphasize leadership and mentoring",
+  "Consider taking a GraphQL course"
+]
+```
+
+`applicationTips` (Json):
+```json
+[
+  "Apply within 3 days - role posted recently",
+  "Tailor resume to emphasize architecture experience",
+  "Prepare for system design questions"
+]
+```
+
+**Red Flags Detected**:
+The analysis identifies concerning patterns such as:
+- Unrealistic experience requirements (e.g., 10 years in 5-year-old tech)
+- Excessive responsibilities for level/salary
+- Vague job descriptions
+- Unprofessional language ("Rockstar", "Ninja", "Guru")
+- Problematic culture indicators ("We're a family", "Unlimited PTO")
+- On-call expectations without compensation
+- Copy-paste job descriptions with unrelated skill sets
+
+**Caching Strategy**:
+- Only ONE analysis per job at any time
+- New analysis automatically deletes previous analysis
+- Optimizes cost by preventing redundant AI calls
+- `GET /api/ai/jobs/:jobId/analysis` retrieves without creating
+- `POST /api/ai/jobs/analyze` creates/updates analysis
+
+---
+
+### 11. Job
 **Purpose**: Job opportunity tracking
 
 | Field | Type | Description |
