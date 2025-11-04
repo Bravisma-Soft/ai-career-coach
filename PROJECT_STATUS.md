@@ -1,6 +1,6 @@
 # AI Career Coach - Project Status
 
-**Last Updated:** October 28, 2025
+**Last Updated:** November 4, 2025
 **Version:** 1.0 MVP
 **Status:** 🟢 Production Deployed on Railway
 
@@ -16,7 +16,7 @@
 | **Redis/Cache** | ✅ Redis on Railway |
 | **AI Integration** | ✅ Claude Sonnet 4.5 |
 | **OAuth Authentication** | ✅ Google OAuth Deployed |
-| **MVP Phase 1** | 🟡 92% Complete (5 agents pending) |
+| **MVP Phase 1** | 🟡 93% Complete (4 agents pending) |
 | **Phase 2** | ⏳ Not Started |
 
 ---
@@ -97,7 +97,7 @@
   - Answer evaluation
   - Session analysis
 
-### 7. **AI Resume Analysis** ⭐ NEW
+### 7. **AI Resume Analysis** ⭐
 - ✅ Comprehensive resume quality scoring (Overall, ATS, Readability)
 - ✅ Section-by-section feedback (Summary, Experience, Education, Skills)
 - ✅ Keyword analysis (matched, missing, overused)
@@ -109,14 +109,28 @@
 - **Routes:** `/api/ai/resumes/analyze`
 - **Database:** `ResumeAnalysis` model with caching
 
-### 8. **Interview Management**
+### 8. **AI Job Analysis** ⭐ NEW (Nov 4, 2025)
+- ✅ Comprehensive job posting analysis with role level detection
+- ✅ Key responsibilities and required/preferred skills extraction
+- ✅ Red flag detection for problematic job postings
+- ✅ Salary insights with market comparison
+- ✅ Optional resume matching with personalized recommendations
+- ✅ Smart caching (single analysis per job)
+- ✅ Multiple access points: Dashboard KanbanBoard & Jobs page
+- ✅ Beautiful tabbed UI (Overview, Match, Salary, Tips)
+- ✅ Resume pre-selection for cached analyses
+- **Agent:** `JobAnalyzerAgent` (Claude Sonnet 4.5)
+- **Routes:** `/api/ai/jobs/analyze`, `/api/ai/jobs/:jobId/analysis`
+- **Database:** `JobAnalysis` model with caching
+
+### 9. **Interview Management**
 - ✅ Interview scheduling and tracking
 - ✅ Interviewer information storage
 - ✅ Link interviews to jobs
 - ✅ Interview preparation materials
 - **Routes:** `/api/interviews/*`
 
-### 9. **Document Management**
+### 10. **Document Management**
 - ✅ Store tailored resumes with metadata
 - ✅ Document versioning
 - ✅ Match scores tracked in metadata
@@ -142,11 +156,11 @@ These routes exist but return **static mock data** instead of real AI:
 - **TODO:** Intelligent job recommendations based on resume
 - **Location:** `backend/src/api/routes/ai.routes.ts:394`
 
-### 3. **Job Analysis Agent**
-- **Route:** `POST /api/ai/jobs/analyze`
-- **Status:** ❌ Placeholder data only
-- **TODO:** Analyze job requirements, culture fit, salary insights
-- **Location:** `backend/src/api/routes/ai.routes.ts:451`
+### 3. **Job Analysis Agent** ✅ COMPLETED (Nov 4, 2025)
+- **Route:** `POST /api/ai/jobs/analyze`, `GET /api/ai/jobs/:jobId/analysis`
+- **Status:** ✅ Fully implemented with smart caching
+- **Agent:** `JobAnalyzerAgent` with comprehensive analysis
+- **Location:** `backend/src/ai/agents/job-analyzer.agent.ts`
 
 ### 4. **Company Research Agent**
 - **Route:** `POST /api/ai/research/company`
@@ -190,9 +204,9 @@ These routes exist but return **static mock data** instead of real AI:
 4. ✅ **JobParserAgent** - Scrape and parse job postings
 5. ✅ **MockInterviewAgent** - Generate questions, evaluate answers, analyze sessions
 6. ✅ **ResumeAnalyzerAgent** - Quality scoring, ATS analysis, suggestions (temp: 0.5)
-7. ❌ **InterviewPrepAgent** - TODO: Company research
-8. ❌ **JobMatchAgent** - TODO: Job recommendations (Phase 2)
-9. ❌ **JobAnalyzerAgent** - TODO: Job requirement analysis
+7. ✅ **JobAnalyzerAgent** - Job analysis with resume matching (temp: 0.6) ⭐ NEW
+8. ❌ **InterviewPrepAgent** - TODO: Company research
+9. ❌ **JobMatchAgent** - TODO: Job recommendations (Phase 2)
 10. ❌ **CompanyResearchAgent** - TODO: Company info scraping
 11. ❌ **InterviewerResearchAgent** - TODO: Interviewer background
 
@@ -394,7 +408,7 @@ ai-career-coach/
 - Job URL parsing: 5-15 seconds
 
 ### Database
-- **Schema:** 15+ models
+- **Schema:** 18 models (added JobAnalysis Nov 4, 2025)
 - **Relations:** Fully normalized with Prisma
 - **Migrations:** Automated on deploy
 
@@ -444,14 +458,15 @@ See `DOCUMENTATION_INDEX.md` for full documentation structure and locations.
 
 ## 🎯 Success Criteria (from PRD)
 
-### MVP Goals (Phase 1) - 92% Complete
+### MVP Goals (Phase 1) - 93% Complete
 - [x] User authentication and profile management
 - [x] Resume upload and AI parsing
 - [x] Job tracking with Kanban board
 - [x] AI resume tailoring
 - [x] AI cover letter generation
 - [x] Mock interview with AI evaluation
-- [x] Resume quality analysis ✅ NEW
+- [x] Resume quality analysis
+- [x] Job posting analysis with resume matching ✅ NEW (Nov 4, 2025)
 - [ ] Interview preparation with research (TODO)
 
 ### Phase 2 Goals - Not Started
