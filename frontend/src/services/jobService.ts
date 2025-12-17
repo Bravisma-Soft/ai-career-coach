@@ -1,6 +1,21 @@
 import { apiClient } from '@/lib/api';
 import { Job, CreateJobData, JobStatus } from '@/types/job';
 
+export interface JobsQueryParams {
+  page?: number;
+  limit?: number;
+  status?: JobStatus;
+  company?: string;
+  workMode?: 'REMOTE' | 'HYBRID' | 'ONSITE';
+  jobType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP' | 'TEMPORARY';
+  priority?: number;
+  search?: string;
+  sortBy?: 'createdAt' | 'updatedAt' | 'company' | 'title' | 'priority' | 'postedDate';
+  sortOrder?: 'asc' | 'desc';
+  startDate?: string;
+  endDate?: string;
+}
+
 interface PaginatedResponse<T> {
   success: boolean;
   data: T[];
@@ -12,6 +27,11 @@ interface PaginatedResponse<T> {
     hasNext: boolean;
     hasPrevious: boolean;
   };
+}
+
+export interface JobsResponse {
+  jobs: Job[];
+  pagination: PaginatedResponse<Job>['pagination'];
 }
 
 export const jobService = {
@@ -41,9 +61,24 @@ export const jobService = {
     return response.data.data.jobData;
   },
 
-  fetchJobs: async (): Promise<Job[]> => {
-    const response = await apiClient.get<PaginatedResponse<Job>>('/jobs');
-    return response.data.data; // Extract data array from paginated response
+  fetchJobs: async (params: JobsQueryParams = {}): Promise<JobsResponse> => {
+    // Default to a high limit to get all jobs unless pagination is explicitly requested
+    const queryParams = {
+      limit: params.limit ?? 100,
+      ...params,
+    };
+
+    // Build query string, filtering out undefined values
+    const queryString = Object.entries(queryParams)
+      .filter(([_, value]) => value !== undefined && value !== '')
+      .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
+      .join('&');
+
+    const response = await apiClient.get<PaginatedResponse<Job>>(`/jobs${queryString ? `?${queryString}` : ''}`);
+    return {
+      jobs: response.data.data,
+      pagination: response.data.pagination,
+    };
   },
 
   createJob: async (data: CreateJobData): Promise<Job> => {

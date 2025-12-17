@@ -202,7 +202,7 @@ export class JobService {
   async getJobs(userId: string, query: GetJobsQuery) {
     const {
       page = 1,
-      limit = 10,
+      limit: rawLimit = 10,
       status,
       company,
       workMode,
@@ -214,6 +214,10 @@ export class JobService {
       startDate,
       endDate,
     } = query;
+
+    // Ensure limit and page are numbers (query params come as strings)
+    const limit = typeof rawLimit === 'string' ? parseInt(rawLimit, 10) : rawLimit;
+    const pageNum = typeof page === 'string' ? parseInt(page as string, 10) : page;
 
     // Build where clause
     const where: any = { userId };
@@ -242,7 +246,7 @@ export class JobService {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { company: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { jobDescription: { contains: search, mode: 'insensitive' } },
         { location: { contains: search, mode: 'insensitive' } },
       ];
     }
@@ -264,7 +268,7 @@ export class JobService {
     const [jobs, total] = await Promise.all([
       prisma.job.findMany({
         where,
-        skip: (page - 1) * limit,
+        skip: (pageNum - 1) * limit,
         take: limit,
         orderBy,
         include: {
@@ -282,12 +286,12 @@ export class JobService {
     return {
       jobs,
       pagination: {
-        page,
+        page: pageNum,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrevious: page > 1,
+        hasNext: pageNum < Math.ceil(total / limit),
+        hasPrevious: pageNum > 1,
       },
     };
   }

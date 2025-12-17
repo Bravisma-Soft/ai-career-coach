@@ -5,11 +5,13 @@ import { ValidationError } from '@/utils/ApiError';
 export const validate = (schema: ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      schema.parse({
+      const parsed = schema.parse({
         body: req.body,
         query: req.query,
         params: req.params,
       });
+      // Store parsed/coerced values in req.validated for handlers to use
+      (req as any).validated = parsed;
       next();
     } catch (error) {
       next(error);

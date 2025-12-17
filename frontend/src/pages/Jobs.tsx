@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useJobs } from '@/hooks/useJobs';
 import { useJobsStore } from '@/store/jobsStore';
-import { Job, CreateJobData } from '@/types/job';
+import { Job, CreateJobData, JobStatus } from '@/types/job';
 import {
   Plus,
   Search,
@@ -27,9 +27,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { AddJobModal } from '@/components/jobs/AddJobModal';
 import { JobDetailModal } from '@/components/jobs/JobDetailModal';
+import { JobsQueryParams } from '@/services/jobService';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 export default function Jobs() {
-  const { jobs, isLoading, error, createJob, updateJob, deleteJob } = useJobs();
   const { selectedJob, setSelectedJob } = useJobsStore();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -39,48 +40,35 @@ export default function Jobs() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [workModeFilter, setWorkModeFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'date' | 'company' | 'title'>('date');
+  const [sortBy, setSortBy] = useState<'createdAt' | 'company' | 'title'>('createdAt');
 
-  const filteredAndSortedJobs = useMemo(() => {
-    let filtered = [...jobs];
+  // Debounce search query to avoid too many API calls
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (job) =>
-          job.company.toLowerCase().includes(query) ||
-          job.title.toLowerCase().includes(query) ||
-          job.location?.toLowerCase().includes(query)
-      );
+  // Build query params for server-side filtering
+  const queryParams: JobsQueryParams = useMemo(() => {
+    const params: JobsQueryParams = {
+      sortBy,
+      sortOrder: sortBy === 'createdAt' ? 'desc' : 'asc',
+    };
+
+    if (debouncedSearch) {
+      params.search = debouncedSearch;
     }
 
-    // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter((job) => job.status === statusFilter);
+      params.status = statusFilter as JobStatus;
     }
 
-    // Apply work mode filter
     if (workModeFilter !== 'all') {
-      filtered = filtered.filter((job) => job.workMode === workModeFilter);
+      params.workMode = workModeFilter as 'REMOTE' | 'HYBRID' | 'ONSITE';
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'date':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'company':
-          return a.company.localeCompare(b.company);
-        case 'title':
-          return a.title.localeCompare(b.title);
-        default:
-          return 0;
-      }
-    });
+    return params;
+  }, [debouncedSearch, statusFilter, workModeFilter, sortBy]);
 
-    return filtered;
-  }, [jobs, searchQuery, statusFilter, workModeFilter, sortBy]);
+  // Fetch jobs with server-side filtering
+  const { jobs, pagination, isLoading, error, createJob, updateJob, deleteJob } = useJobs(queryParams);
 
   const handleViewJob = (job: Job) => {
     setSelectedJob(job);
@@ -219,12 +207,12 @@ export default function Jobs() {
                   </SelectContent>
                 </Select>
 
-                <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'createdAt' | 'company' | 'title')}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="date">Sort by Date</SelectItem>
+                    <SelectItem value="createdAt">Sort by Date</SelectItem>
                     <SelectItem value="company">Sort by Company</SelectItem>
                     <SelectItem value="title">Sort by Title</SelectItem>
                   </SelectContent>
@@ -234,7 +222,11 @@ export default function Jobs() {
               {/* Results Count */}
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>
-                  Showing {filteredAndSortedJobs.length} of {jobs.length} jobs
+                  {pagination ? (
+                    <>Showing {jobs.length} of {pagination.total} jobs</>
+                  ) : (
+                    <>Showing {jobs.length} jobs</>
+                  )}
                 </span>
                 {(searchQuery || statusFilter !== 'all' || workModeFilter !== 'all') && (
                   <Button
@@ -255,21 +247,23 @@ export default function Jobs() {
         </Card>
 
         {/* Jobs List */}
-        {filteredAndSortedJobs.length === 0 ? (
+        {jobs.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                 <Briefcase className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-2">
-                {jobs.length === 0 ? 'No jobs tracked yet' : 'No jobs match your filters'}
+                {!searchQuery && statusFilter === 'all' && workModeFilter === 'all'
+                  ? 'No jobs tracked yet'
+                  : 'No jobs match your filters'}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {jobs.length === 0
+                {!searchQuery && statusFilter === 'all' && workModeFilter === 'all'
                   ? 'Start tracking your job applications by adding your first job'
                   : 'Try adjusting your search or filters'}
               </p>
-              {jobs.length === 0 && (
+              {!searchQuery && statusFilter === 'all' && workModeFilter === 'all' && (
                 <Button onClick={handleAddJob} variant="hero">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Your First Job
@@ -279,7 +273,7 @@ export default function Jobs() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredAndSortedJobs.map((job) => (
+            {jobs.map((job) => (
               <Card
                 key={job.id}
                 className="hover:shadow-lg transition-all cursor-pointer group"
